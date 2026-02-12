@@ -1,14 +1,16 @@
-import { useState } from "react";
 import { useExpenseStore } from "@/hooks/useExpenseStore";
+import { useAuth } from "@/hooks/useAuth";
 import { Dashboard } from "@/components/Dashboard";
 import { ExpenseTable } from "@/components/ExpenseTable";
 import { BudgetSettings } from "@/components/BudgetSettings";
 import { MonthNavigator } from "@/components/MonthNavigator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, TableProperties, Settings2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LayoutDashboard, TableProperties, Settings2, LogOut } from "lucide-react";
 
 const Index = () => {
   const store = useExpenseStore();
+  const { signOut, user } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -17,7 +19,12 @@ const Index = () => {
           <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
             💰 Controle de Gastos
           </h1>
-          <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
+          <div className="flex items-center gap-4">
+            <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
+            <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
