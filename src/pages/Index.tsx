@@ -3,10 +3,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Dashboard } from "@/components/Dashboard";
 import { ExpenseTable } from "@/components/ExpenseTable";
 import { BudgetSettings } from "@/components/BudgetSettings";
+import { RecurringExpenses } from "@/components/RecurringExpenses";
 import { MonthNavigator } from "@/components/MonthNavigator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, TableProperties, Settings2, LogOut } from "lucide-react";
+import { LayoutDashboard, TableProperties, Settings2, LogOut, RefreshCw } from "lucide-react";
 
 const Index = () => {
   const store = useExpenseStore();
@@ -30,7 +31,7 @@ const Index = () => {
 
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-grid">
+          <TabsList className="grid w-full grid-cols-4 sm:w-auto sm:inline-grid">
             <TabsTrigger value="dashboard" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -38,6 +39,10 @@ const Index = () => {
             <TabsTrigger value="expenses" className="gap-2">
               <TableProperties className="h-4 w-4" />
               <span className="hidden sm:inline">Gastos</span>
+            </TabsTrigger>
+            <TabsTrigger value="recurring" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Recorrentes</span>
             </TabsTrigger>
             <TabsTrigger value="budget" className="gap-2">
               <Settings2 className="h-4 w-4" />
@@ -62,6 +67,17 @@ const Index = () => {
               onAdd={store.addExpense}
               onUpdate={store.updateExpense}
               onDelete={store.deleteExpense}
+              onAddCategory={store.addCustomCategory}
+            />
+          </TabsContent>
+
+          <TabsContent value="recurring">
+            <RecurringExpenses
+              recurringExpenses={store.recurringExpenses}
+              customCategories={store.customCategories}
+              onAdd={store.addRecurringExpense}
+              onToggle={store.toggleRecurringExpense}
+              onDelete={store.deleteRecurringExpense}
               onAddCategory={store.addCustomCategory}
             />
           </TabsContent>

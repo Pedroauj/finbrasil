@@ -4,6 +4,16 @@ export interface Expense {
   description: string;
   category: string;
   amount: number;
+  isRecurring?: boolean; // marks if this was generated from a recurring expense
+}
+
+export interface RecurringExpense {
+  id: string;
+  description: string;
+  category: string;
+  amount: number;
+  dayOfMonth: number;
+  active: boolean;
 }
 
 export interface Budget {

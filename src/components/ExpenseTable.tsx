@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Pencil, Trash2, Search, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, RefreshCw } from "lucide-react";
 import { Expense, DEFAULT_CATEGORIES, formatCurrency, getCategoryColor } from "@/types/expense";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,7 +123,14 @@ export function ExpenseTable({
                     <TableCell className="font-medium text-sm">
                       {format(new Date(expense.date), "dd/MM/yyyy")}
                     </TableCell>
-                    <TableCell>{expense.description}</TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-1.5">
+                        {expense.description}
+                        {expense.isRecurring && (
+                          <span title="Recorrente"><RefreshCw className="h-3 w-3 text-primary" /></span>
+                        )}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
