@@ -4,10 +4,11 @@ import { Dashboard } from "@/components/Dashboard";
 import { ExpenseTable } from "@/components/ExpenseTable";
 import { BudgetSettings } from "@/components/BudgetSettings";
 import { RecurringExpenses } from "@/components/RecurringExpenses";
+import { FinancialCalendar } from "@/components/FinancialCalendar";
 import { MonthNavigator } from "@/components/MonthNavigator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, TableProperties, Settings2, LogOut, RefreshCw } from "lucide-react";
+import { LayoutDashboard, TableProperties, Settings2, LogOut, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
 
 const Index = () => {
   const store = useExpenseStore();
@@ -31,10 +32,14 @@ const Index = () => {
 
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 sm:w-auto sm:inline-grid">
+          <TabsList className="grid w-full grid-cols-5 sm:w-auto sm:inline-grid">
             <TabsTrigger value="dashboard" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendário</span>
             </TabsTrigger>
             <TabsTrigger value="expenses" className="gap-2">
               <TableProperties className="h-4 w-4" />
@@ -56,6 +61,18 @@ const Index = () => {
               budget={store.budget}
               prevMonthExpenses={store.prevMonthExpenses}
               currentDate={store.currentDate}
+            />
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <FinancialCalendar
+              expenses={store.expenses}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              onAdd={store.addExpense}
+              onUpdate={store.updateExpense}
+              onDelete={store.deleteExpense}
+              onAddCategory={store.addCustomCategory}
             />
           </TabsContent>
 
