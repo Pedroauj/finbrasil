@@ -5,6 +5,7 @@ export interface Expense {
   category: string;
   amount: number;
   isRecurring?: boolean; // marks if this was generated from a recurring expense
+  cardId?: string; // Optional: link to a credit card
 }
 
 export interface RecurringExpense {
@@ -14,6 +15,31 @@ export interface RecurringExpense {
   amount: number;
   dayOfMonth: number;
   active: boolean;
+}
+
+export interface CreditCard {
+  id: string;
+  name: string;
+  limit: number;
+  closingDay: number;
+  dueDay: number;
+  color: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  category: string;
+}
+
+export interface CreditCardInvoice {
+  id: string;
+  cardId: string;
+  month: string; // YYYY-MM
+  items: InvoiceItem[];
+  isPaid: boolean;
 }
 
 export interface Budget {
@@ -37,17 +63,17 @@ export const DEFAULT_CATEGORIES = [
 ] as const;
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  "Alimentação": "hsl(15, 80%, 55%)",
-  "Transporte": "hsl(210, 70%, 50%)",
-  "Moradia": "hsl(250, 65%, 55%)",
-  "Saúde": "hsl(152, 60%, 42%)",
-  "Lazer": "hsl(38, 92%, 50%)",
-  "Educação": "hsl(330, 65%, 55%)",
-  "Outros": "hsl(220, 10%, 55%)",
+  "Alimentação": "hsl(15, 85%, 50%)",
+  "Transporte": "hsl(210, 80%, 45%)",
+  "Moradia": "hsl(250, 80%, 55%)",
+  "Saúde": "hsl(152, 75%, 35%)",
+  "Lazer": "hsl(38, 95%, 45%)",
+  "Educação": "hsl(330, 80%, 50%)",
+  "Outros": "hsl(220, 15%, 45%)",
 };
 
 export function getCategoryColor(category: string): string {
-  return CATEGORY_COLORS[category] || `hsl(${Math.abs(hashCode(category)) % 360}, 60%, 50%)`;
+  return CATEGORY_COLORS[category] || `hsl(${Math.abs(hashCode(category)) % 360}, 65%, 45%)`;
 }
 
 function hashCode(str: string): number {
