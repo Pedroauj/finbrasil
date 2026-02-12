@@ -1,21 +1,24 @@
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, AlertTriangle, Wallet, DollarSign, Target } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Expense, formatCurrency, getCategoryColor } from "@/types/expense";
+import { Expense, formatCurrency, getCategoryColor, CreditCard, CreditCardInvoice } from "@/types/expense";
 import { Budget } from "@/types/expense";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { InvoiceAlerts } from "./InvoiceAlerts";
 
 interface DashboardProps {
   expenses: Expense[];
   budget: Budget;
   prevMonthExpenses: Expense[];
   currentDate: Date;
+  cards?: CreditCard[];
+  invoices?: CreditCardInvoice[];
 }
 
-export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate }: DashboardProps) {
+export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate, cards = [], invoices = [] }: DashboardProps) {
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const prevTotal = prevMonthExpenses.reduce((s, e) => s + e.amount, 0);
   const remaining = budget.total - totalSpent;
@@ -52,6 +55,9 @@ export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate }: 
 
   return (
     <div className="space-y-6">
+      {/* Alertas de Cartão de Crédito */}
+      <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
+
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="border-0 shadow-lg">
@@ -125,7 +131,7 @@ export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate }: 
         </Card>
       </div>
 
-      {/* Alert */}
+      {/* Alert Orçamento */}
       {(overBudget || nearBudget) && budget.total > 0 && (
         <div className={`flex items-center gap-3 rounded-xl p-4 ${overBudget ? "bg-destructive/10 text-destructive" : "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]"}`}>
           <AlertTriangle className="h-5 w-5 shrink-0" />
