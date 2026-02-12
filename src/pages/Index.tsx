@@ -11,6 +11,7 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, TableProperties, Settings2, LogOut, RefreshCw, Calendar as CalendarIcon, CreditCard as CardIcon } from "lucide-react";
+import { InvoiceAlerts } from "@/components/InvoiceAlerts";
 
 const Index = () => {
   const store = useExpenseStore();
@@ -82,6 +83,8 @@ const Index = () => {
               budget={store.budget}
               prevMonthExpenses={store.prevMonthExpenses}
               currentDate={store.currentDate}
+              cards={store.creditCards}
+              invoices={store.invoices}
             />
           </TabsContent>
 
@@ -121,17 +124,20 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="cards">
-            <CreditCardManager 
-              cards={store.creditCards}
-              invoices={store.invoices}
-              categories={categories}
-              currentDate={store.currentDate}
-              onAddCard={store.addCreditCard}
-              onDeleteCard={store.deleteCreditCard}
-              onAddInvoiceItem={store.addInvoiceItem}
-              onRemoveInvoiceItem={store.removeInvoiceItem}
-              onTogglePaid={store.toggleInvoicePaid}
-            />
+            <div className="space-y-6">
+              <InvoiceAlerts cards={store.creditCards} invoices={store.invoices} currentDate={store.currentDate} />
+              <CreditCardManager 
+                cards={store.creditCards}
+                invoices={store.invoices}
+                categories={categories}
+                currentDate={store.currentDate}
+                onAddCard={store.addCreditCard}
+                onDeleteCard={store.deleteCreditCard}
+                onAddInvoiceItem={store.addInvoiceItem}
+                onRemoveInvoiceItem={store.removeInvoiceItem}
+                onTogglePaid={store.toggleInvoicePaid}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="budget">
