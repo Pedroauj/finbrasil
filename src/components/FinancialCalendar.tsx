@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,7 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, Filter } from "lucide-react";
+import { Plus, Edit2, Trash2, Filter, FileDown, Loader2 } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 interface FinancialCalendarProps {
   expenses: Expense[];
@@ -35,6 +38,8 @@ export function FinancialCalendar({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(() => [
     "Alimentação", "Transporte", "Moradia", "Saúde", "Lazer", "Educação", "Outros",
@@ -78,6 +83,42 @@ export function FinancialCalendar({
     );
   };
 
+  const handleExportPDF = async () => {
+    if (!calendarRef.current) return;
+    
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(calendarRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#09090b", // Match app background color
+      });
+      
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+      
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      
+      const monthName = format(currentDate, "MMMM-yyyy", { locale: ptBR });
+      pdf.save(`calendario-financeiro-${monthName}.pdf`);
+      
+      toast.success("PDF gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar o PDF. Tente novamente.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleAddClick = () => {
     setEditingExpense(null);
     setIsFormOpen(true);
@@ -116,12 +157,25 @@ export function FinancialCalendar({
             </SelectContent>
           </Select>
         </div>
+        <Button 
+          variant="outline" 
+          onClick={handleExportPDF} 
+          disabled={isExporting}
+          className="flex items-center gap-2"
+        >
+          {isExporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileDown className="h-4 w-4" />
+          )}
+          {isExporting ? "Gerando PDF..." : "Exportar PDF"}
+        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[1fr_300px]">
+      <div ref={calendarRef} className="grid gap-6 md:grid-cols-[1fr_300px] bg-background p-4 rounded-lg">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Calendário de Gastos</CardTitle>
+            <CardTitle className="text-lg">Calendário de Gastos - {format(currentDate, "MMMM yyyy", { locale: ptBR })}</CardTitle>
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
             <Calendar
