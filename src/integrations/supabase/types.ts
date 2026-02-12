@@ -119,6 +119,78 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_expense_instances: {
+        Row: {
+          expense_id: string
+          id: string
+          month: number
+          recurring_expense_id: string
+          year: number
+        }
+        Insert: {
+          expense_id: string
+          id?: string
+          month: number
+          recurring_expense_id: string
+          year: number
+        }
+        Update: {
+          expense_id?: string
+          id?: string
+          month?: number
+          recurring_expense_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expense_instances_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_expense_instances_recurring_expense_id_fkey"
+            columns: ["recurring_expense_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_expenses: {
+        Row: {
+          active: boolean
+          amount: number
+          category: string
+          created_at: string
+          day_of_month: number
+          description: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          category: string
+          created_at?: string
+          day_of_month?: number
+          description: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          category?: string
+          created_at?: string
+          day_of_month?: number
+          description?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
