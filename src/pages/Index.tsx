@@ -6,6 +6,7 @@ import { BudgetSettings } from "@/components/BudgetSettings";
 import { RecurringExpenses } from "@/components/RecurringExpenses";
 import { FinancialCalendar } from "@/components/FinancialCalendar";
 import { MonthNavigator } from "@/components/MonthNavigator";
+import { ModeToggle } from "@/components/ModeToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, TableProperties, Settings2, LogOut, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
@@ -15,17 +16,21 @@ const Index = () => {
   const { signOut, user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
             💰 Controle de Gastos
           </h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <div className="h-6 w-[1px] bg-border mx-1 hidden sm:block" />
+            <div className="flex items-center gap-1">
+              <ModeToggle />
+              <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="h-9 w-9 rounded-full">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

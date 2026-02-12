@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { format, parseISO, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { format, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Expense, formatCurrency, getCategoryColor } from "@/types/expense";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, Filter, FileDown, Loader2, TrendingDown, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit2, Trash2, Filter, FileDown, Loader2, TrendingDown, CalendarDays } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
@@ -82,7 +82,7 @@ export function FinancialCalendar({
             <div className="w-2 h-2 rounded-full bg-muted-foreground border border-background shadow-sm" />
           )}
         </div>
-        <span className="text-[11px] font-bold text-primary bg-primary/10 px-1 rounded shadow-sm">
+        <span className="text-[10px] sm:text-[11px] font-bold text-primary bg-primary/10 px-1 rounded shadow-sm whitespace-nowrap">
           {total > 0 && `R$${total.toFixed(0)}`}
         </span>
       </div>
@@ -97,7 +97,7 @@ export function FinancialCalendar({
       const canvas = await html2canvas(calendarRef.current, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#09090b",
+        backgroundColor: document.documentElement.classList.contains("dark") ? "#09090b" : "#ffffff",
       });
       
       const imgData = canvas.toDataURL("image/png");
@@ -146,7 +146,7 @@ export function FinancialCalendar({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto w-full">
       {/* Header com Filtros e Ações */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-4 rounded-xl border shadow-sm">
         <div className="flex flex-wrap items-center gap-4">
@@ -157,7 +157,7 @@ export function FinancialCalendar({
             <div className="flex flex-col">
               <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Filtrar Categoria</span>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[200px] h-9 border-none bg-transparent p-0 focus:ring-0">
+                <SelectTrigger className="w-[180px] h-9 border-none bg-transparent p-0 focus:ring-0">
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
@@ -187,7 +187,7 @@ export function FinancialCalendar({
           variant="outline" 
           onClick={handleExportPDF} 
           disabled={isExporting}
-          className="flex items-center gap-2 hover:bg-primary hover:text-primary-foreground transition-all rounded-lg"
+          className="flex items-center gap-2 hover:bg-primary hover:text-primary-foreground transition-all rounded-lg w-full sm:w-auto"
         >
           {isExporting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -199,9 +199,9 @@ export function FinancialCalendar({
       </div>
 
       {/* Grid Principal */}
-      <div ref={calendarRef} className="grid gap-6 lg:grid-cols-[1fr_350px]">
+      <div ref={calendarRef} className="grid gap-6 lg:grid-cols-[1fr_350px] w-full">
         {/* Calendário */}
-        <Card className="overflow-hidden border-none shadow-md bg-card/50 backdrop-blur-sm">
+        <Card className="overflow-hidden border-none shadow-md bg-card/50 backdrop-blur-sm w-full">
           <CardHeader className="bg-primary/5 border-b pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-xl font-bold">
@@ -210,52 +210,54 @@ export function FinancialCalendar({
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="p-0 sm:p-4">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              month={currentDate}
-              disableNavigation
-              locale={ptBR}
-              className="w-full"
-              classNames={{
-                months: "w-full",
-                month: "w-full space-y-4",
-                table: "w-full border-collapse",
-                head_row: "flex w-full",
-                head_cell: "text-muted-foreground rounded-md w-full font-bold text-[12px] uppercase tracking-widest pb-4",
-                row: "flex w-full mt-2",
-                day: cn(
-                  "h-24 w-full p-0 font-normal transition-all hover:bg-primary/5 relative group",
-                  "border border-border/40"
-                ),
-                day_selected: "bg-primary/10 text-primary font-bold hover:bg-primary/20 border-primary/50",
-                day_today: "bg-accent text-accent-foreground",
-                day_outside: "opacity-20 pointer-events-none",
-                day_disabled: "opacity-50",
-                day_hidden: "invisible",
-              }}
-              components={{
-                DayContent: ({ date }) => (
-                  <div className="relative w-full h-full flex flex-col items-center pt-2 px-1">
-                    <span className={cn(
-                      "text-sm z-10 transition-colors",
-                      isSameDay(date, new Date()) ? "bg-primary text-primary-foreground px-2 py-0.5 rounded-full" : "text-foreground/70 group-hover:text-primary"
-                    )}>
-                      {date.getDate()}
-                    </span>
-                    {dayContent(date)}
-                  </div>
-                ),
-              }}
-            />
+          <CardContent className="p-2 sm:p-4 flex justify-center w-full overflow-x-auto">
+            <div className="w-full min-w-[300px] flex justify-center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                month={currentDate}
+                disableNavigation
+                locale={ptBR}
+                className="w-full"
+                classNames={{
+                  months: "w-full flex justify-center",
+                  month: "w-full space-y-4 flex flex-col items-center",
+                  table: "w-full border-collapse mx-auto",
+                  head_row: "flex w-full justify-between",
+                  head_cell: "text-muted-foreground rounded-md flex-1 font-bold text-[10px] sm:text-[12px] uppercase tracking-widest pb-4 text-center",
+                  row: "flex w-full mt-2 justify-between",
+                  day: cn(
+                    "h-16 sm:h-24 flex-1 p-0 font-normal transition-all hover:bg-primary/5 relative group flex items-center justify-center",
+                    "border border-border/40"
+                  ),
+                  day_selected: "bg-primary/10 text-primary font-bold hover:bg-primary/20 border-primary/50",
+                  day_today: "bg-accent text-accent-foreground",
+                  day_outside: "opacity-20 pointer-events-none",
+                  day_disabled: "opacity-50",
+                  day_hidden: "invisible",
+                }}
+                components={{
+                  DayContent: ({ date }) => (
+                    <div className="relative w-full h-full flex flex-col items-center pt-2 px-1">
+                      <span className={cn(
+                        "text-xs sm:text-sm z-10 transition-colors",
+                        isSameDay(date, new Date()) ? "bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 rounded-full" : "text-foreground/70 group-hover:text-primary"
+                      )}>
+                        {date.getDate()}
+                      </span>
+                      {dayContent(date)}
+                    </div>
+                  ),
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
 
         {/* Lista Lateral de Detalhes */}
-        <div className="space-y-6">
-          <Card className="flex flex-col h-[650px] border-none shadow-md overflow-hidden">
+        <div className="space-y-6 w-full">
+          <Card className="flex flex-col h-auto lg:h-[650px] border-none shadow-md overflow-hidden w-full">
             <CardHeader className="bg-primary/5 border-b pb-4 flex flex-row items-center justify-between space-y-0">
               <div className="flex flex-col">
                 <CardTitle className="text-lg font-bold">
@@ -272,7 +274,7 @@ export function FinancialCalendar({
               </Button>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full px-4">
+              <ScrollArea className="h-[400px] lg:h-full px-4">
                 <div className="space-y-4 py-6">
                   {selectedDateExpenses.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -315,7 +317,7 @@ export function FinancialCalendar({
                             </span>
                           </div>
                           
-                          <div className="flex justify-end gap-2 pt-2 border-t border-dashed opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex justify-end gap-2 pt-2 border-t border-dashed opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
                               size="sm"
