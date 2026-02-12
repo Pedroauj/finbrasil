@@ -5,6 +5,7 @@ export interface Expense {
   category: string;
   amount: number;
   isRecurring?: boolean; // marks if this was generated from a recurring expense
+  cardId?: string; // Optional: link to a credit card
 }
 
 export interface RecurringExpense {
@@ -14,6 +15,31 @@ export interface RecurringExpense {
   amount: number;
   dayOfMonth: number;
   active: boolean;
+}
+
+export interface CreditCard {
+  id: string;
+  name: string;
+  limit: number;
+  closingDay: number;
+  dueDay: number;
+  color: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  category: string;
+}
+
+export interface CreditCardInvoice {
+  id: string;
+  cardId: string;
+  month: string; // YYYY-MM
+  items: InvoiceItem[];
+  isPaid: boolean;
 }
 
 export interface Budget {

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Expense, Budget, RecurringExpense, getMonthKey } from "@/types/expense";
+import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
 
 export function useExpenseStore() {
@@ -11,15 +11,36 @@ export function useExpenseStore() {
   const [prevMonthExpenses, setPrevMonthExpenses] = useState<Expense[]>([]);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
+  const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   const monthKey = getMonthKey(currentDate);
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
 
+  // Load Credit Cards from localStorage (Mocking Supabase for new feature)
+  useEffect(() => {
+    if (!user) return;
+    const savedCards = localStorage.getItem(`cards_${user.id}`);
+    if (savedCards) {
+      setCreditCards(JSON.parse(savedCards));
+    }
+    const savedInvoices = localStorage.getItem(`invoices_${user.id}`);
+    if (savedInvoices) {
+      setInvoices(JSON.parse(savedInvoices));
+    }
+  }, [user]);
+
+  // Save Credit Cards and Invoices to localStorage
+  useEffect(() => {
+    if (!user) return;
+    localStorage.setItem(`cards_${user.id}`, JSON.stringify(creditCards));
+    localStorage.setItem(`invoices_${user.id}`, JSON.stringify(invoices));
+  }, [creditCards, invoices, user]);
+
   // Materialize recurring expenses for a given month
   const materializeRecurring = useCallback(async (userId: string, m: number, y: number) => {
-    // Get all active recurring expenses
     const { data: recurrings } = await supabase
       .from("recurring_expenses")
       .select("*")
@@ -28,7 +49,6 @@ export function useExpenseStore() {
 
     if (!recurrings || recurrings.length === 0) return;
 
-    // Check which have already been materialized
     const { data: instances } = await supabase
       .from("recurring_expense_instances")
       .select("recurring_expense_id")
@@ -69,7 +89,7 @@ export function useExpenseStore() {
     }
   }, []);
 
-  // Load expenses for current month (after materializing recurring)
+  // Load expenses for current month
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -90,7 +110,6 @@ export function useExpenseStore() {
         .lt("date", endDate)
         .order("date", { ascending: false });
 
-      // Get recurring instance IDs for this month to mark them
       const { data: instances } = await supabase
         .from("recurring_expense_instances")
         .select("expense_id")
@@ -329,7 +348,6 @@ export function useExpenseStore() {
           ...prev,
         ]);
 
-        // Materialize for current month immediately
         const lastDay = new Date(year, month, 0).getDate();
         const day = Math.min(recurring.dayOfMonth, lastDay);
         const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -407,6 +425,54 @@ export function useExpenseStore() {
     [user]
   );
 
+  // Credit Card Methods
+  const addCreditCard = useCallback((card: Omit<CreditCard, "id">) => {
+    const newCard = { ...card, id: crypto.randomUUID() };
+    setCreditCards(prev => [...prev, newCard]);
+  }, []);
+
+  const updateCreditCard = useCallback((id: string, updates: Partial<CreditCard>) => {
+    setCreditCards(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  }, []);
+
+  const deleteCreditCard = useCallback((id: string) => {
+    setCreditCards(prev => prev.filter(c => c.id !== id));
+    setInvoices(prev => prev.filter(i => i.cardId !== id));
+  }, []);
+
+  const addInvoiceItem = useCallback((cardId: string, month: string, item: Omit<InvoiceItem, "id">) => {
+    setInvoices(prev => {
+      const existingInvoice = prev.find(i => i.cardId === cardId && i.month === month);
+      const newItem = { ...item, id: crypto.randomUUID() };
+      
+      if (existingInvoice) {
+        return prev.map(i => i.id === existingInvoice.id 
+          ? { ...i, items: [...i.items, newItem] } 
+          : i
+        );
+      } else {
+        return [...prev, {
+          id: crypto.randomUUID(),
+          cardId,
+          month,
+          items: [newItem],
+          isPaid: false
+        }];
+      }
+    });
+  }, []);
+
+  const removeInvoiceItem = useCallback((invoiceId: string, itemId: string) => {
+    setInvoices(prev => prev.map(i => i.id === invoiceId 
+      ? { ...i, items: i.items.filter(item => item.id !== itemId) } 
+      : i
+    ));
+  }, []);
+
+  const toggleInvoicePaid = useCallback((invoiceId: string) => {
+    setInvoices(prev => prev.map(i => i.id === invoiceId ? { ...i, isPaid: !i.isPaid } : i));
+  }, []);
+
   const navigateMonth = useCallback((offset: number) => {
     setCurrentDate((prev) => {
       const d = new Date(prev);
@@ -427,6 +493,8 @@ export function useExpenseStore() {
     prevMonthExpenses,
     customCategories,
     recurringExpenses,
+    creditCards,
+    invoices,
     loading,
     addExpense,
     updateExpense,
@@ -436,6 +504,12 @@ export function useExpenseStore() {
     addRecurringExpense,
     toggleRecurringExpense,
     deleteRecurringExpense,
+    addCreditCard,
+    updateCreditCard,
+    deleteCreditCard,
+    addInvoiceItem,
+    removeInvoiceItem,
+    toggleInvoicePaid,
     navigateMonth,
     goToMonth,
   };
