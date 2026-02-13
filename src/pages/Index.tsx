@@ -2,7 +2,7 @@ import { useExpenseStore } from "@/hooks/useExpenseStore";
 import { useAuth } from "@/hooks/useAuth";
 import { Dashboard } from "@/components/Dashboard";
 import { ExpenseTable } from "@/components/ExpenseTable";
-import { BudgetSettings } from "@/components/BudgetSettings";
+import { IncomeManager } from "@/components/IncomeManager";
 import { RecurringExpenses } from "@/components/RecurringExpenses";
 import { FinancialCalendar } from "@/components/FinancialCalendar";
 import { CreditCardManager } from "@/components/CreditCardManager";
@@ -171,10 +171,18 @@ const Index = () => {
               </TabsContent>
 
               <TabsContent value="budget" className="mt-0">
-                <BudgetSettings
+                <IncomeManager
+                  salary={store.salary}
+                  extraIncomes={store.extraIncomes}
                   budget={store.budget}
                   customCategories={store.customCategories}
-                  onSave={store.setBudget}
+                  currentDate={store.currentDate}
+                  onSaveSalary={store.saveSalary}
+                  onDeleteSalary={store.deleteSalary}
+                  onAddExtraIncome={store.addExtraIncome}
+                  onUpdateExtraIncome={store.updateExtraIncome}
+                  onDeleteExtraIncome={store.deleteExtraIncome}
+                  onSaveBudget={store.setBudget}
                 />
               </TabsContent>
 

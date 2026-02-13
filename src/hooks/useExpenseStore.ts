@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, FinancialAccount, AccountTransfer, getMonthKey } from "@/types/expense";
+import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, FinancialAccount, AccountTransfer, Salary, ExtraIncome, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
 
 export interface MonthBalance {
@@ -26,6 +26,8 @@ export function useExpenseStore() {
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [allBudgets, setAllBudgets] = useState<{ month: number; year: number; total_limit: number }[]>([]);
   const [financialAccounts, setFinancialAccounts] = useState<FinancialAccount[]>([]);
+  const [salary, setSalary] = useState<Salary | null>(null);
+  const [extraIncomes, setExtraIncomes] = useState<ExtraIncome[]>([]);
 
   const monthKey = getMonthKey(currentDate);
   const month = currentDate.getMonth() + 1;
@@ -257,7 +259,83 @@ export function useExpenseStore() {
       });
   }, [user]);
 
-  // Load all expenses and budgets for cumulative balance
+  // Load salary for current month
+  useEffect(() => {
+    if (!user) return;
+    const loadSalary = async () => {
+      // Try current month
+      const { data } = await supabase
+        .from("salaries" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("month", month)
+        .eq("year", year)
+        .maybeSingle();
+
+      if (data) {
+        const d = data as any;
+        setSalary({ id: d.id, amount: Number(d.amount), month: d.month, year: d.year, dayOfReceipt: d.day_of_receipt, autoRepeat: d.auto_repeat });
+      } else {
+        // Check if previous month has auto_repeat enabled
+        const prevM = month === 1 ? 12 : month - 1;
+        const prevY = month === 1 ? year - 1 : year;
+        const { data: prevData } = await supabase
+          .from("salaries" as any)
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("month", prevM)
+          .eq("year", prevY)
+          .eq("auto_repeat", true)
+          .maybeSingle();
+
+        if (prevData) {
+          const p = prevData as any;
+          // Auto-create for current month
+          const { data: newSalary } = await supabase
+            .from("salaries" as any)
+            .insert({ user_id: user.id, amount: p.amount, month, year, day_of_receipt: p.day_of_receipt, auto_repeat: true } as any)
+            .select()
+            .single();
+          if (newSalary) {
+            const n = newSalary as any;
+            setSalary({ id: n.id, amount: Number(n.amount), month: n.month, year: n.year, dayOfReceipt: n.day_of_receipt, autoRepeat: n.auto_repeat });
+          } else {
+            setSalary(null);
+          }
+        } else {
+          setSalary(null);
+        }
+      }
+    };
+    loadSalary();
+  }, [user, month, year]);
+
+  // Load extra incomes for current month
+  useEffect(() => {
+    if (!user) return;
+    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    const endMonth = month === 12 ? 1 : month + 1;
+    const endYear = month === 12 ? year + 1 : year;
+    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
+
+    supabase
+      .from("extra_incomes" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("date", startDate)
+      .lt("date", endDate)
+      .order("date", { ascending: false })
+      .then(({ data }: any) => {
+        setExtraIncomes((data || []).map((e: any) => ({
+          id: e.id, amount: Number(e.amount), description: e.description, category: e.category, date: e.date,
+        })));
+      });
+  }, [user, month, year]);
+
+  // Load all expenses, budgets, salaries and extra incomes for cumulative balance
+  const [allSalaries, setAllSalaries] = useState<{ month: number; year: number; amount: number }[]>([]);
+  const [allExtraIncomes, setAllExtraIncomes] = useState<{ date: string; amount: number }[]>([]);
+
   useEffect(() => {
     if (!user) return;
     const loadAll = async () => {
@@ -272,15 +350,26 @@ export function useExpenseStore() {
         .select("month, year, total_limit")
         .eq("user_id", user.id);
       setAllBudgets((budData || []).map(b => ({ month: b.month, year: b.year, total_limit: Number(b.total_limit) })));
+
+      const { data: salData } = await supabase
+        .from("salaries" as any)
+        .select("month, year, amount")
+        .eq("user_id", user.id);
+      setAllSalaries(((salData as any) || []).map((s: any) => ({ month: s.month, year: s.year, amount: Number(s.amount) })));
+
+      const { data: extraData } = await supabase
+        .from("extra_incomes" as any)
+        .select("date, amount")
+        .eq("user_id", user.id);
+      setAllExtraIncomes(((extraData as any) || []).map((e: any) => ({ date: e.date, amount: Number(e.amount) })));
     };
     loadAll();
-  }, [user, expenses, budget]);
+  }, [user, expenses, budget, salary, extraIncomes]);
 
   // Calculate cumulative balance
   const monthBalance = useMemo((): MonthBalance => {
     const mk = getMonthKey(currentDate);
     
-    // Gather all unique month keys from expenses and budgets
     const allMonthKeys = new Set<string>();
     allExpenses.forEach(e => {
       const d = new Date(e.date);
@@ -288,6 +377,13 @@ export function useExpenseStore() {
     });
     allBudgets.forEach(b => {
       allMonthKeys.add(`${b.year}-${String(b.month).padStart(2, "0")}`);
+    });
+    allSalaries.forEach(s => {
+      allMonthKeys.add(`${s.year}-${String(s.month).padStart(2, "0")}`);
+    });
+    allExtraIncomes.forEach(e => {
+      const d = new Date(e.date);
+      allMonthKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
     });
     allMonthKeys.add(mk);
 
@@ -299,7 +395,14 @@ export function useExpenseStore() {
     for (const key of sortedKeys) {
       const [y, m] = key.split("-").map(Number);
       
-      const monthIncome = allBudgets.find(b => b.month === m && b.year === y)?.total_limit || 0;
+      // Income = salary + budget (legacy) + extra incomes
+      const salaryIncome = allSalaries.find(s => s.month === m && s.year === y)?.amount || 0;
+      const budgetIncome = allBudgets.find(b => b.month === m && b.year === y)?.total_limit || 0;
+      const extraIncome = allExtraIncomes
+        .filter(e => { const d = new Date(e.date); return d.getFullYear() === y && d.getMonth() + 1 === m; })
+        .reduce((s, e) => s + e.amount, 0);
+      const monthIncome = salaryIncome + extraIncome + budgetIncome;
+
       const monthExpenses = allExpenses
         .filter(e => {
           const d = new Date(e.date);
@@ -307,7 +410,6 @@ export function useExpenseStore() {
         })
         .reduce((s, e) => s + e.amount, 0);
       
-      // Paid invoices for this month
       const monthKeyStr = `${y}-${String(m).padStart(2, "0")}`;
       const paidInvoiceTotal = invoices
         .filter(i => i.month === monthKeyStr && i.isPaid)
@@ -325,7 +427,7 @@ export function useExpenseStore() {
     }
 
     return result;
-  }, [allExpenses, allBudgets, invoices, currentDate]);
+  }, [allExpenses, allBudgets, allSalaries, allExtraIncomes, invoices, currentDate]);
 
   const addExpense = useCallback(
     async (expense: Omit<Expense, "id">) => {
@@ -689,6 +791,75 @@ export function useExpenseStore() {
     }));
   }, [user, financialAccounts]);
 
+  // Salary CRUD
+  const saveSalary = useCallback(async (amount: number, dayOfReceipt: number, autoRepeat: boolean) => {
+    if (!user) return;
+    const insertData: any = { user_id: user.id, amount, month, year, day_of_receipt: dayOfReceipt, auto_repeat: autoRepeat };
+
+    if (salary) {
+      const { error } = await supabase
+        .from("salaries" as any)
+        .update({ amount, day_of_receipt: dayOfReceipt, auto_repeat: autoRepeat } as any)
+        .eq("id", salary.id);
+      if (!error) setSalary({ ...salary, amount, dayOfReceipt, autoRepeat });
+    } else {
+      const { data, error } = await supabase
+        .from("salaries" as any)
+        .insert(insertData as any)
+        .select()
+        .single();
+      if (data && !error) {
+        const d = data as any;
+        setSalary({ id: d.id, amount: Number(d.amount), month: d.month, year: d.year, dayOfReceipt: d.day_of_receipt, autoRepeat: d.auto_repeat });
+      }
+    }
+  }, [user, month, year, salary]);
+
+  const deleteSalary = useCallback(async () => {
+    if (!user || !salary) return;
+    const { error } = await supabase
+      .from("salaries" as any)
+      .delete()
+      .eq("id", salary.id);
+    if (!error) setSalary(null);
+  }, [user, salary]);
+
+  // Extra Income CRUD
+  const addExtraIncome = useCallback(async (income: Omit<ExtraIncome, "id">) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("extra_incomes" as any)
+      .insert({ user_id: user.id, amount: income.amount, description: income.description, category: income.category, date: income.date } as any)
+      .select()
+      .single();
+    if (data && !error) {
+      const d = data as any;
+      setExtraIncomes(prev => [{ id: d.id, amount: Number(d.amount), description: d.description, category: d.category, date: d.date }, ...prev]);
+    }
+  }, [user]);
+
+  const updateExtraIncome = useCallback(async (id: string, updates: Partial<Omit<ExtraIncome, "id">>) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("extra_incomes" as any)
+      .update(updates as any)
+      .eq("id", id);
+    if (!error) {
+      setExtraIncomes(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    }
+  }, [user]);
+
+  const deleteExtraIncome = useCallback(async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("extra_incomes" as any)
+      .delete()
+      .eq("id", id);
+    if (!error) {
+      setExtraIncomes(prev => prev.filter(e => e.id !== id));
+    }
+  }, [user]);
+
   return {
     currentDate,
     monthKey,
@@ -702,6 +873,8 @@ export function useExpenseStore() {
     loading,
     monthBalance,
     financialAccounts,
+    salary,
+    extraIncomes,
     addExpense,
     updateExpense,
     deleteExpense,
@@ -722,5 +895,10 @@ export function useExpenseStore() {
     updateFinancialAccount,
     deleteFinancialAccount,
     transferBetweenAccounts,
+    saveSalary,
+    deleteSalary,
+    addExtraIncome,
+    updateExtraIncome,
+    deleteExtraIncome,
   };
 }
