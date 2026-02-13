@@ -12,15 +12,15 @@ export function CashBalance({ balance }: CashBalanceProps) {
   const carryNegative = balance.carryOver < 0;
 
   return (
-    <Card className={`border-0 shadow-lg overflow-hidden ${isNegative ? "ring-2 ring-destructive/30" : "ring-2 ring-[hsl(var(--success))]/20"}`}>
-      <div className={`h-1.5 w-full ${isNegative ? "bg-destructive" : "bg-[hsl(var(--success))]"}`} />
+    <Card className={`border-0 shadow-lg overflow-hidden rounded-2xl ${isNegative ? "ring-2 ring-destructive/30" : "ring-2 ring-[hsl(var(--success))]/20"}`}>
+      <div className={`h-1 w-full ${isNegative ? "bg-destructive" : "bg-[hsl(var(--success))]"}`} />
       <CardContent className="p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className={`rounded-xl p-3 ${isNegative ? "bg-destructive/10" : "bg-[hsl(var(--success))]/10"}`}>
+          <div className={`rounded-2xl p-3 ${isNegative ? "bg-destructive/10" : "bg-[hsl(var(--success))]/10"}`}>
             <Landmark className={`h-6 w-6 ${isNegative ? "text-destructive" : "text-[hsl(var(--success))]"}`} />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Caixa Total</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Caixa Total</p>
             <p className={`text-2xl font-bold tracking-tight ${isNegative ? "text-destructive" : "text-[hsl(var(--success))]"}`}>
               {formatCurrency(balance.balance)}
             </p>
@@ -28,8 +28,8 @@ export function CashBalance({ balance }: CashBalanceProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-            <div className={`rounded-md p-1.5 ${carryNegative ? "bg-destructive/10" : "bg-primary/10"}`}>
+          <div className="flex items-center gap-2 rounded-xl bg-muted/50 p-3">
+            <div className={`rounded-lg p-1.5 ${carryNegative ? "bg-destructive/10" : "bg-primary/10"}`}>
               {carryNegative ? <MinusCircle className="h-4 w-4 text-destructive" /> : <TrendingUp className="h-4 w-4 text-primary" />}
             </div>
             <div>
@@ -40,8 +40,8 @@ export function CashBalance({ balance }: CashBalanceProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-            <div className="rounded-md p-1.5 bg-[hsl(var(--success))]/10">
+          <div className="flex items-center gap-2 rounded-xl bg-muted/50 p-3">
+            <div className="rounded-lg p-1.5 bg-[hsl(var(--success))]/10">
               <ArrowUp className="h-4 w-4 text-[hsl(var(--success))]" />
             </div>
             <div>
@@ -50,8 +50,8 @@ export function CashBalance({ balance }: CashBalanceProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-            <div className="rounded-md p-1.5 bg-destructive/10">
+          <div className="flex items-center gap-2 rounded-xl bg-muted/50 p-3">
+            <div className="rounded-lg p-1.5 bg-destructive/10">
               <ArrowDown className="h-4 w-4 text-destructive" />
             </div>
             <div>
@@ -60,8 +60,8 @@ export function CashBalance({ balance }: CashBalanceProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-            <div className={`rounded-md p-1.5 ${isNegative ? "bg-destructive/10" : "bg-[hsl(var(--success))]/10"}`}>
+          <div className="flex items-center gap-2 rounded-xl bg-muted/50 p-3">
+            <div className={`rounded-lg p-1.5 ${isNegative ? "bg-destructive/10" : "bg-[hsl(var(--success))]/10"}`}>
               {isNegative ? <TrendingDown className="h-4 w-4 text-destructive" /> : <TrendingUp className="h-4 w-4 text-[hsl(var(--success))]" />}
             </div>
             <div>
@@ -74,8 +74,8 @@ export function CashBalance({ balance }: CashBalanceProps) {
         </div>
 
         {balance.paidInvoices > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-            <div className="rounded-md p-1.5 bg-destructive/10">
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-muted/50 p-3">
+            <div className="rounded-lg p-1.5 bg-destructive/10">
               <MinusCircle className="h-4 w-4 text-destructive" />
             </div>
             <div>
