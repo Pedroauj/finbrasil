@@ -6,11 +6,12 @@ import { BudgetSettings } from "@/components/BudgetSettings";
 import { RecurringExpenses } from "@/components/RecurringExpenses";
 import { FinancialCalendar } from "@/components/FinancialCalendar";
 import { CreditCardManager } from "@/components/CreditCardManager";
+import { AccountManager } from "@/components/AccountManager";
 import { MonthNavigator } from "@/components/MonthNavigator";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, TableProperties, Settings2, LogOut, RefreshCw, Calendar as CalendarIcon, CreditCard as CardIcon } from "lucide-react";
+import { LayoutDashboard, TableProperties, Settings2, LogOut, RefreshCw, Calendar as CalendarIcon, CreditCard as CardIcon, Wallet } from "lucide-react";
 import { InvoiceAlerts } from "@/components/InvoiceAlerts";
 
 const Index = () => {
@@ -50,7 +51,7 @@ const Index = () => {
 
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 sm:w-auto sm:inline-grid">
+          <TabsList className="grid w-full grid-cols-7 sm:w-auto sm:inline-grid">
             <TabsTrigger value="dashboard" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -58,6 +59,10 @@ const Index = () => {
             <TabsTrigger value="expenses" className="gap-2">
               <TableProperties className="h-4 w-4" />
               <span className="hidden sm:inline">Gastos</span>
+            </TabsTrigger>
+            <TabsTrigger value="accounts" className="gap-2">
+              <Wallet className="h-4 w-4" />
+              <span className="hidden sm:inline">Contas</span>
             </TabsTrigger>
             <TabsTrigger value="cards" className="gap-2">
               <CardIcon className="h-4 w-4" />
@@ -94,10 +99,21 @@ const Index = () => {
               expenses={store.expenses}
               customCategories={store.customCategories}
               currentDate={store.currentDate}
+              accounts={store.financialAccounts}
               onAdd={store.addExpense}
               onUpdate={store.updateExpense}
               onDelete={store.deleteExpense}
               onAddCategory={store.addCustomCategory}
+            />
+          </TabsContent>
+
+          <TabsContent value="accounts">
+            <AccountManager
+              accounts={store.financialAccounts}
+              onAdd={store.addFinancialAccount}
+              onUpdate={store.updateFinancialAccount}
+              onDelete={store.deleteFinancialAccount}
+              onTransfer={store.transferBetweenAccounts}
             />
           </TabsContent>
 

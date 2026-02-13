@@ -1,11 +1,35 @@
+export type TransactionStatus = 'planned' | 'paid' | 'overdue';
+export type AccountType = 'checking' | 'savings' | 'wallet' | 'credit_card' | 'investment';
+
+export interface FinancialAccount {
+  id: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  color: string;
+  icon: string;
+  isActive: boolean;
+}
+
+export interface AccountTransfer {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  description?: string;
+  date: string;
+}
+
 export interface Expense {
   id: string;
-  date: string; // ISO date string
+  date: string;
   description: string;
   category: string;
   amount: number;
-  isRecurring?: boolean; // marks if this was generated from a recurring expense
-  cardId?: string; // Optional: link to a credit card
+  isRecurring?: boolean;
+  cardId?: string;
+  status: TransactionStatus;
+  accountId?: string;
 }
 
 export interface RecurringExpense {
