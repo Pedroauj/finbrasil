@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { InvoiceAlerts } from "./InvoiceAlerts";
+import { CashBalance } from "./CashBalance";
+import { MonthBalance } from "@/hooks/useExpenseStore";
 
 interface DashboardProps {
   expenses: Expense[];
@@ -16,9 +18,10 @@ interface DashboardProps {
   currentDate: Date;
   cards?: CreditCard[];
   invoices?: CreditCardInvoice[];
+  monthBalance: MonthBalance;
 }
 
-export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate, cards = [], invoices = [] }: DashboardProps) {
+export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate, cards = [], invoices = [], monthBalance }: DashboardProps) {
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const prevTotal = prevMonthExpenses.reduce((s, e) => s + e.amount, 0);
   const remaining = budget.total - totalSpent;
@@ -55,6 +58,9 @@ export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate, ca
 
   return (
     <div className="space-y-6">
+      {/* Saldo Acumulado */}
+      <CashBalance balance={monthBalance} />
+
       {/* Alertas de Cartão de Crédito */}
       <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
 

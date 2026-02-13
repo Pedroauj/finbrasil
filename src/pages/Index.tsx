@@ -85,6 +85,7 @@ const Index = () => {
               currentDate={store.currentDate}
               cards={store.creditCards}
               invoices={store.invoices}
+              monthBalance={store.monthBalance}
             />
           </TabsContent>
 

@@ -1,7 +1,16 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
+
+export interface MonthBalance {
+  monthKey: string;
+  income: number;
+  expenses: number;
+  paidInvoices: number;
+  carryOver: number;
+  balance: number;
+}
 
 export function useExpenseStore() {
   const { user } = useAuth();
@@ -14,6 +23,8 @@ export function useExpenseStore() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+  const [allBudgets, setAllBudgets] = useState<{ month: number; year: number; total_limit: number }[]>([]);
 
   const monthKey = getMonthKey(currentDate);
   const month = currentDate.getMonth() + 1;
@@ -217,6 +228,76 @@ export function useExpenseStore() {
         );
       });
   }, [user]);
+
+  // Load all expenses and budgets for cumulative balance
+  useEffect(() => {
+    if (!user) return;
+    const loadAll = async () => {
+      const { data: expData } = await supabase
+        .from("expenses")
+        .select("id, date, amount")
+        .eq("user_id", user.id);
+      setAllExpenses((expData || []).map(e => ({ id: e.id, date: e.date, description: "", category: "", amount: Number(e.amount) })));
+
+      const { data: budData } = await supabase
+        .from("budgets")
+        .select("month, year, total_limit")
+        .eq("user_id", user.id);
+      setAllBudgets((budData || []).map(b => ({ month: b.month, year: b.year, total_limit: Number(b.total_limit) })));
+    };
+    loadAll();
+  }, [user, expenses, budget]);
+
+  // Calculate cumulative balance
+  const monthBalance = useMemo((): MonthBalance => {
+    const mk = getMonthKey(currentDate);
+    
+    // Gather all unique month keys from expenses and budgets
+    const allMonthKeys = new Set<string>();
+    allExpenses.forEach(e => {
+      const d = new Date(e.date);
+      allMonthKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    });
+    allBudgets.forEach(b => {
+      allMonthKeys.add(`${b.year}-${String(b.month).padStart(2, "0")}`);
+    });
+    allMonthKeys.add(mk);
+
+    const sortedKeys = Array.from(allMonthKeys).sort();
+    
+    let carryOver = 0;
+    let result: MonthBalance = { monthKey: mk, income: 0, expenses: 0, paidInvoices: 0, carryOver: 0, balance: 0 };
+
+    for (const key of sortedKeys) {
+      const [y, m] = key.split("-").map(Number);
+      
+      const monthIncome = allBudgets.find(b => b.month === m && b.year === y)?.total_limit || 0;
+      const monthExpenses = allExpenses
+        .filter(e => {
+          const d = new Date(e.date);
+          return d.getFullYear() === y && d.getMonth() + 1 === m;
+        })
+        .reduce((s, e) => s + e.amount, 0);
+      
+      // Paid invoices for this month
+      const monthKeyStr = `${y}-${String(m).padStart(2, "0")}`;
+      const paidInvoiceTotal = invoices
+        .filter(i => i.month === monthKeyStr && i.isPaid)
+        .reduce((s, i) => s + i.items.reduce((si, item) => si + item.amount, 0), 0);
+
+      const balance = carryOver + monthIncome - monthExpenses - paidInvoiceTotal;
+
+      if (key === mk) {
+        result = { monthKey: mk, income: monthIncome, expenses: monthExpenses, paidInvoices: paidInvoiceTotal, carryOver, balance };
+      }
+
+      carryOver = balance;
+
+      if (key >= mk) break;
+    }
+
+    return result;
+  }, [allExpenses, allBudgets, invoices, currentDate]);
 
   const addExpense = useCallback(
     async (expense: Omit<Expense, "id">) => {
@@ -496,6 +577,7 @@ export function useExpenseStore() {
     creditCards,
     invoices,
     loading,
+    monthBalance,
     addExpense,
     updateExpense,
     deleteExpense,
