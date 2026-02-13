@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, getMonthKey } from "@/types/expense";
+import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, FinancialAccount, AccountTransfer, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
 
 export interface MonthBalance {
@@ -25,6 +25,7 @@ export function useExpenseStore() {
   const [loading, setLoading] = useState(true);
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [allBudgets, setAllBudgets] = useState<{ month: number; year: number; total_limit: number }[]>([]);
+  const [financialAccounts, setFinancialAccounts] = useState<FinancialAccount[]>([]);
 
   const monthKey = getMonthKey(currentDate);
   const month = currentDate.getMonth() + 1;
@@ -130,13 +131,15 @@ export function useExpenseStore() {
       const recurringExpenseIds = new Set((instances || []).map(i => i.expense_id));
 
       setExpenses(
-        (data || []).map((e) => ({
+        (data || []).map((e: any) => ({
           id: e.id,
           date: e.date,
           description: e.description,
           category: e.category,
           amount: Number(e.amount),
           isRecurring: recurringExpenseIds.has(e.id),
+          status: e.status || 'paid',
+          accountId: e.account_id || undefined,
         }))
       );
       setLoading(false);
@@ -162,12 +165,13 @@ export function useExpenseStore() {
       .lt("date", endDate)
       .then(({ data }) => {
         setPrevMonthExpenses(
-          (data || []).map((e) => ({
+          (data || []).map((e: any) => ({
             id: e.id,
             date: e.date,
             description: e.description,
             category: e.category,
             amount: Number(e.amount),
+            status: e.status || 'paid',
           }))
         );
       });
@@ -229,6 +233,30 @@ export function useExpenseStore() {
       });
   }, [user]);
 
+  // Load financial accounts
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("financial_accounts" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .then(({ data }: any) => {
+        setFinancialAccounts(
+          (data || []).map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            type: a.type,
+            balance: Number(a.balance),
+            color: a.color,
+            icon: a.icon,
+            isActive: a.is_active,
+          }))
+        );
+      });
+  }, [user]);
+
   // Load all expenses and budgets for cumulative balance
   useEffect(() => {
     if (!user) return;
@@ -237,7 +265,7 @@ export function useExpenseStore() {
         .from("expenses")
         .select("id, date, amount")
         .eq("user_id", user.id);
-      setAllExpenses((expData || []).map(e => ({ id: e.id, date: e.date, description: "", category: "", amount: Number(e.amount) })));
+      setAllExpenses((expData || []).map((e: any) => ({ id: e.id, date: e.date, description: "", category: "", amount: Number(e.amount), status: e.status || 'paid' as const })));
 
       const { data: budData } = await supabase
         .from("budgets")
@@ -302,15 +330,18 @@ export function useExpenseStore() {
   const addExpense = useCallback(
     async (expense: Omit<Expense, "id">) => {
       if (!user) return;
-      const { data, error } = await supabase
-        .from("expenses")
-        .insert({
+      const insertData: any = {
           user_id: user.id,
           description: expense.description,
           amount: expense.amount,
           category: expense.category,
           date: expense.date,
-        })
+          status: expense.status || 'paid',
+        };
+      if (expense.accountId) insertData.account_id = expense.accountId;
+      const { data, error } = await supabase
+        .from("expenses")
+        .insert(insertData)
         .select()
         .single();
 
@@ -322,6 +353,8 @@ export function useExpenseStore() {
             description: data.description,
             category: data.category,
             amount: Number(data.amount),
+            status: (data as any).status || 'paid',
+            accountId: (data as any).account_id || undefined,
           },
           ...prev,
         ]);
@@ -463,6 +496,7 @@ export function useExpenseStore() {
               category: expense.category,
               amount: Number(expense.amount),
               isRecurring: true,
+              status: (expense as any).status || 'paid',
             },
             ...prev,
           ]);
@@ -566,6 +600,95 @@ export function useExpenseStore() {
     setCurrentDate(new Date(y, m));
   }, []);
 
+  // Financial account CRUD
+  const addFinancialAccount = useCallback(async (account: Omit<FinancialAccount, "id" | "isActive">) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("financial_accounts" as any)
+      .insert({
+        user_id: user.id,
+        name: account.name,
+        type: account.type,
+        balance: account.balance,
+        color: account.color,
+        icon: account.icon,
+      } as any)
+      .select()
+      .single();
+
+    if (data && !error) {
+      const d = data as any;
+      setFinancialAccounts(prev => [...prev, {
+        id: d.id, name: d.name, type: d.type, balance: Number(d.balance),
+        color: d.color, icon: d.icon, isActive: d.is_active,
+      }]);
+    }
+  }, [user]);
+
+  const updateFinancialAccount = useCallback(async (id: string, updates: Partial<FinancialAccount>) => {
+    if (!user) return;
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.type !== undefined) dbUpdates.type = updates.type;
+    if (updates.balance !== undefined) dbUpdates.balance = updates.balance;
+    if (updates.color !== undefined) dbUpdates.color = updates.color;
+    if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+
+    const { error } = await supabase
+      .from("financial_accounts" as any)
+      .update(dbUpdates)
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (!error) {
+      setFinancialAccounts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+    }
+  }, [user]);
+
+  const deleteFinancialAccount = useCallback(async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("financial_accounts" as any)
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (!error) {
+      setFinancialAccounts(prev => prev.filter(a => a.id !== id));
+    }
+  }, [user]);
+
+  const transferBetweenAccounts = useCallback(async (fromId: string, toId: string, amount: number, description?: string) => {
+    if (!user) return;
+    // Insert transfer record
+    await supabase
+      .from("account_transfers" as any)
+      .insert({
+        user_id: user.id,
+        from_account_id: fromId,
+        to_account_id: toId,
+        amount,
+        description: description || "Transferência",
+      } as any);
+
+    // Update account balances
+    const fromAccount = financialAccounts.find(a => a.id === fromId);
+    const toAccount = financialAccounts.find(a => a.id === toId);
+
+    if (fromAccount) {
+      await supabase.from("financial_accounts" as any).update({ balance: fromAccount.balance - amount } as any).eq("id", fromId);
+    }
+    if (toAccount) {
+      await supabase.from("financial_accounts" as any).update({ balance: toAccount.balance + amount } as any).eq("id", toId);
+    }
+
+    setFinancialAccounts(prev => prev.map(a => {
+      if (a.id === fromId) return { ...a, balance: a.balance - amount };
+      if (a.id === toId) return { ...a, balance: a.balance + amount };
+      return a;
+    }));
+  }, [user, financialAccounts]);
+
   return {
     currentDate,
     monthKey,
@@ -578,6 +701,7 @@ export function useExpenseStore() {
     invoices,
     loading,
     monthBalance,
+    financialAccounts,
     addExpense,
     updateExpense,
     deleteExpense,
@@ -594,5 +718,9 @@ export function useExpenseStore() {
     toggleInvoicePaid,
     navigateMonth,
     goToMonth,
+    addFinancialAccount,
+    updateFinancialAccount,
+    deleteFinancialAccount,
+    transferBetweenAccounts,
   };
 }
