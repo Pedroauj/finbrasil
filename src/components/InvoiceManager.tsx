@@ -67,7 +67,7 @@ export function InvoiceManager({
             Fatura de {format(new Date(monthKey + "-01"), "MMMM", { locale: ptBR })}
           </CardTitle>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant={isPaid ? "success" : "warning"} className="text-[10px] uppercase font-black">
+            <Badge variant={isPaid ? "default" : "destructive"} className="text-[10px] uppercase font-black">
               {isPaid ? "Paga" : "Aberta"}
             </Badge>
             <span className="text-xs text-muted-foreground font-medium">Vence dia {card.dueDay}</span>

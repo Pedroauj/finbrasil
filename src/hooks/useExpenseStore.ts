@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, getMonthKey } from "@/types/expense";
+import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
 
 export function useExpenseStore() {
