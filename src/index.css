@@ -3,105 +3,108 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    /* Fundo levemente acinzentado para destacar os cards brancos */
-    --background: 210 20% 98%;
-    --foreground: 224 71% 4%;
+    /* Fundo suave off-white */
+    --background: 220 20% 97%;
+    --foreground: 224 30% 12%;
 
-    /* Cards branco puro com bordas sutis */
+    /* Cards brancos com sombra suave */
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 224 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    --popover-foreground: 224 30% 12%;
 
-    /* Primary: Um roxo mais sofisticado e legível no claro */
-    --primary: 250 84% 54%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Verde sofisticado fintech */
+    --primary: 160 70% 38%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Cinza neutro suave */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 224 71% 4%;
+    /* Secondary */
+    --secondary: 220 14% 95%;
+    --secondary-foreground: 224 30% 12%;
 
-    /* Muted: Para textos de suporte com bom contraste */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted */
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 10% 46%;
 
-    /* Accent: Verde esmeralda para destaques positivos */
-    --accent: 160 84% 39%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent: Verde esmeralda */
+    --accent: 165 60% 42%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 210 40% 98%;
+    --warning-foreground: 0 0% 100%;
 
-    --success: 152 60% 42%;
-    --success-foreground: 210 40% 98%;
+    --success: 155 65% 40%;
+    --success-foreground: 0 0% 100%;
 
-    /* Bordas e Inputs mais definidos mas suaves */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 250 84% 54%;
+    /* Bordas suaves */
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 160 70% 38%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-primary: 160 70% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 95%;
     --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 220 13% 90%;
+    --sidebar-ring: 160 70% 38%;
   }
 
   .dark {
-    --background: 225 25% 8%;
-    --foreground: 220 15% 92%;
+    /* Fundo escuro quente, NÃO preto puro */
+    --background: 225 20% 7%;
+    --foreground: 220 15% 90%;
 
-    --card: 225 20% 12%;
-    --card-foreground: 220 15% 92%;
+    --card: 225 18% 11%;
+    --card-foreground: 220 15% 90%;
 
-    --popover: 225 20% 12%;
-    --popover-foreground: 220 15% 92%;
+    --popover: 225 18% 11%;
+    --popover-foreground: 220 15% 90%;
 
-    --primary: 250 65% 62%;
+    /* Primary verde fintech no dark */
+    --primary: 160 60% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 225 20% 18%;
-    --secondary-foreground: 220 15% 92%;
+    --secondary: 225 16% 16%;
+    --secondary-foreground: 220 15% 90%;
 
-    --muted: 225 15% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 225 14% 16%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 170 55% 50%;
+    --accent: 165 50% 45%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
 
     --warning: 38 80% 45%;
     --warning-foreground: 0 0% 100%;
 
-    --success: 152 50% 38%;
+    --success: 155 55% 42%;
     --success-foreground: 0 0% 100%;
 
-    --border: 225 15% 20%;
-    --input: 225 15% 20%;
-    --ring: 250 65% 62%;
+    --border: 225 14% 18%;
+    --input: 225 14% 18%;
+    --ring: 160 60% 48%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 225 20% 8%;
+    --sidebar-foreground: 220 15% 90%;
+    --sidebar-primary: 160 60% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 225 14% 16%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 225 14% 18%;
+    --sidebar-ring: 160 60% 48%;
   }
 }
 
@@ -111,12 +114,31 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
-    @apply font-bold tracking-tight;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-background/80 backdrop-blur-xl border-b border-border/50;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px -12px hsl(var(--primary) / 0.12);
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow duration-200;
   }
 }
