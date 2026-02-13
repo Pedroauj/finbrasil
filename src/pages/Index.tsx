@@ -55,13 +55,13 @@ const Index = () => {
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Calendário</span>
-            </TabsTrigger>
             <TabsTrigger value="expenses" className="gap-2">
               <TableProperties className="h-4 w-4" />
               <span className="hidden sm:inline">Gastos</span>
+            </TabsTrigger>
+            <TabsTrigger value="cards" className="gap-2">
+              <CardIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Cartões</span>
             </TabsTrigger>
             <TabsTrigger value="recurring" className="gap-2">
               <RefreshCw className="h-4 w-4" />
@@ -73,7 +73,11 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger value="budget" className="gap-2">
               <Settings2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Receita Mensal</span>
+              <span className="hidden sm:inline">Renda Mensal</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendário</span>
             </TabsTrigger>
           </TabsList>
 
@@ -88,18 +92,6 @@ const Index = () => {
             />
           </TabsContent>
 
-          <TabsContent value="calendar">
-            <FinancialCalendar
-              expenses={store.expenses}
-              customCategories={store.customCategories}
-              currentDate={store.currentDate}
-              onAdd={store.addExpense}
-              onUpdate={store.updateExpense}
-              onDelete={store.deleteExpense}
-              onAddCategory={store.addCustomCategory}
-            />
-          </TabsContent>
-
           <TabsContent value="expenses">
             <ExpenseTable
               expenses={store.expenses}
@@ -110,6 +102,23 @@ const Index = () => {
               onDelete={store.deleteExpense}
               onAddCategory={store.addCustomCategory}
             />
+          </TabsContent>
+
+          <TabsContent value="cards">
+            <div className="space-y-6">
+              <InvoiceAlerts cards={store.creditCards} invoices={store.invoices} currentDate={store.currentDate} />
+              <CreditCardManager 
+                cards={store.creditCards}
+                invoices={store.invoices}
+                categories={categories}
+                currentDate={store.currentDate}
+                onAddCard={store.addCreditCard}
+                onDeleteCard={store.deleteCreditCard}
+                onAddInvoiceItem={store.addInvoiceItem}
+                onRemoveInvoiceItem={store.removeInvoiceItem}
+                onTogglePaid={store.toggleInvoicePaid}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="recurring">
@@ -145,6 +154,18 @@ const Index = () => {
               budget={store.budget}
               customCategories={store.customCategories}
               onSave={store.setBudget}
+            />
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <FinancialCalendar
+              expenses={store.expenses}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              onAdd={store.addExpense}
+              onUpdate={store.updateExpense}
+              onDelete={store.deleteExpense}
+              onAddCategory={store.addCustomCategory}
             />
           </TabsContent>
         </Tabs>
