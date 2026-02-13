@@ -67,10 +67,6 @@ const Index = () => {
               <RefreshCw className="h-4 w-4" />
               <span className="hidden sm:inline">Recorrentes</span>
             </TabsTrigger>
-            <TabsTrigger value="cards" className="gap-2">
-              <CardIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Cartões</span>
-            </TabsTrigger>
             <TabsTrigger value="budget" className="gap-2">
               <Settings2 className="h-4 w-4" />
               <span className="hidden sm:inline">Renda Mensal</span>
@@ -130,23 +126,6 @@ const Index = () => {
               onDelete={store.deleteRecurringExpense}
               onAddCategory={store.addCustomCategory}
             />
-          </TabsContent>
-
-          <TabsContent value="cards">
-            <div className="space-y-6">
-              <InvoiceAlerts cards={store.creditCards} invoices={store.invoices} currentDate={store.currentDate} />
-              <CreditCardManager 
-                cards={store.creditCards}
-                invoices={store.invoices}
-                categories={categories}
-                currentDate={store.currentDate}
-                onAddCard={store.addCreditCard}
-                onDeleteCard={store.deleteCreditCard}
-                onAddInvoiceItem={store.addInvoiceItem}
-                onRemoveInvoiceItem={store.removeInvoiceItem}
-                onTogglePaid={store.toggleInvoicePaid}
-              />
-            </div>
           </TabsContent>
 
           <TabsContent value="budget">
