@@ -71,6 +71,32 @@ export interface Budget {
   byCategory: Record<string, number>;
 }
 
+export interface Salary {
+  id: string;
+  amount: number;
+  month: number;
+  year: number;
+  dayOfReceipt: number;
+  autoRepeat: boolean;
+}
+
+export interface ExtraIncome {
+  id: string;
+  amount: number;
+  description: string;
+  category: string;
+  date: string;
+}
+
+export const INCOME_CATEGORIES = [
+  "Freelance",
+  "Venda",
+  "Reembolso",
+  "Bônus",
+  "Investimento",
+  "Outros",
+] as const;
+
 export interface MonthData {
   expenses: Expense[];
   budget: Budget;

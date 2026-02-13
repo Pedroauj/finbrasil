@@ -160,6 +160,36 @@ export type Database = {
           },
         ]
       }
+      extra_incomes: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financial_accounts: {
         Row: {
           balance: number
@@ -289,6 +319,42 @@ export type Database = {
           description?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      salaries: {
+        Row: {
+          amount: number
+          auto_repeat: boolean
+          created_at: string
+          day_of_receipt: number
+          id: string
+          month: number
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          auto_repeat?: boolean
+          created_at?: string
+          day_of_receipt?: number
+          id?: string
+          month: number
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          auto_repeat?: boolean
+          created_at?: string
+          day_of_receipt?: number
+          id?: string
+          month?: number
+          updated_at?: string
+          user_id?: string
+          year?: number
         }
         Relationships: []
       }
