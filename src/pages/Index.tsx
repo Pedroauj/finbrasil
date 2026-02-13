@@ -73,7 +73,7 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger value="budget" className="gap-2">
               <Settings2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Orçamento</span>
+              <span className="hidden sm:inline">Receita Mensal</span>
             </TabsTrigger>
           </TabsList>
 
