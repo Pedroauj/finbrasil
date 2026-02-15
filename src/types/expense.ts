@@ -9,6 +9,27 @@ export interface FinancialAccount {
   color: string;
   icon: string;
   isActive: boolean;
+  appliedValue?: number;
+  currentValue?: number;
+}
+
+export type AdjustmentReason = 'manual' | 'yield' | 'fee' | 'correction' | 'other';
+
+export const ADJUSTMENT_REASON_LABELS: Record<AdjustmentReason, string> = {
+  manual: 'Atualização manual',
+  yield: 'Rendimento',
+  fee: 'Taxa',
+  correction: 'Correção',
+  other: 'Outro',
+};
+
+export interface AccountAdjustment {
+  id: string;
+  accountId: string;
+  amount: number;
+  reason: AdjustmentReason;
+  description?: string;
+  date: string;
 }
 
 export interface AccountTransfer {
