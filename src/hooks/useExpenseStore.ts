@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, FinancialAccount, AccountTransfer, Salary, ExtraIncome, getMonthKey } from "@/types/expense";
+import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, FinancialAccount, AccountTransfer, AccountAdjustment, AdjustmentReason, Salary, ExtraIncome, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
 
 export interface MonthBalance {
@@ -26,6 +26,8 @@ export function useExpenseStore() {
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [allBudgets, setAllBudgets] = useState<{ month: number; year: number; total_limit: number }[]>([]);
   const [financialAccounts, setFinancialAccounts] = useState<FinancialAccount[]>([]);
+  const [accountTransfers, setAccountTransfers] = useState<AccountTransfer[]>([]);
+  const [accountAdjustments, setAccountAdjustments] = useState<AccountAdjustment[]>([]);
   const [salary, setSalary] = useState<Salary | null>(null);
   const [extraIncomes, setExtraIncomes] = useState<ExtraIncome[]>([]);
 
@@ -242,7 +244,6 @@ export function useExpenseStore() {
       .from("financial_accounts" as any)
       .select("*")
       .eq("user_id", user.id)
-      .eq("is_active", true)
       .order("created_at", { ascending: true })
       .then(({ data }: any) => {
         setFinancialAccounts(
@@ -254,6 +255,52 @@ export function useExpenseStore() {
             color: a.color,
             icon: a.icon,
             isActive: a.is_active,
+            appliedValue: Number(a.applied_value || 0),
+            currentValue: Number(a.current_value || 0),
+          }))
+        );
+      });
+  }, [user]);
+
+  // Load account transfers
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("account_transfers" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .then(({ data }: any) => {
+        setAccountTransfers(
+          (data || []).map((t: any) => ({
+            id: t.id,
+            fromAccountId: t.from_account_id,
+            toAccountId: t.to_account_id,
+            amount: Number(t.amount),
+            description: t.description,
+            date: t.date,
+          }))
+        );
+      });
+  }, [user]);
+
+  // Load account adjustments
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("account_adjustments" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .then(({ data }: any) => {
+        setAccountAdjustments(
+          (data || []).map((a: any) => ({
+            id: a.id,
+            accountId: a.account_id,
+            amount: Number(a.amount),
+            reason: a.reason,
+            description: a.description,
+            date: a.date,
           }))
         );
       });
@@ -705,16 +752,20 @@ export function useExpenseStore() {
   // Financial account CRUD
   const addFinancialAccount = useCallback(async (account: Omit<FinancialAccount, "id" | "isActive">) => {
     if (!user) return;
+    const insertData: any = {
+      user_id: user.id,
+      name: account.name,
+      type: account.type,
+      balance: account.balance,
+      color: account.color,
+      icon: account.icon,
+    };
+    if (account.appliedValue) insertData.applied_value = account.appliedValue;
+    if (account.currentValue) insertData.current_value = account.currentValue;
+
     const { data, error } = await supabase
       .from("financial_accounts" as any)
-      .insert({
-        user_id: user.id,
-        name: account.name,
-        type: account.type,
-        balance: account.balance,
-        color: account.color,
-        icon: account.icon,
-      } as any)
+      .insert(insertData as any)
       .select()
       .single();
 
@@ -723,6 +774,7 @@ export function useExpenseStore() {
       setFinancialAccounts(prev => [...prev, {
         id: d.id, name: d.name, type: d.type, balance: Number(d.balance),
         color: d.color, icon: d.icon, isActive: d.is_active,
+        appliedValue: Number(d.applied_value || 0), currentValue: Number(d.current_value || 0),
       }]);
     }
   }, [user]);
@@ -732,9 +784,10 @@ export function useExpenseStore() {
     const dbUpdates: any = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.type !== undefined) dbUpdates.type = updates.type;
-    if (updates.balance !== undefined) dbUpdates.balance = updates.balance;
     if (updates.color !== undefined) dbUpdates.color = updates.color;
     if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+    if (updates.appliedValue !== undefined) dbUpdates.applied_value = updates.appliedValue;
+    if (updates.currentValue !== undefined) dbUpdates.current_value = updates.currentValue;
 
     const { error } = await supabase
       .from("financial_accounts" as any)
@@ -762,8 +815,7 @@ export function useExpenseStore() {
 
   const transferBetweenAccounts = useCallback(async (fromId: string, toId: string, amount: number, description?: string) => {
     if (!user) return;
-    // Insert transfer record
-    await supabase
+    const { data, error } = await supabase
       .from("account_transfers" as any)
       .insert({
         user_id: user.id,
@@ -771,25 +823,58 @@ export function useExpenseStore() {
         to_account_id: toId,
         amount,
         description: description || "Transferência",
-      } as any);
+      } as any)
+      .select()
+      .single();
 
-    // Update account balances
-    const fromAccount = financialAccounts.find(a => a.id === fromId);
-    const toAccount = financialAccounts.find(a => a.id === toId);
-
-    if (fromAccount) {
-      await supabase.from("financial_accounts" as any).update({ balance: fromAccount.balance - amount } as any).eq("id", fromId);
+    if (data && !error) {
+      const t = data as any;
+      setAccountTransfers(prev => [{
+        id: t.id, fromAccountId: t.from_account_id, toAccountId: t.to_account_id,
+        amount: Number(t.amount), description: t.description, date: t.date,
+      }, ...prev]);
     }
-    if (toAccount) {
-      await supabase.from("financial_accounts" as any).update({ balance: toAccount.balance + amount } as any).eq("id", toId);
-    }
+  }, [user]);
 
-    setFinancialAccounts(prev => prev.map(a => {
-      if (a.id === fromId) return { ...a, balance: a.balance - amount };
-      if (a.id === toId) return { ...a, balance: a.balance + amount };
-      return a;
-    }));
-  }, [user, financialAccounts]);
+  // Account adjustment
+  const addAccountAdjustment = useCallback(async (accountId: string, amount: number, reason: AdjustmentReason, description?: string) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("account_adjustments" as any)
+      .insert({ account_id: accountId, user_id: user.id, amount, reason, description } as any)
+      .select()
+      .single();
+
+    if (data && !error) {
+      const a = data as any;
+      setAccountAdjustments(prev => [{
+        id: a.id, accountId: a.account_id, amount: Number(a.amount),
+        reason: a.reason, description: a.description, date: a.date,
+      }, ...prev]);
+    }
+  }, [user]);
+
+  const deleteAccountAdjustment = useCallback(async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("account_adjustments" as any)
+      .delete()
+      .eq("id", id);
+    if (!error) setAccountAdjustments(prev => prev.filter(a => a.id !== id));
+  }, [user]);
+
+  // Archive/unarchive account
+  const toggleAccountArchive = useCallback(async (id: string, isActive: boolean) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("financial_accounts" as any)
+      .update({ is_active: isActive } as any)
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (!error) {
+      setFinancialAccounts(prev => prev.map(a => a.id === id ? { ...a, isActive } : a));
+    }
+  }, [user]);
 
   // Salary CRUD
   const saveSalary = useCallback(async (amount: number, dayOfReceipt: number, autoRepeat: boolean) => {
@@ -873,6 +958,8 @@ export function useExpenseStore() {
     loading,
     monthBalance,
     financialAccounts,
+    accountTransfers,
+    accountAdjustments,
     salary,
     extraIncomes,
     addExpense,
@@ -895,6 +982,9 @@ export function useExpenseStore() {
     updateFinancialAccount,
     deleteFinancialAccount,
     transferBetweenAccounts,
+    addAccountAdjustment,
+    deleteAccountAdjustment,
+    toggleAccountArchive,
     saveSalary,
     deleteSalary,
     addExtraIncome,

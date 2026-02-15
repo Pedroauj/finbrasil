@@ -135,10 +135,15 @@ const Index = () => {
               <TabsContent value="accounts" className="mt-0">
                 <AccountManager
                   accounts={store.financialAccounts}
+                  transfers={store.accountTransfers}
+                  adjustments={store.accountAdjustments}
                   onAdd={store.addFinancialAccount}
                   onUpdate={store.updateFinancialAccount}
                   onDelete={store.deleteFinancialAccount}
                   onTransfer={store.transferBetweenAccounts}
+                  onAdjust={store.addAccountAdjustment}
+                  onDeleteAdjustment={store.deleteAccountAdjustment}
+                  onToggleArchive={store.toggleAccountArchive}
                 />
               </TabsContent>
 

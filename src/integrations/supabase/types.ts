@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_adjustments: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_adjustments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       account_transfers: {
         Row: {
           amount: number
@@ -192,9 +233,11 @@ export type Database = {
       }
       financial_accounts: {
         Row: {
+          applied_value: number
           balance: number
           color: string
           created_at: string
+          current_value: number
           icon: string
           id: string
           is_active: boolean
@@ -204,9 +247,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          applied_value?: number
           balance?: number
           color?: string
           created_at?: string
+          current_value?: number
           icon?: string
           id?: string
           is_active?: boolean
@@ -216,9 +261,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          applied_value?: number
           balance?: number
           color?: string
           created_at?: string
+          current_value?: number
           icon?: string
           id?: string
           is_active?: boolean
