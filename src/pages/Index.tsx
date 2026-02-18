@@ -52,14 +52,11 @@ const Index = () => {
     { value: "recurring", label: "Recorrentes", Icon: RefreshCw },
     { value: "budget", label: "Renda", Icon: Settings2 },
     { value: "calendar", label: "Calendário", Icon: CalendarIcon },
-  ] as const;
+  ];
 
-  // Trigger com alinhamento perfeito + suporte ao "pill" animado
   const tabTriggerClass =
     "relative flex h-full items-center justify-center gap-2 rounded-xl py-0 leading-none " +
-    "transition-colors duration-200 " +
-    "text-white/70 hover:text-white " +
-    "data-[state=active]:text-slate-950";
+    "transition-colors duration-200 text-white/70 hover:text-white";
 
   return (
     <PageShell
@@ -85,41 +82,44 @@ const Index = () => {
         </div>
       }
     >
-      {/* Header interno (glass) — opcional */}
       <header className="mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <FadeIn className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 ring-1 ring-emerald-400/20">
-              <TrendingUp className="h-5 w-5 text-emerald-200" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight sm:text-xl text-white/90">
-                FinBrasil
-              </h1>
-              <p className="hidden text-[10px] font-medium uppercase tracking-widest text-white/50 sm:block">
-                Gestão Financeira
-              </p>
-            </div>
-          </FadeIn>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 ring-1 ring-emerald-400/20">
+            <TrendingUp className="h-5 w-5 text-emerald-200" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight sm:text-xl text-white/90">
+              FinBrasil
+            </h1>
+            <p className="hidden text-[10px] font-medium uppercase tracking-widest text-white/50 sm:block">
+              Gestão Financeira
+            </p>
+          </div>
         </div>
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <FadeIn delay={0.15}>
-          <TabsList className="grid h-12 w-full grid-cols-7 items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl sm:w-auto sm:inline-grid">
+          <TabsList className="grid h-12 w-full grid-cols-7 items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.04] p-1 backdrop-blur-xl sm:w-auto sm:inline-grid">
             {tabs.map(({ value, label, Icon }) => (
               <TabsTrigger key={value} value={value} className={tabTriggerClass}>
-                {/* Indicador animado (PILL) */}
+                
+                {/* ===== INDICADOR ANIMADO ===== */}
                 {activeTab === value && (
                   <motion.div
                     layoutId="tab-indicator"
-                    className="absolute inset-[2px] rounded-[10px] bg-emerald-500 shadow-md"
-                    className="absolute inset-[2px] rounded-[10px] bg-emerald-500 shadow-md shadow-emerald-500/20"
-                    transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                    className="absolute inset-[2px] rounded-[10px]
+                               bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600
+                               shadow-lg shadow-emerald-500/30"
+                    transition={{
+                      type: "spring",
+                      stiffness: 520,
+                      damping: 36,
+                    }}
                   />
                 )}
 
-                {/* Conteúdo sempre acima do pill */}
+                {/* Conteúdo acima do pill */}
                 <span className="relative z-10 flex items-center gap-2">
                   <Icon className="h-4 w-4" />
                   <span className="hidden sm:inline text-sm">{label}</span>
