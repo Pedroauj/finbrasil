@@ -86,10 +86,10 @@ const Index = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <FadeIn delay={0.15}>
-          <TabsList className="grid w-full grid-cols-7 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-xl sm:w-auto sm:inline-grid">
+          <TabsList className="grid w-full grid-cols-7 items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl sm:w-auto sm:inline-grid">
             <TabsTrigger
               value="dashboard"
-              className="gap-2 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md transition-all duration-200"
+              className="flex h-10 items-center justify-center gap-2 rounded-xl py-0 leading-none data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md"
             >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Dashboard</span>
