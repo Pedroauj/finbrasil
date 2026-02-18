@@ -708,27 +708,46 @@ export function useExpenseStore() {
     setInvoices(prev => {
       const existingInvoice = prev.find(i => i.cardId === cardId && i.month === month);
       const newItem = { ...item, id: crypto.randomUUID() };
-      
+
       if (existingInvoice) {
-        return prev.map(i => i.id === existingInvoice.id 
-          ? { ...i, items: [...i.items, newItem] } 
+        return prev.map(i => i.id === existingInvoice.id
+          ? { ...i, items: [...i.items, newItem] }
           : i
         );
       } else {
-        return [...prev, {
-          id: crypto.randomUUID(),
-          cardId,
-          month,
-          items: [newItem],
-          isPaid: false
-        }];
+        return [...prev, { id: crypto.randomUUID(), cardId, month, items: [newItem], isPaid: false }];
       }
     });
   }, []);
 
+  const addInstallments = useCallback((cardId: string, items: { month: string; item: Omit<InvoiceItem, "id"> }[]) => {
+    setInvoices(prev => {
+      let updated = [...prev];
+      for (const { month, item } of items) {
+        const newItem: InvoiceItem = { ...item, id: crypto.randomUUID() };
+        const existingIdx = updated.findIndex(i => i.cardId === cardId && i.month === month);
+        if (existingIdx >= 0) {
+          updated[existingIdx] = { ...updated[existingIdx], items: [...updated[existingIdx].items, newItem] };
+        } else {
+          updated = [...updated, { id: crypto.randomUUID(), cardId, month, items: [newItem], isPaid: false }];
+        }
+      }
+      return updated;
+    });
+  }, []);
+
+  const removeInstallmentGroup = useCallback((cardId: string, groupId: string) => {
+    setInvoices(prev =>
+      prev.map(inv => {
+        if (inv.cardId !== cardId) return inv;
+        return { ...inv, items: inv.items.filter(i => i.installmentGroupId !== groupId) };
+      }).filter(inv => inv.items.length > 0 || inv.isPaid)
+    );
+  }, []);
+
   const removeInvoiceItem = useCallback((invoiceId: string, itemId: string) => {
-    setInvoices(prev => prev.map(i => i.id === invoiceId 
-      ? { ...i, items: i.items.filter(item => item.id !== itemId) } 
+    setInvoices(prev => prev.map(i => i.id === invoiceId
+      ? { ...i, items: i.items.filter(item => item.id !== itemId) }
       : i
     ));
   }, []);
@@ -974,6 +993,8 @@ export function useExpenseStore() {
     updateCreditCard,
     deleteCreditCard,
     addInvoiceItem,
+    addInstallments,
+    removeInstallmentGroup,
     removeInvoiceItem,
     toggleInvoicePaid,
     navigateMonth,

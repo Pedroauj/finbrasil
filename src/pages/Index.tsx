@@ -158,7 +158,9 @@ const Index = () => {
                     onAddCard={store.addCreditCard}
                     onDeleteCard={store.deleteCreditCard}
                     onAddInvoiceItem={store.addInvoiceItem}
+                    onAddInstallments={store.addInstallments}
                     onRemoveInvoiceItem={store.removeInvoiceItem}
+                    onRemoveInstallmentGroup={store.removeInstallmentGroup}
                     onTogglePaid={store.toggleInvoicePaid}
                   />
                 </div>
