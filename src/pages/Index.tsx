@@ -64,89 +64,60 @@ const Index = () => {
         </div>
       </header>
 
-<main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-  <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-    <FadeIn delay={0.15}>
-      <TabsList className="grid w-full grid-cols-7 rounded-2xl bg-muted/60 p-1.5 backdrop-blur-sm sm:w-auto sm:inline-grid">
-        <TabsTrigger
-          value="dashboard"
-          className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-        >
-          <LayoutDashboard className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">Dashboard</span>
-        </TabsTrigger>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <FadeIn delay={0.15}>
+            <TabsList className="grid w-full grid-cols-7 rounded-2xl bg-muted/60 p-1.5 backdrop-blur-sm sm:w-auto sm:inline-grid">
+              <TabsTrigger value="dashboard" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200">
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Dashboard</span>
+              </TabsTrigger>
+              <TabsTrigger value="expenses" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200">
+                <TableProperties className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Gastos</span>
+              </TabsTrigger>
+              <TabsTrigger value="accounts" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200">
+                <Wallet className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Contas</span>
+              </TabsTrigger>
+              <TabsTrigger value="cards" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200">
+                <CardIcon className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Cartões</span>
+              </TabsTrigger>
+              <TabsTrigger value="recurring" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200">
+                <RefreshCw className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Recorrentes</span>
+              </TabsTrigger>
+              <TabsTrigger value="budget" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200">
+                <Settings2 className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Renda</span>
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200">
+                <CalendarIcon className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Calendário</span>
+              </TabsTrigger>
+            </TabsList>
+          </FadeIn>
 
-        <TabsTrigger
-          value="expenses"
-          className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-        >
-          <TableProperties className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">Gastos</span>
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="accounts"
-          className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-        >
-          <Wallet className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">Contas</span>
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="cards"
-          className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-        >
-          <CardIcon className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">Cartões</span>
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="recurring"
-          className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-        >
-          <RefreshCw className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">Recorrentes</span>
-        </TabsTrigger>
-
-        {/* Importante: "Renda" vira income para não conflitar com budget/orçamento */}
-        <TabsTrigger
-          value="income"
-          className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-        >
-          <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">Renda</span>
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="calendar"
-          className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-        >
-          <CalendarIcon className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">Calendário</span>
-        </TabsTrigger>
-      </TabsList>
-    </FadeIn>
-
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-      >
-        <TabsContent value="dashboard" className="mt-0">
-          <Dashboard
-            expenses={store.expenses}
-            budget={store.budget}
-            prevMonthExpenses={store.prevMonthExpenses}
-            currentDate={store.currentDate}
-            cards={store.creditCards}
-            invoices={store.invoices}
-            monthBalance={store.monthBalance}
-            historyData={store.historyData}
-          />
-        </TabsContent>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <TabsContent value="dashboard" className="mt-0">
+                <Dashboard
+                  expenses={store.expenses}
+                  budget={store.budget}
+                  prevMonthExpenses={store.prevMonthExpenses}
+                  currentDate={store.currentDate}
+                  cards={store.creditCards}
+                  invoices={store.invoices}
+                  monthBalance={store.monthBalance}
+                />
+              </TabsContent>
 
               <TabsContent value="expenses" className="mt-0">
                 <ExpenseTable
@@ -195,40 +166,32 @@ const Index = () => {
                 </div>
               </TabsContent>
 
-          <TabsContent value="budget">
-  <BudgetSettings
-    budget={store.budget}
-    customCategories={store.customCategories}
-    onSave={store.setBudget}
-  />
-</TabsContent>
+              <TabsContent value="recurring" className="mt-0">
+                <RecurringExpenses
+                  recurringExpenses={store.recurringExpenses}
+                  customCategories={store.customCategories}
+                  onAdd={store.addRecurringExpense}
+                  onToggle={store.toggleRecurringExpense}
+                  onDelete={store.deleteRecurringExpense}
+                  onAddCategory={store.addCustomCategory}
+                />
+              </TabsContent>
 
-<TabsContent value="recurring" className="mt-0">
-  <RecurringExpenses
-    recurringExpenses={store.recurringExpenses}
-    customCategories={store.customCategories}
-    onAdd={store.addRecurringExpense}
-    onToggle={store.toggleRecurringExpense}
-    onDelete={store.deleteRecurringExpense}
-    onAddCategory={store.addCustomCategory}
-  />
-</TabsContent>
-
-<TabsContent value="income" className="mt-0">
-  <IncomeManager
-    salary={store.salary}
-    extraIncomes={store.extraIncomes}
-    budget={store.budget}
-    customCategories={store.customCategories}
-    currentDate={store.currentDate}
-    onSaveSalary={store.saveSalary}
-    onDeleteSalary={store.deleteSalary}
-    onAddExtraIncome={store.addExtraIncome}
-    onUpdateExtraIncome={store.updateExtraIncome}
-    onDeleteExtraIncome={store.deleteExtraIncome}
-    onSaveBudget={store.setBudget}
-  />
-</TabsContent>
+              <TabsContent value="budget" className="mt-0">
+                <IncomeManager
+                  salary={store.salary}
+                  extraIncomes={store.extraIncomes}
+                  budget={store.budget}
+                  customCategories={store.customCategories}
+                  currentDate={store.currentDate}
+                  onSaveSalary={store.saveSalary}
+                  onDeleteSalary={store.deleteSalary}
+                  onAddExtraIncome={store.addExtraIncome}
+                  onUpdateExtraIncome={store.updateExtraIncome}
+                  onDeleteExtraIncome={store.deleteExtraIncome}
+                  onSaveBudget={store.setBudget}
+                />
+              </TabsContent>
 
               <TabsContent value="calendar" className="mt-0">
                 <FinancialCalendar
