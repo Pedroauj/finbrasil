@@ -44,6 +44,12 @@ const Index = () => {
     ...store.customCategories,
   ];
 
+  // ✅ Classe única pra TODOS os triggers ficarem perfeitamente alinhados
+  const tabTriggerClass =
+    "flex h-full -translate-y-[0.5px] items-center justify-center gap-2 rounded-xl py-0 leading-none transition-all duration-200 " +
+    "text-white/70 hover:text-white " +
+    "data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md";
+
   return (
     <PageShell
       title="FinBrasil"
@@ -65,7 +71,7 @@ const Index = () => {
         </div>
       }
     >
-      {/* Header interno (glass) — opcional: se quiser tirar, é só apagar esse bloco */}
+      {/* Header interno (glass) — opcional */}
       <header className="mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <FadeIn className="flex items-center gap-3">
@@ -86,59 +92,38 @@ const Index = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <FadeIn delay={0.15}>
-          <TabsList className="grid w-full grid-cols-7 items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl sm:w-auto sm:inline-grid">
-            <TabsTrigger
-              value="dashboard"
-              className="flex h-10 items-center justify-center gap-2 rounded-xl py-0 leading-none data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md"
-            >
+          <TabsList className="grid h-12 w-full grid-cols-7 items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl sm:w-auto sm:inline-grid">
+            <TabsTrigger value="dashboard" className={tabTriggerClass}>
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Dashboard</span>
             </TabsTrigger>
 
-            <TabsTrigger
-              value="expenses"
-              className="gap-2 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md transition-all duration-200"
-            >
+            <TabsTrigger value="expenses" className={tabTriggerClass}>
               <TableProperties className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Gastos</span>
             </TabsTrigger>
 
-            <TabsTrigger
-              value="accounts"
-              className="gap-2 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md transition-all duration-200"
-            >
+            <TabsTrigger value="accounts" className={tabTriggerClass}>
               <Wallet className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Contas</span>
             </TabsTrigger>
 
-            <TabsTrigger
-              value="cards"
-              className="gap-2 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md transition-all duration-200"
-            >
+            <TabsTrigger value="cards" className={tabTriggerClass}>
               <CardIcon className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Cartões</span>
             </TabsTrigger>
 
-            <TabsTrigger
-              value="recurring"
-              className="gap-2 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md transition-all duration-200"
-            >
+            <TabsTrigger value="recurring" className={tabTriggerClass}>
               <RefreshCw className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Recorrentes</span>
             </TabsTrigger>
 
-            <TabsTrigger
-              value="budget"
-              className="gap-2 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md transition-all duration-200"
-            >
+            <TabsTrigger value="budget" className={tabTriggerClass}>
               <Settings2 className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Renda</span>
             </TabsTrigger>
 
-            <TabsTrigger
-              value="calendar"
-              className="gap-2 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md transition-all duration-200"
-            >
+            <TabsTrigger value="calendar" className={tabTriggerClass}>
               <CalendarIcon className="h-4 w-4" />
               <span className="hidden sm:inline text-sm">Calendário</span>
             </TabsTrigger>
