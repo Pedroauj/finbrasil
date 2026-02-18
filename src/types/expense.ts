@@ -1,11 +1,56 @@
+export type TransactionStatus = 'planned' | 'paid' | 'overdue';
+export type AccountType = 'checking' | 'savings' | 'wallet' | 'credit_card' | 'investment';
+
+export interface FinancialAccount {
+  id: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  color: string;
+  icon: string;
+  isActive: boolean;
+  appliedValue?: number;
+  currentValue?: number;
+}
+
+export type AdjustmentReason = 'manual' | 'yield' | 'fee' | 'correction' | 'other';
+
+export const ADJUSTMENT_REASON_LABELS: Record<AdjustmentReason, string> = {
+  manual: 'Atualização manual',
+  yield: 'Rendimento',
+  fee: 'Taxa',
+  correction: 'Correção',
+  other: 'Outro',
+};
+
+export interface AccountAdjustment {
+  id: string;
+  accountId: string;
+  amount: number;
+  reason: AdjustmentReason;
+  description?: string;
+  date: string;
+}
+
+export interface AccountTransfer {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  description?: string;
+  date: string;
+}
+
 export interface Expense {
   id: string;
-  date: string; // ISO date string
+  date: string;
   description: string;
   category: string;
   amount: number;
-  isRecurring?: boolean; // marks if this was generated from a recurring expense
-  cardId?: string; // Optional: link to a credit card
+  isRecurring?: boolean;
+  cardId?: string;
+  status: TransactionStatus;
+  accountId?: string;
 }
 
 export interface RecurringExpense {
@@ -32,6 +77,11 @@ export interface InvoiceItem {
   description: string;
   amount: number;
   category: string;
+  // Installment fields
+  installmentGroupId?: string;  // UUID shared by all parcelas of same purchase
+  installmentCurrent?: number;  // ex: 2 (2ª parcela)
+  installmentTotal?: number;    // ex: 6 (de 6)
+  totalPurchaseAmount?: number; // valor total da compra
 }
 
 export interface CreditCardInvoice {
@@ -46,6 +96,32 @@ export interface Budget {
   total: number;
   byCategory: Record<string, number>;
 }
+
+export interface Salary {
+  id: string;
+  amount: number;
+  month: number;
+  year: number;
+  dayOfReceipt: number;
+  autoRepeat: boolean;
+}
+
+export interface ExtraIncome {
+  id: string;
+  amount: number;
+  description: string;
+  category: string;
+  date: string;
+}
+
+export const INCOME_CATEGORIES = [
+  "Freelance",
+  "Venda",
+  "Reembolso",
+  "Bônus",
+  "Investimento",
+  "Outros",
+] as const;
 
 export interface MonthData {
   expenses: Expense[];

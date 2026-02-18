@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_adjustments: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_adjustments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      account_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          from_account_id: string
+          id: string
+          to_account_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_account_id: string
+          id?: string
+          to_account_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          from_account_id?: string
+          id?: string
+          to_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_transfers_from_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_transfers_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           category_limits: Json
@@ -70,6 +159,50 @@ export type Database = {
       }
       expenses: {
         Row: {
+          account_id: string | null
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          status: Database["public"]["Enums"]["transaction_status"]
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extra_incomes: {
+        Row: {
           amount: number
           category: string
           created_at: string
@@ -80,9 +213,9 @@ export type Database = {
         }
         Insert: {
           amount: number
-          category: string
+          category?: string
           created_at?: string
-          date: string
+          date?: string
           description: string
           id?: string
           user_id: string
@@ -94,6 +227,51 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      financial_accounts: {
+        Row: {
+          applied_value: number
+          balance: number
+          color: string
+          created_at: string
+          current_value: number
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          type: Database["public"]["Enums"]["account_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_value?: number
+          balance?: number
+          color?: string
+          created_at?: string
+          current_value?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          type?: Database["public"]["Enums"]["account_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_value?: number
+          balance?: number
+          color?: string
+          created_at?: string
+          current_value?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: Database["public"]["Enums"]["account_type"]
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -191,6 +369,42 @@ export type Database = {
         }
         Relationships: []
       }
+      salaries: {
+        Row: {
+          amount: number
+          auto_repeat: boolean
+          created_at: string
+          day_of_receipt: number
+          id: string
+          month: number
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          auto_repeat?: boolean
+          created_at?: string
+          day_of_receipt?: number
+          id?: string
+          month: number
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          auto_repeat?: boolean
+          created_at?: string
+          day_of_receipt?: number
+          id?: string
+          month?: number
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -199,7 +413,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      account_type:
+        | "checking"
+        | "savings"
+        | "wallet"
+        | "credit_card"
+        | "investment"
+      transaction_status: "planned" | "paid" | "overdue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -326,6 +546,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_type: [
+        "checking",
+        "savings",
+        "wallet",
+        "credit_card",
+        "investment",
+      ],
+      transaction_status: ["planned", "paid", "overdue"],
+    },
   },
 } as const
