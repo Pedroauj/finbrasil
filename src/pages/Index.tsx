@@ -25,13 +25,16 @@ import {
 import { InvoiceAlerts } from "@/components/InvoiceAlerts";
 import { FadeIn } from "@/components/ui/animations";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
+import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 
 const Index = () => {
   const store = useExpenseStore();
   const { signOut } = useAuth();
+
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
 
   const categories = [
     "Alimentação",
@@ -44,19 +47,31 @@ const Index = () => {
     ...store.customCategories,
   ];
 
-  const tabs = [
-    { value: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
-    { value: "expenses", label: "Gastos", Icon: TableProperties },
-    { value: "accounts", label: "Contas", Icon: Wallet },
-    { value: "cards", label: "Cartões", Icon: CardIcon },
-    { value: "recurring", label: "Recorrentes", Icon: RefreshCw },
-    { value: "budget", label: "Renda", Icon: Settings2 },
-    { value: "calendar", label: "Calendário", Icon: CalendarIcon },
-  ];
+  const tabs = useMemo(
+    () => [
+      { value: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+      { value: "expenses", label: "Gastos", Icon: TableProperties },
+      { value: "accounts", label: "Contas", Icon: Wallet },
+      { value: "cards", label: "Cartões", Icon: CardIcon },
+      { value: "recurring", label: "Recorrentes", Icon: RefreshCw },
+      { value: "budget", label: "Renda", Icon: Settings2 },
+      { value: "calendar", label: "Calendário", Icon: CalendarIcon },
+    ],
+    []
+  );
 
+  // Trigger alinhado + suporte ao pill/hover
   const tabTriggerClass =
-    "relative flex h-full items-center justify-center gap-2 rounded-xl py-0 leading-none " +
-    "transition-colors duration-200 text-white/70 hover:text-white";
+    "group relative flex h-full items-center justify-center gap-2 rounded-xl py-0 leading-none " +
+    "transition-colors duration-200 " +
+    "text-white/70 hover:text-white " +
+    "data-[state=active]:text-slate-950";
+
+  // Ação do FAB: vai pra aba gastos + dispara evento global (pra você conectar no ExpenseTable)
+  const handleFabClick = () => {
+    setActiveTab("expenses");
+    window.dispatchEvent(new CustomEvent("open-add-expense"));
+  };
 
   return (
     <PageShell
@@ -64,10 +79,7 @@ const Index = () => {
       subtitle="Gestão Financeira"
       rightSlot={
         <div className="flex items-center gap-2">
-          <MonthNavigator
-            currentDate={store.currentDate}
-            onNavigate={store.navigateMonth}
-          />
+          <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
           <div className="hidden h-6 w-[1px] bg-white/10 sm:block" />
           <ModeToggle />
           <Button
@@ -82,15 +94,14 @@ const Index = () => {
         </div>
       }
     >
+      {/* Header interno */}
       <header className="mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 ring-1 ring-emerald-400/20">
             <TrendingUp className="h-5 w-5 text-emerald-200" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight sm:text-xl text-white/90">
-              FinBrasil
-            </h1>
+            <h1 className="text-lg font-bold tracking-tight sm:text-xl text-white/90">FinBrasil</h1>
             <p className="hidden text-[10px] font-medium uppercase tracking-widest text-white/50 sm:block">
               Gestão Financeira
             </p>
@@ -101,31 +112,51 @@ const Index = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <FadeIn delay={0.15}>
           <TabsList className="grid h-12 w-full grid-cols-7 items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.04] p-1 backdrop-blur-xl sm:w-auto sm:inline-grid">
-            {tabs.map(({ value, label, Icon }) => (
-              <TabsTrigger key={value} value={value} className={tabTriggerClass}>
-                
-                {/* ===== INDICADOR ANIMADO ===== */}
-                {activeTab === value && (
-                  <motion.div
-                    layoutId="tab-indicator"
-                    className="absolute inset-[2px] rounded-[10px]
-                               bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600
-                               shadow-lg shadow-emerald-500/30"
-                    transition={{
-                      type: "spring",
-                      stiffness: 520,
-                      damping: 36,
-                    }}
-                  />
-                )}
+            {tabs.map(({ value, label, Icon }) => {
+              const isActive = activeTab === value;
+              const isHovered = hoveredTab === value && !isActive;
 
-                {/* Conteúdo acima do pill */}
-                <span className="relative z-10 flex items-center gap-2">
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline text-sm">{label}</span>
-                </span>
-              </TabsTrigger>
-            ))}
+              return (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className={tabTriggerClass}
+                  onMouseEnter={() => setHoveredTab(value)}
+                  onMouseLeave={() => setHoveredTab(null)}
+                >
+                  {/* Hover Preview (leve) */}
+                  {isHovered && (
+                    <motion.div
+                      layoutId="tab-hover"
+                      className="absolute inset-[2px] rounded-[10px] bg-white/7"
+                      transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                    />
+                  )}
+
+                  {/* Indicador ativo (iOS premium) */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="tab-indicator"
+                      className="absolute inset-[2px] rounded-[10px]
+                                 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600
+                                 shadow-lg shadow-emerald-500/30
+                                 before:absolute before:inset-0 before:rounded-[10px]
+                                 before:bg-white/10 before:opacity-20"
+                      transition={{ type: "spring", stiffness: 520, damping: 36 }}
+                    />
+                  )}
+
+                  {/* Conteúdo acima */}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    <span className="hidden sm:inline text-sm">{label}</span>
+                  </span>
+
+                  {/* Glow no hover */}
+                  <span className="pointer-events-none absolute inset-[2px] rounded-[10px] opacity-0 transition group-hover:opacity-100 bg-emerald-500/8" />
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
         </FadeIn>
 
@@ -179,11 +210,7 @@ const Index = () => {
 
             <TabsContent value="cards" className="mt-0">
               <div className="space-y-6">
-                <InvoiceAlerts
-                  cards={store.creditCards}
-                  invoices={store.invoices}
-                  currentDate={store.currentDate}
-                />
+                <InvoiceAlerts cards={store.creditCards} invoices={store.invoices} currentDate={store.currentDate} />
                 <CreditCardManager
                   cards={store.creditCards}
                   invoices={store.invoices}
@@ -241,6 +268,9 @@ const Index = () => {
           </motion.div>
         </AnimatePresence>
       </Tabs>
+
+      {/* FAB */}
+      <FloatingAddButton onClick={handleFabClick} label="Novo gasto" />
     </PageShell>
   );
 };
