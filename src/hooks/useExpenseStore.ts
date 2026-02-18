@@ -14,6 +14,7 @@ export function useExpenseStore() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [historyData, setHistoryData] = useState<{ month: string, total: number }[]>([]);
 
   const monthKey = getMonthKey(currentDate);
   const month = currentDate.getMonth() + 1;
@@ -182,6 +183,37 @@ export function useExpenseStore() {
           setBudgetState({ total: 0, byCategory: {} });
         }
       });
+  }, [user, month, year]);
+
+  // Load 6-month history for chart
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadHistory = async () => {
+      const history = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(year, month - 1 - i, 1);
+        const m = d.getMonth() + 1;
+        const y = d.getFullYear();
+        const startDate = `${y}-${String(m).padStart(2, "0")}-01`;
+        const endD = new Date(y, m, 1);
+        const endDate = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, "0")}-01`;
+        
+        const { data } = await supabase
+          .from("expenses")
+          .select("amount")
+          .eq("user_id", user.id)
+          .gte("date", startDate)
+          .lt("date", endDate);
+          
+        const total = (data || []).reduce((sum, e) => sum + Number(e.amount), 0);
+        const monthLabel = d.toLocaleString('pt-BR', { month: 'short' });
+        history.push({ month: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1), total });
+      }
+      setHistoryData(history);
+    };
+    
+    loadHistory();
   }, [user, month, year]);
 
   // Load custom categories
@@ -496,6 +528,7 @@ export function useExpenseStore() {
     creditCards,
     invoices,
     loading,
+    historyData,
     addExpense,
     updateExpense,
     deleteExpense,
