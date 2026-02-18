@@ -38,10 +38,8 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">💰 Controle de Gastos</CardTitle>
-          <CardDescription>
-            {isLogin ? "Entre na sua conta" : "Crie sua conta"}
-          </CardDescription>
+          <CardTitle className="text-2xl">🪙FinBrasil - Gestão Financeira</CardTitle>
+          <CardDescription>{isLogin ? "Entre na sua conta" : "Crie sua conta"}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -89,10 +87,7 @@ const Auth = () => {
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {isLogin ? "Não tem conta?" : "Já tem conta?"}{" "}
-            <button
-              className="text-primary underline-offset-4 hover:underline"
-              onClick={() => setIsLogin(!isLogin)}
-            >
+            <button className="text-primary underline-offset-4 hover:underline" onClick={() => setIsLogin(!isLogin)}>
               {isLogin ? "Cadastre-se" : "Faça login"}
             </button>
           </div>
