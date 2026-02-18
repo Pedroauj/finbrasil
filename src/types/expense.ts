@@ -77,6 +77,11 @@ export interface InvoiceItem {
   description: string;
   amount: number;
   category: string;
+  // Installment fields
+  installmentGroupId?: string;  // UUID shared by all parcelas of same purchase
+  installmentCurrent?: number;  // ex: 2 (2ª parcela)
+  installmentTotal?: number;    // ex: 6 (de 6)
+  totalPurchaseAmount?: number; // valor total da compra
 }
 
 export interface CreditCardInvoice {

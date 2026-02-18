@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { CreditCard, CreditCardInvoice, formatCurrency } from "@/types/expense";
+import { CreditCard, CreditCardInvoice, InvoiceItem, formatCurrency } from "@/types/expense";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,10 @@ interface CreditCardManagerProps {
   currentDate: Date;
   onAddCard: (card: Omit<CreditCard, "id">) => void;
   onDeleteCard: (id: string) => void;
-  onAddInvoiceItem: (cardId: string, month: string, item: any) => void;
+  onAddInvoiceItem: (cardId: string, month: string, item: Omit<InvoiceItem, "id">) => void;
+  onAddInstallments: (cardId: string, items: { month: string; item: Omit<InvoiceItem, "id"> }[]) => void;
   onRemoveInvoiceItem: (invoiceId: string, itemId: string) => void;
+  onRemoveInstallmentGroup: (cardId: string, groupId: string) => void;
   onTogglePaid: (invoiceId: string) => void;
 }
 
@@ -30,24 +32,25 @@ export function CreditCardManager({
   onAddCard,
   onDeleteCard,
   onAddInvoiceItem,
+  onAddInstallments,
   onRemoveInvoiceItem,
+  onRemoveInstallmentGroup,
   onTogglePaid,
 }: CreditCardManagerProps) {
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  
+
   const [newCard, setNewCard] = useState({
     name: "",
     limit: "",
     closingDay: "1",
     dueDay: "10",
-    color: "hsl(250, 84%, 54%)"
+    color: "hsl(250, 84%, 54%)",
   });
 
   const monthKey = format(currentDate, "yyyy-MM");
-
   const selectedCard = useMemo(() => cards.find(c => c.id === selectedCardId), [cards, selectedCardId]);
-  
+
   const handleAddCard = () => {
     if (!newCard.name || !newCard.limit) return;
     onAddCard({
@@ -55,7 +58,7 @@ export function CreditCardManager({
       limit: Number(newCard.limit),
       closingDay: Number(newCard.closingDay),
       dueDay: Number(newCard.dueDay),
-      color: newCard.color
+      color: newCard.color,
     });
     setNewCard({ name: "", limit: "", closingDay: "1", dueDay: "10", color: "hsl(250, 84%, 54%)" });
     setIsAddCardOpen(false);
@@ -73,7 +76,7 @@ export function CreditCardManager({
             <p className="text-xs text-muted-foreground">Gerencie seus limites e faturas</p>
           </div>
         </div>
-        
+
         <Dialog open={isAddCardOpen} onOpenChange={setIsAddCardOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 rounded-lg shadow-sm">
@@ -87,20 +90,20 @@ export function CreditCardManager({
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Nome do Cartão</Label>
-                <Input id="name" placeholder="Ex: Nubank, Inter..." value={newCard.name} onChange={e => setNewCard({...newCard, name: e.target.value})} />
+                <Input id="name" placeholder="Ex: Nubank, Inter..." value={newCard.name} onChange={e => setNewCard({ ...newCard, name: e.target.value })} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="limit">Limite Total</Label>
-                <Input id="limit" type="number" placeholder="0,00" value={newCard.limit} onChange={e => setNewCard({...newCard, limit: e.target.value})} />
+                <Input id="limit" type="number" placeholder="0,00" value={newCard.limit} onChange={e => setNewCard({ ...newCard, limit: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="closing">Dia Fechamento</Label>
-                  <Input id="closing" type="number" min="1" max="31" value={newCard.closingDay} onChange={e => setNewCard({...newCard, closingDay: e.target.value})} />
+                  <Input id="closing" type="number" min="1" max="31" value={newCard.closingDay} onChange={e => setNewCard({ ...newCard, closingDay: e.target.value })} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="due">Dia Vencimento</Label>
-                  <Input id="due" type="number" min="1" max="31" value={newCard.dueDay} onChange={e => setNewCard({...newCard, dueDay: e.target.value})} />
+                  <Input id="due" type="number" min="1" max="31" value={newCard.dueDay} onChange={e => setNewCard({ ...newCard, dueDay: e.target.value })} />
                 </div>
               </div>
               <Button onClick={handleAddCard} className="w-full mt-2">Salvar Cartão</Button>
@@ -125,9 +128,18 @@ export function CreditCardManager({
               const available = card.limit - totalSpent;
               const percent = (totalSpent / card.limit) * 100;
 
+              // Count installment groups for this card
+              const installmentGroupIds = new Set(
+                invoices
+                  .filter(i => i.cardId === card.id)
+                  .flatMap(i => i.items)
+                  .filter(i => i.installmentGroupId && i.installmentCurrent !== i.installmentTotal)
+                  .map(i => i.installmentGroupId!)
+              );
+
               return (
-                <Card 
-                  key={card.id} 
+                <Card
+                  key={card.id}
                   className={cn(
                     "cursor-pointer transition-all hover:shadow-md overflow-hidden border-l-4",
                     selectedCardId === card.id ? "ring-2 ring-primary/20 border-primary" : "border-transparent"
@@ -141,8 +153,17 @@ export function CreditCardManager({
                           <div className="w-4 h-1 bg-primary/40 rounded-full" />
                         </div>
                         <span className="font-bold text-sm">{card.name}</span>
+                        {installmentGroupIds.size > 0 && (
+                          <span className="text-[9px] bg-amber-500/15 text-amber-600 font-black px-1.5 py-0.5 rounded-full border border-amber-500/20">
+                            {installmentGroupIds.size} parcela{installmentGroupIds.size > 1 ? "s" : ""}
+                          </span>
+                        )}
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDeleteCard(card.id); }}>
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={e => { e.stopPropagation(); onDeleteCard(card.id); }}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -159,9 +180,9 @@ export function CreditCardManager({
                       </div>
                     </div>
                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className={cn("h-full transition-all", percent > 90 ? "bg-destructive" : "bg-primary")} 
-                        style={{ width: `${Math.min(percent, 100)}%` }} 
+                      <div
+                        className={cn("h-full transition-all", percent > 90 ? "bg-destructive" : "bg-primary")}
+                        style={{ width: `${Math.min(percent, 100)}%` }}
                       />
                     </div>
                     <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
@@ -177,13 +198,16 @@ export function CreditCardManager({
 
         <div className="w-full min-h-[500px]">
           {selectedCard ? (
-            <InvoiceManager 
+            <InvoiceManager
               card={selectedCard}
               invoice={invoices.find(i => i.cardId === selectedCard.id && i.month === monthKey)}
+              allInvoices={invoices.filter(i => i.cardId === selectedCard.id)}
               categories={categories}
               monthKey={monthKey}
-              onAddItem={(item) => onAddInvoiceItem(selectedCard.id, monthKey, item)}
+              onAddItem={item => onAddInvoiceItem(selectedCard.id, monthKey, item)}
+              onAddInstallments={onAddInstallments}
               onRemoveItem={onRemoveInvoiceItem}
+              onRemoveInstallmentGroup={onRemoveInstallmentGroup}
               onTogglePaid={onTogglePaid}
             />
           ) : (
