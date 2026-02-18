@@ -44,11 +44,22 @@ const Index = () => {
     ...store.customCategories,
   ];
 
-  // ✅ Classe única pra TODOS os triggers ficarem perfeitamente alinhados
+  const tabs = [
+    { value: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+    { value: "expenses", label: "Gastos", Icon: TableProperties },
+    { value: "accounts", label: "Contas", Icon: Wallet },
+    { value: "cards", label: "Cartões", Icon: CardIcon },
+    { value: "recurring", label: "Recorrentes", Icon: RefreshCw },
+    { value: "budget", label: "Renda", Icon: Settings2 },
+    { value: "calendar", label: "Calendário", Icon: CalendarIcon },
+  ] as const;
+
+  // Trigger com alinhamento perfeito + suporte ao "pill" animado
   const tabTriggerClass =
-    "flex h-full -translate-y-[0.5px] items-center justify-center gap-2 rounded-xl py-0 leading-none transition-all duration-200 " +
+    "relative flex h-full items-center justify-center gap-2 rounded-xl py-0 leading-none " +
+    "transition-colors duration-200 " +
     "text-white/70 hover:text-white " +
-    "data-[state=active]:bg-emerald-500 data-[state=active]:text-slate-950 data-[state=active]:shadow-md";
+    "data-[state=active]:text-slate-950";
 
   return (
     <PageShell
@@ -56,7 +67,10 @@ const Index = () => {
       subtitle="Gestão Financeira"
       rightSlot={
         <div className="flex items-center gap-2">
-          <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
+          <MonthNavigator
+            currentDate={store.currentDate}
+            onNavigate={store.navigateMonth}
+          />
           <div className="hidden h-6 w-[1px] bg-white/10 sm:block" />
           <ModeToggle />
           <Button
@@ -93,40 +107,24 @@ const Index = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <FadeIn delay={0.15}>
           <TabsList className="grid h-12 w-full grid-cols-7 items-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl sm:w-auto sm:inline-grid">
-            <TabsTrigger value="dashboard" className={tabTriggerClass}>
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Dashboard</span>
-            </TabsTrigger>
+            {tabs.map(({ value, label, Icon }) => (
+              <TabsTrigger key={value} value={value} className={tabTriggerClass}>
+                {/* Indicador animado (PILL) */}
+                {activeTab === value && (
+                  <motion.div
+                    layoutId="tab-indicator"
+                    className="absolute inset-0 rounded-xl bg-emerald-500 shadow-md"
+                    transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                  />
+                )}
 
-            <TabsTrigger value="expenses" className={tabTriggerClass}>
-              <TableProperties className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Gastos</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="accounts" className={tabTriggerClass}>
-              <Wallet className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Contas</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="cards" className={tabTriggerClass}>
-              <CardIcon className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Cartões</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="recurring" className={tabTriggerClass}>
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Recorrentes</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="budget" className={tabTriggerClass}>
-              <Settings2 className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Renda</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="calendar" className={tabTriggerClass}>
-              <CalendarIcon className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Calendário</span>
-            </TabsTrigger>
+                {/* Conteúdo sempre acima do pill */}
+                <span className="relative z-10 flex items-center gap-2">
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline text-sm">{label}</span>
+                </span>
+              </TabsTrigger>
+            ))}
           </TabsList>
         </FadeIn>
 
