@@ -20,7 +20,10 @@ const CATEGORY_RULES: Array<{ category: string; keywords: string[] }> = [
 ];
 
 function normalize(s: string) {
-    return s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function parseAmount(text: string): number | null {
