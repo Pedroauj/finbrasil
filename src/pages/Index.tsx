@@ -61,12 +61,14 @@ const Index = () => {
     []
   );
 
+  // Trigger alinhado + suporte ao pill/hover
   const tabTriggerClass =
     "group relative flex h-full items-center justify-center gap-2 rounded-xl py-0 leading-none " +
     "transition-colors duration-200 " +
     "text-white/70 hover:text-white " +
     "data-[state=active]:text-slate-950";
 
+  // Ação do FAB: vai pra aba gastos + dispara evento global (pra você conectar no ExpenseTable)
   const handleFabClick = () => {
     setActiveTab("expenses");
     window.dispatchEvent(new CustomEvent("open-add-expense"));
@@ -128,6 +130,7 @@ const Index = () => {
                   onMouseEnter={() => setHoveredTab(value)}
                   onMouseLeave={() => setHoveredTab(null)}
                 >
+                  {/* Hover Preview (leve) */}
                   {isHovered && (
                     <motion.div
                       layoutId="tab-hover"
@@ -136,6 +139,7 @@ const Index = () => {
                     />
                   )}
 
+                  {/* Indicador ativo (iOS premium) */}
                   {isActive && (
                     <motion.div
                       layoutId="tab-indicator"
@@ -148,11 +152,13 @@ const Index = () => {
                     />
                   )}
 
+                  {/* Conteúdo acima */}
                   <span className="relative z-10 flex items-center gap-2">
                     <Icon className="h-4 w-4" />
                     <span className="hidden sm:inline text-sm">{label}</span>
                   </span>
 
+                  {/* Glow no hover */}
                   <span className="pointer-events-none absolute inset-[2px] rounded-[10px] opacity-0 transition group-hover:opacity-100 bg-emerald-500/8" />
                 </TabsTrigger>
               );
@@ -291,6 +297,7 @@ const Index = () => {
             status: e.status,
           })
         }
+      />
       />
     </PageShell>
   );

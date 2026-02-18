@@ -39,10 +39,7 @@ type Msg =
   | { role: "user"; text: string };
 
 function normalize(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, ""); // remove acentos (compatível com targets antigos)
+  return s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
 function isSameMonth(a: Date, b: Date) {
