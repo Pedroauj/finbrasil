@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, AlertTriangle, Wallet, DollarSign, Target } from "lucide-react";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from "recharts";
 import { Expense, formatCurrency, getCategoryColor, CreditCard, CreditCardInvoice } from "@/types/expense";
 import { Budget } from "@/types/expense";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,10 +18,16 @@ interface DashboardProps {
   currentDate: Date;
   cards?: CreditCard[];
   invoices?: CreditCardInvoice[];
+feat/financial-calendar
+  historyData?: { month: string, total: number }[];
+}
+
+export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate, cards = [], invoices = [], historyData = [] }: DashboardProps) 
   monthBalance: MonthBalance;
 }
 
 export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate, cards = [], invoices = [], monthBalance }: DashboardProps) {
+  main
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const prevTotal = prevMonthExpenses.reduce((s, e) => s + e.amount, 0);
   const remaining = budget.total - totalSpent;
@@ -158,6 +164,37 @@ export function Dashboard({ expenses, budget, prevMonthExpenses, currentDate, ca
           </div>
         </FadeIn>
       )}
+
+      {/* Evolution Chart */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg">Evolução de Gastos (Últimos 6 meses)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {historyData.length === 0 ? (
+            <p className="py-12 text-center text-muted-foreground">Carregando histórico...</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={historyData}>
+                <defs>
+                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={v => `R$${v}`} axisLine={false} tickLine={false} />
+                <Tooltip 
+                  formatter={(value: number) => formatCurrency(value)}
+                  contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                />
+                <Area type="monotone" dataKey="total" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <StaggerContainer staggerDelay={0.12} className="grid gap-6 lg:grid-cols-2">
