@@ -113,7 +113,8 @@ const Index = () => {
                 {activeTab === value && (
                   <motion.div
                     layoutId="tab-indicator"
-                    className="absolute inset-0 rounded-xl bg-emerald-500 shadow-md"
+                    className="absolute inset-[2px] rounded-[10px] bg-emerald-500 shadow-md"
+                    className="absolute inset-[2px] rounded-[10px] bg-emerald-500 shadow-md shadow-emerald-500/20"
                     transition={{ type: "spring", stiffness: 520, damping: 38 }}
                   />
                 )}
