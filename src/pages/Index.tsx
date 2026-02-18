@@ -285,6 +285,9 @@ const Index = () => {
       {/* 🧠 Assistente */}
       <AssistantDrawer
         baseDate={store.currentDate}
+        expenses={store.expenses}
+        budget={store.budget}
+        monthBalance={store.monthBalance}
         onAddExpense={(e) =>
           store.addExpense({
             date: e.date,
@@ -294,6 +297,7 @@ const Index = () => {
             status: e.status,
           })
         }
+      />
       />
     </PageShell>
   );
