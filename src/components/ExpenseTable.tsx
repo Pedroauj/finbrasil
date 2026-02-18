@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Plus,
@@ -29,17 +29,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExpenseForm } from "./ExpenseForm";
 import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
-import { motion, AnimatePresence } from "framer-motion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const STATUS_CONFIG: Record<
-  TransactionStatus,
-  { label: string; icon: React.ReactNode; className: string }
-> = {
+const STATUS_CONFIG: Record<TransactionStatus, { label: string; icon: React.ReactNode; className: string }> = {
   paid: {
     label: "Pago",
     icon: <CheckCircle2 className="h-3 w-3" />,
-    className:
-      "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20",
+    className: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20",
   },
   planned: {
     label: "Previsto",
@@ -74,139 +70,168 @@ export function ExpenseTable({
   onDelete,
   onAddCategory,
 }: ExpenseTableProps) {
-  const [showForm, setShowForm] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  // 👇 quando abre "novo gasto", a gente pode pré-definir o status
+  const [defaultStatus, setDefaultStatus] = useState<TransactionStatus>("planned");
+
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ✅ Conecta com o FAB do Index.tsx (evento global)
-  useEffect(() => {
-    const handler = () => {
-      setEditingExpense(null);
-      setShowForm(true);
-    };
+  const allCategories = useMemo(() => [...DEFAULT_CATEGORIES, ...customCategories], [customCategories]);
 
-    window.addEventListener("open-add-expense", handler);
-    return () => window.removeEventListener("open-add-expense", handler);
-  }, []);
-
-  const allCategories = [...DEFAULT_CATEGORIES, ...customCategories];
-
-  const filtered = expenses
-    .filter((e) => filterCategory === "all" || e.category === filterCategory)
-    .filter((e) => filterStatus === "all" || e.status === filterStatus)
-    .filter((e) => e.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const filtered = useMemo(() => {
+    return expenses
+      .filter((e) => filterCategory === "all" || e.category === filterCategory)
+      .filter((e) => filterStatus === "all" || e.status === filterStatus)
+      .filter((e) => e.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [expenses, filterCategory, filterStatus, searchTerm]);
 
   const total = filtered.reduce((sum, e) => sum + e.amount, 0);
   const paidTotal = filtered.filter((e) => e.status === "paid").reduce((s, e) => s + e.amount, 0);
-  const plannedTotal = filtered
-    .filter((e) => e.status === "planned")
-    .reduce((s, e) => s + e.amount, 0);
-  const overdueTotal = filtered
-    .filter((e) => e.status === "overdue")
-    .reduce((s, e) => s + e.amount, 0);
+  const plannedTotal = filtered.filter((e) => e.status === "planned").reduce((s, e) => s + e.amount, 0);
+  const overdueTotal = filtered.filter((e) => e.status === "overdue").reduce((s, e) => s + e.amount, 0);
   const overdueCount = filtered.filter((e) => e.status === "overdue").length;
+
+  function openNewExpense(status?: TransactionStatus) {
+    setEditingExpense(null);
+    setDefaultStatus(status ?? "planned");
+    setDialogOpen(true);
+  }
+
+  function openEditExpense(expense: Expense) {
+    setEditingExpense(expense);
+    setDialogOpen(true);
+  }
+
+  function closeDialog() {
+    setDialogOpen(false);
+    setEditingExpense(null);
+  }
+
+  // ✅ Conecta com o FAB do Index.tsx (evento global)
+  useEffect(() => {
+    const handler = () => openNewExpense("planned");
+    window.addEventListener("open-add-expense", handler);
+    return () => window.removeEventListener("open-add-expense", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* Summary Cards (agora com botão que abre popup específico) */}
       <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StaggerItem>
           <Card className="border-0 shadow-lg rounded-2xl card-hover">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Total do Mês
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total do Mês</p>
                   <p className="text-2xl font-bold mt-1">{formatCurrency(total)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {filtered.length} transação(ões)
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{filtered.length} transação(ões)</p>
                 </div>
-                <div className="rounded-2xl bg-primary/10 p-3">
-                  <DollarSign className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-
-        <StaggerItem>
-          <Card className="border-0 shadow-lg rounded-2xl card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Pagos
-                  </p>
-                  <p className="text-2xl font-bold mt-1 text-[hsl(var(--success))]">
-                    {formatCurrency(paidTotal)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {filtered.filter((e) => e.status === "paid").length} gasto(s)
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-[hsl(var(--success))]/10 p-3">
-                  <CheckCircle2 className="h-5 w-5 text-[hsl(var(--success))]" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-
-        <StaggerItem>
-          <Card className="border-0 shadow-lg rounded-2xl card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Previstos
-                  </p>
-                  <p className="text-2xl font-bold mt-1 text-primary">
-                    {formatCurrency(plannedTotal)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {filtered.filter((e) => e.status === "planned").length} gasto(s)
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-primary/10 p-3">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-
-        <StaggerItem>
-          <Card className="border-0 shadow-lg rounded-2xl card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Atrasados
-                  </p>
-                  <p
-                    className={`text-2xl font-bold mt-1 ${
-                      overdueCount > 0 ? "text-destructive" : "text-muted-foreground"
-                    }`}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl"
+                    title="Adicionar gasto"
+                    onClick={() => openNewExpense("planned")}
                   >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <div className="rounded-2xl bg-primary/10 p-3">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card className="border-0 shadow-lg rounded-2xl card-hover">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pagos</p>
+                  <p className="text-2xl font-bold mt-1 text-[hsl(var(--success))]">{formatCurrency(paidTotal)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{filtered.filter((e) => e.status === "paid").length} gasto(s)</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl"
+                    title="Adicionar gasto pago"
+                    onClick={() => openNewExpense("paid")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <div className="rounded-2xl bg-[hsl(var(--success))]/10 p-3">
+                    <CheckCircle2 className="h-5 w-5 text-[hsl(var(--success))]" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card className="border-0 shadow-lg rounded-2xl card-hover">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Previstos</p>
+                  <p className="text-2xl font-bold mt-1 text-primary">{formatCurrency(plannedTotal)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{filtered.filter((e) => e.status === "planned").length} gasto(s)</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl"
+                    title="Adicionar gasto previsto"
+                    onClick={() => openNewExpense("planned")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <div className="rounded-2xl bg-primary/10 p-3">
+                    <Clock className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card className="border-0 shadow-lg rounded-2xl card-hover">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Atrasados</p>
+                  <p className={`text-2xl font-bold mt-1 ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"}`}>
                     {formatCurrency(overdueTotal)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">{overdueCount} gasto(s)</p>
                 </div>
-                <div
-                  className={`rounded-2xl p-3 ${
-                    overdueCount > 0 ? "bg-destructive/10" : "bg-muted"
-                  }`}
-                >
-                  <AlertTriangle
-                    className={`h-5 w-5 ${
-                      overdueCount > 0 ? "text-destructive" : "text-muted-foreground"
-                    }`}
-                  />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl"
+                    title="Adicionar gasto atrasado"
+                    onClick={() => openNewExpense("overdue")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <div className={`rounded-2xl p-3 ${overdueCount > 0 ? "bg-destructive/10" : "bg-muted"}`}>
+                    <AlertTriangle className={`h-5 w-5 ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -223,14 +248,7 @@ export function ExpenseTable({
                 <ListChecks className="h-5 w-5 text-primary" />
                 <CardTitle className="text-xl">Gastos do Mês</CardTitle>
               </div>
-
-              <Button
-                onClick={() => {
-                  setEditingExpense(null);
-                  setShowForm(true);
-                }}
-                className="gap-2 rounded-xl"
-              >
+              <Button onClick={() => openNewExpense("planned")} className="gap-2 rounded-xl">
                 <Plus className="h-4 w-4" /> Adicionar Gasto
               </Button>
             </div>
@@ -283,41 +301,6 @@ export function ExpenseTable({
           </CardHeader>
 
           <CardContent className="p-0">
-            <AnimatePresence>
-              {showForm && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <div className="border-b p-4 bg-muted/30">
-                    <ExpenseForm
-                      expense={editingExpense}
-                      currentDate={currentDate}
-                      categories={allCategories}
-                      accounts={accounts}
-                      onSubmit={(data) => {
-                        if (editingExpense) {
-                          onUpdate(editingExpense.id, data);
-                        } else {
-                          onAdd(data);
-                        }
-                        setShowForm(false);
-                        setEditingExpense(null);
-                      }}
-                      onCancel={() => {
-                        setShowForm(false);
-                        setEditingExpense(null);
-                      }}
-                      onAddCategory={onAddCategory}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -330,18 +313,13 @@ export function ExpenseTable({
                     <TableHead className="w-24 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <ListChecks className="h-8 w-8 text-muted-foreground/40" />
-                          <p>
-                            {expenses.length === 0
-                              ? "Nenhum gasto registrado ainda."
-                              : "Nenhum resultado encontrado."}
-                          </p>
+                          <p>{expenses.length === 0 ? "Nenhum gasto registrado ainda." : "Nenhum resultado encontrado."}</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -350,10 +328,7 @@ export function ExpenseTable({
                       const statusCfg = STATUS_CONFIG[expense.status];
                       return (
                         <TableRow key={expense.id} className="group transition-colors duration-150">
-                          <TableCell className="font-medium text-sm">
-                            {format(new Date(expense.date), "dd/MM/yyyy")}
-                          </TableCell>
-
+                          <TableCell className="font-medium text-sm">{format(new Date(expense.date), "dd/MM/yyyy")}</TableCell>
                           <TableCell>
                             <span className="flex items-center gap-1.5">
                               {expense.description}
@@ -364,47 +339,27 @@ export function ExpenseTable({
                               )}
                             </span>
                           </TableCell>
-
                           <TableCell>
                             <Badge
                               variant="secondary"
                               className="font-normal rounded-lg"
-                              style={{
-                                borderLeft: `3px solid ${getCategoryColor(expense.category)}`,
-                              }}
+                              style={{ borderLeft: `3px solid ${getCategoryColor(expense.category)}` }}
                             >
                               {expense.category}
                             </Badge>
                           </TableCell>
-
                           <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={`gap-1 text-[10px] font-semibold border rounded-lg ${statusCfg.className}`}
-                            >
+                            <Badge variant="outline" className={`gap-1 text-[10px] font-semibold border rounded-lg ${statusCfg.className}`}>
                               {statusCfg.icon}
                               {statusCfg.label}
                             </Badge>
                           </TableCell>
-
-                          <TableCell className="text-right font-semibold tabular-nums">
-                            {formatCurrency(expense.amount)}
-                          </TableCell>
-
+                          <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(expense.amount)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-lg"
-                                onClick={() => {
-                                  setEditingExpense(expense);
-                                  setShowForm(true);
-                                }}
-                              >
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEditExpense(expense)}>
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
-
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -432,6 +387,32 @@ export function ExpenseTable({
           </CardContent>
         </Card>
       </FadeIn>
+
+      {/* ✅ Modal flutuante (popup) */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{editingExpense ? "Editar gasto" : "Novo gasto"}</DialogTitle>
+          </DialogHeader>
+
+          <ExpenseForm
+            expense={editingExpense}
+            currentDate={currentDate}
+            categories={allCategories}
+            accounts={accounts}
+            // 👇 vai precisar de suporte no ExpenseForm (veja abaixo)
+            defaultStatus={defaultStatus}
+            onSubmit={(data) => {
+              if (editingExpense) onUpdate(editingExpense.id, data);
+              else onAdd(data);
+
+              closeDialog();
+            }}
+            onCancel={closeDialog}
+            onAddCategory={onAddCategory}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
