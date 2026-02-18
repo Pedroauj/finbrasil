@@ -276,21 +276,10 @@ const Index = () => {
       {/* FAB */}
       <FloatingAddButton onClick={handleFabClick} label="Novo gasto" />
 
-      {/* 🧠 Assistente */}
+      {/* 🧠 Assistente (versão do zero) */}
       <AssistantDrawer
         baseDate={store.currentDate}
-        expenses={store.expenses}
-        budget={store.budget}
-        monthBalance={store.monthBalance}
-        onAddExpense={(e) =>
-          store.addExpense({
-            date: e.date,
-            description: e.description,
-            category: e.category,
-            amount: e.amount,
-            status: e.status,
-          })
-        }
+        onAddExpense={(e) => store.addExpense(e)}
       />
     </PageShell>
   );
