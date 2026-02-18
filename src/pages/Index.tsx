@@ -28,7 +28,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
-import { AssistantDrawer } from "@/components/AssistantDrawer";
 
 const Index = () => {
   const store = useExpenseStore();
@@ -80,10 +79,7 @@ const Index = () => {
       subtitle="Gestão Financeira"
       rightSlot={
         <div className="flex items-center gap-2">
-          <MonthNavigator
-            currentDate={store.currentDate}
-            onNavigate={store.navigateMonth}
-          />
+          <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
           <div className="hidden h-6 w-[1px] bg-white/10 sm:block" />
           <ModeToggle />
           <Button
@@ -105,9 +101,7 @@ const Index = () => {
             <TrendingUp className="h-5 w-5 text-emerald-200" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight sm:text-xl text-white/90">
-              FinBrasil
-            </h1>
+            <h1 className="text-lg font-bold tracking-tight sm:text-xl text-white/90">FinBrasil</h1>
             <p className="hidden text-[10px] font-medium uppercase tracking-widest text-white/50 sm:block">
               Gestão Financeira
             </p>
@@ -216,11 +210,7 @@ const Index = () => {
 
             <TabsContent value="cards" className="mt-0">
               <div className="space-y-6">
-                <InvoiceAlerts
-                  cards={store.creditCards}
-                  invoices={store.invoices}
-                  currentDate={store.currentDate}
-                />
+                <InvoiceAlerts cards={store.creditCards} invoices={store.invoices} currentDate={store.currentDate} />
                 <CreditCardManager
                   cards={store.creditCards}
                   invoices={store.invoices}
@@ -281,24 +271,6 @@ const Index = () => {
 
       {/* FAB */}
       <FloatingAddButton onClick={handleFabClick} label="Novo gasto" />
-
-      {/* 🧠 Assistente */}
-      <AssistantDrawer
-        baseDate={store.currentDate}
-        expenses={store.expenses}
-        budget={store.budget}
-        monthBalance={store.monthBalance}
-        onAddExpense={(e) =>
-          store.addExpense({
-            date: e.date,
-            description: e.description,
-            category: e.category,
-            amount: e.amount,
-            status: e.status,
-          })
-        }
-      />
-      />
     </PageShell>
   );
 };
