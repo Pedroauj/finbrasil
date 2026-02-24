@@ -20,9 +20,11 @@ import {
   CartesianGrid,
 } from "recharts";
 import {
-  Expense,
   formatCurrency,
   getCategoryColor,
+} from "@/types/expense";
+import type {
+  Expense,
   CreditCard,
   CreditCardInvoice,
   Budget,
@@ -31,7 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth } from "date-fns";
 import { InvoiceAlerts } from "./InvoiceAlerts";
 import { CashBalance } from "./CashBalance";
-import { MonthBalance } from "@/hooks/useExpenseStore";
+import type { MonthBalance } from "@/hooks/useExpenseStore";
 import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
 
 interface DashboardProps {
@@ -82,10 +84,7 @@ export function Dashboard({
   const weeklyData = useMemo(() => {
     const mStart = startOfMonth(currentDate);
     const mEnd = endOfMonth(currentDate);
-    const weeks = eachWeekOfInterval(
-      { start: mStart, end: mEnd },
-      { weekStartsOn: 1 }
-    );
+    const weeks = eachWeekOfInterval({ start: mStart, end: mEnd }, { weekStartsOn: 1 });
 
     return weeks.map((weekStart, i) => {
       const wEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -152,8 +151,8 @@ export function Dashboard({
                             : "text-[hsl(var(--success))]"
                         }
                       >
-                        {Math.abs(((totalSpent - prevTotal) / prevTotal) * 100).toFixed(0)}%
-                        {" "}vs mês anterior
+                        {Math.abs(((totalSpent - prevTotal) / prevTotal) * 100).toFixed(0)}%{" "}
+                        vs mês anterior
                       </span>
                     </div>
                   )}
@@ -233,9 +232,7 @@ export function Dashboard({
                   <p className="mt-1 text-2xl font-bold text-white/90">{expenses.length}</p>
                   <p className="mt-2 text-xs text-white/60">
                     Média:{" "}
-                    {expenses.length > 0
-                      ? formatCurrency(totalSpent / expenses.length)
-                      : "R$ 0,00"}
+                    {expenses.length > 0 ? formatCurrency(totalSpent / expenses.length) : "R$ 0,00"}
                   </p>
                 </div>
 
@@ -274,9 +271,7 @@ export function Dashboard({
         <StaggerItem>
           <Card className={glassCard}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-white/90">
-                Gastos por Categoria
-              </CardTitle>
+              <CardTitle className="text-lg text-white/90">Gastos por Categoria</CardTitle>
             </CardHeader>
             <CardContent>
               {categoryData.length === 0 ? (
@@ -305,10 +300,7 @@ export function Dashboard({
                   <div className="flex w-full flex-col gap-2.5 text-sm">
                     {categoryData.map((d) => (
                       <div key={d.name} className="flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: d.color }}
-                        />
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: d.color }} />
                         <span className="text-white/70">{d.name}</span>
                         <span className="ml-auto font-semibold text-white/90">
                           {formatCurrency(d.value)}
@@ -325,9 +317,7 @@ export function Dashboard({
         <StaggerItem>
           <Card className={glassCard}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-white/90">
-                Gastos por Semana
-              </CardTitle>
+              <CardTitle className="text-lg text-white/90">Gastos por Semana</CardTitle>
             </CardHeader>
             <CardContent>
               {weeklyData.every((w) => w.total === 0) ? (
@@ -335,10 +325,7 @@ export function Dashboard({
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={weeklyData}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="rgba(255,255,255,0.10)"
-                    />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.10)" />
                     <XAxis
                       dataKey="name"
                       tick={{ fontSize: 12 }}
@@ -350,11 +337,7 @@ export function Dashboard({
                       tickFormatter={(v) => `R$${v}`}
                     />
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    <Bar
-                      dataKey="total"
-                      fill="hsl(var(--primary))"
-                      radius={[10, 10, 0, 0]}
-                    />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
