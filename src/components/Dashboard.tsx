@@ -61,8 +61,10 @@ export function Dashboard({
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const prevTotal = prevMonthExpenses.reduce((s, e) => s + e.amount, 0);
   const remaining = budget.total - totalSpent;
+
   const percentUsed =
     budget.total > 0 ? Math.min((totalSpent / budget.total) * 100, 100) : 0;
+
   const overBudget = totalSpent > budget.total && budget.total > 0;
   const nearBudget = percentUsed >= 80 && !overBudget;
 
@@ -114,20 +116,12 @@ export function Dashboard({
     <div className="space-y-6">
       {/* Saldo Acumulado */}
       <FadeIn>
-        <div className={glassCard}>
-          <div className="p-4 sm:p-6">
-            <CashBalance balance={monthBalance} />
-          </div>
-        </div>
+        <CashBalance balance={monthBalance} />
       </FadeIn>
 
       {/* Alertas de Cartão de Crédito */}
       <FadeIn delay={0.05}>
-        <div className={glassCard}>
-          <div className="p-4 sm:p-6">
-            <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
-          </div>
-        </div>
+        <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </FadeIn>
 
       {/* Summary Cards */}
@@ -236,9 +230,7 @@ export function Dashboard({
                   <p className="text-xs font-medium text-white/60 uppercase tracking-wider">
                     Nº de Gastos
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-white/90">
-                    {expenses.length}
-                  </p>
+                  <p className="mt-1 text-2xl font-bold text-white/90">{expenses.length}</p>
                   <p className="mt-2 text-xs text-white/60">
                     Média:{" "}
                     {expenses.length > 0
