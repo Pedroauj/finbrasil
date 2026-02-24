@@ -40,15 +40,19 @@ interface DashboardProps {
   monthBalance: MonthBalance;
 }
 
+/**
+ * Glass clean (sem gradiente "manchado" e sem radial overlay).
+ * Mantém premium + hover suave.
+ */
 const glassCard =
   "relative overflow-hidden rounded-3xl " +
   "border border-white/10 " +
-  "bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl " +
-  "shadow-[0_10px_40px_rgba(0,0,0,0.35)] shadow-emerald-500/5 " +
+  "bg-background/55 backdrop-blur-xl " +
+  "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)] " +
   "transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/12 " +
-  "before:content-[''] before:absolute before:inset-0 before:pointer-events-none " +
-  "before:bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.10),transparent_35%)]";
+  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/10 " +
+  // brilho bem leve, sem “mancha”
+  "after:pointer-events-none after:absolute after:inset-0 after:bg-white/[0.02]";
 
 export function Dashboard({
   expenses,
@@ -83,7 +87,10 @@ export function Dashboard({
   const weeklyData = useMemo(() => {
     const mStart = startOfMonth(currentDate);
     const mEnd = endOfMonth(currentDate);
-    const weeks = eachWeekOfInterval({ start: mStart, end: mEnd }, { weekStartsOn: 1 });
+    const weeks = eachWeekOfInterval(
+      { start: mStart, end: mEnd },
+      { weekStartsOn: 1 }
+    );
 
     return weeks.map((weekStart, i) => {
       const wEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
