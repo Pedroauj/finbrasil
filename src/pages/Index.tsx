@@ -65,7 +65,8 @@ const Index = () => {
     "group relative flex h-full items-center justify-center gap-2 rounded-xl py-0 leading-none " +
     "transition-colors duration-200 " +
     "text-white/70 hover:text-white " +
-    "data-[state=active]:text-slate-950";
+    "data-[state=active]:text-slate-950 " +
+    "overflow-hidden outline-none focus-visible:ring-0 focus-visible:ring-offset-0";
 
   const handleFabClick = () => {
     setActiveTab("expenses");
@@ -132,7 +133,7 @@ const Index = () => {
                   {isHovered && (
                     <motion.div
                       layoutId="tab-hover"
-                      className="absolute inset-[2px] rounded-[10px] bg-white/7"
+                      className="absolute inset-0 rounded-xl bg-white/7"
                       transition={{ type: "spring", stiffness: 600, damping: 40 }}
                     />
                   )}
@@ -141,11 +142,11 @@ const Index = () => {
                   {isActive && (
                     <motion.div
                       layoutId="tab-indicator"
-                      className="absolute inset-[2px] rounded-[10px]
-                                 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600
-                                 shadow-lg shadow-emerald-500/30
-                                 before:absolute before:inset-0 before:rounded-[10px]
-                                 before:bg-white/10 before:opacity-20"
+                      className="absolute inset-0 rounded-xl
+               bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600
+               shadow-lg shadow-emerald-500/30
+               before:absolute before:inset-0 before:rounded-xl
+               before:bg-white/10 before:opacity-20"
                       transition={{ type: "spring", stiffness: 650, damping: 42 }}
                     />
                   )}
