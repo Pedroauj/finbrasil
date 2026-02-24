@@ -94,29 +94,10 @@ export default function Index() {
         className="space-y-6"
       >
         <div className="relative">
-          <TabsList
-            className="
-              grid w-full grid-cols-3 sm:grid-cols-6
-              rounded-2xl border border-white/10
-              bg-background/40 backdrop-blur-xl
-              p-1
-              lg:w-auto lg:inline-grid
-            "
-          >
+          {/* Aqui só definimos o GRID/RESPONSIVO — o visual vem do tabs.tsx */}
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-grid">
             {TAB_ITEMS.map(({ value, label, icon: Icon }) => (
-              <TabsTrigger
-                key={value}
-                value={value}
-                className="
-                  gap-2 rounded-xl px-3 py-2
-                  text-muted-foreground
-                  transition-all
-                  hover:text-foreground hover:bg-white/5
-                  data-[state=active]:bg-emerald-500/10
-                  data-[state=active]:text-emerald-300
-                  data-[state=active]:shadow-[0_0_0_1px_rgba(16,185,129,0.25)]
-                "
-              >
+              <TabsTrigger key={value} value={value} className="gap-2">
                 <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{label}</span>
               </TabsTrigger>
