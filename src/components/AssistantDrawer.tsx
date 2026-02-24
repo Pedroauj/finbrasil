@@ -184,12 +184,12 @@ export function AssistantDrawer({ baseDate, onAddExpense }: Props) {
 
     pushAssistant(
       `Entendi isso aqui 👇\n` +
-        `• ${full.description}\n` +
-        `• ${formatCurrencyBRL(full.amount)}\n` +
-        `• ${full.category}\n` +
-        `• ${statusLabel(full.status)}\n` +
-        `• ${format(new Date(full.date), "dd/MM/yyyy")}\n\n` +
-        `Confirmar?`
+      `• ${full.description}\n` +
+      `• ${formatCurrencyBRL(full.amount)}\n` +
+      `• ${full.category}\n` +
+      `• ${statusLabel(full.status)}\n` +
+      `• ${format(new Date(full.date), "dd/MM/yyyy")}\n\n` +
+      `Confirmar?`
     );
   }
 
@@ -304,11 +304,46 @@ export function AssistantDrawer({ baseDate, onAddExpense }: Props) {
   return (
     <>
       {/* Botão flutuante */}
-      <motion.div className="fixed bottom-5 left-5 z-50" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-        <Button onClick={() => setOpen(true)} className="h-12 rounded-full px-4 shadow-lg shadow-emerald-500/20" variant="secondary">
-          <Sparkles className="h-4 w-4 mr-2" />
-          Assistente
-        </Button>
+      {/* Botão flutuante (Premium) */}
+      <motion.div
+        className="fixed right-4 top-1/2 -translate-y-1/2 z-50"
+        initial={{ opacity: 0, x: 18 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={[
+            "group relative flex items-center gap-2",
+            "h-12 rounded-full",
+            "pl-3 pr-3 sm:pr-4",
+            "border border-white/10 bg-white/5 backdrop-blur-xl",
+            "shadow-xl shadow-emerald-500/15",
+            "transition-all duration-200",
+            "hover:bg-white/10 hover:-translate-y-[1px]",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40",
+          ].join(" ")}
+          aria-label="Abrir assistente"
+        >
+          {/* Glow sutil */}
+          <span className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition group-hover:opacity-100 bg-emerald-500/10" />
+
+          {/* Ícone (sempre visível) */}
+          <span className="relative grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/25">
+            <Sparkles className="h-4 w-4 text-white" />
+          </span>
+
+          {/* Label (some no mobile, aparece no hover no desktop) */}
+          <span className="relative hidden sm:block overflow-hidden">
+            <span className="block max-w-0 whitespace-nowrap text-sm font-semibold text-white/90 transition-all duration-200 group-hover:max-w-[140px]">
+              Assistente
+            </span>
+            <span className="block text-[11px] text-white/60 -mt-0.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              Lançar gasto por texto
+            </span>
+          </span>
+        </button>
       </motion.div>
 
       {/* Drawer */}
