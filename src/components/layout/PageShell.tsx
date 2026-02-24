@@ -56,23 +56,27 @@ export function PageShell({ children, title, subtitle, rightSlot }: PageShellPro
 function BackgroundFX() {
   return (
     <>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.12),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(34,211,238,0.10),transparent_45%),linear-gradient(135deg,#0b1220_0%,#060a14_45%,#04140f_100%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.10] [background-image:linear-gradient(to_right,rgba(255,255,255,0.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.25)_1px,transparent_1px)] [background-size:64px_64px]" />
+      {/* Base (estática e leve) */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.10),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(34,211,238,0.08),transparent_50%),linear-gradient(135deg,#0b1220_0%,#060a14_45%,#04140f_100%)]" />
 
+      {/* Grid bem mais discreto */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(255,255,255,0.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.25)_1px,transparent_1px)] [background-size:72px_72px]" />
+
+      {/* Luzes sutis passando (baratas: só transform + opacidade baixa) */}
       <motion.div
-        className="pointer-events-none absolute left-[-120px] top-[20%] h-[380px] w-[380px] rounded-full bg-emerald-500/10 blur-3xl"
-        animate={{ y: [0, -16, 0], x: [0, 10, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="pointer-events-none absolute -inset-x-32 top-[10%] h-[220px] rounded-[999px] bg-emerald-500/10 blur-2xl transform-gpu"
+        animate={{ x: [-120, 120, -120] }}
+        transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
       />
       <motion.div
-        className="pointer-events-none absolute right-[-140px] top-[10%] h-[420px] w-[420px] rounded-full bg-cyan-500/10 blur-3xl"
-        animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        className="pointer-events-none absolute -inset-x-32 top-[32%] h-[260px] rounded-[999px] bg-cyan-500/8 blur-2xl transform-gpu"
+        animate={{ x: [140, -140, 140] }}
+        transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
       />
       <motion.div
-        className="pointer-events-none absolute bottom-[-160px] left-[15%] h-[440px] w-[440px] rounded-full bg-emerald-500/8 blur-3xl"
-        animate={{ y: [0, 14, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className="pointer-events-none absolute -inset-x-32 top-[58%] h-[240px] rounded-[999px] bg-emerald-500/7 blur-2xl transform-gpu"
+        animate={{ x: [-90, 90, -90] }}
+        transition={{ duration: 38, repeat: Infinity, ease: "linear" }}
       />
     </>
   );
