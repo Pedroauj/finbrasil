@@ -21,14 +21,23 @@ import {
 } from "recharts";
 import { endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth } from "date-fns";
 
-import type { Expense, CreditCard, CreditCardInvoice, Budget } from "@/types/expense";
+import type {
+  Expense,
+  CreditCard,
+  CreditCardInvoice,
+  Budget,
+} from "@/types/expense";
 import { formatCurrency, getCategoryColor } from "@/types/expense";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceAlerts } from "./InvoiceAlerts";
 import { CashBalance } from "./CashBalance";
 import type { MonthBalance } from "@/hooks/useExpenseStore";
-import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
+import {
+  StaggerContainer,
+  StaggerItem,
+  FadeIn,
+} from "@/components/ui/animations";
 
 interface DashboardProps {
   expenses: Expense[];
@@ -41,18 +50,17 @@ interface DashboardProps {
 }
 
 /**
- * Glass clean (sem gradiente "manchado" e sem radial overlay).
- * Mantém premium + hover suave.
+ * Glass CLEAN (sem “manchado”):
+ * - Fundo mais opaco (não deixa o gradiente do background aparecer através)
+ * - Sem gradiente/radial overlay
  */
 const glassCard =
   "relative overflow-hidden rounded-3xl " +
   "border border-white/10 " +
-  "bg-background/55 backdrop-blur-xl " +
+  "bg-zinc-950/80 backdrop-blur-md " +
   "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)] " +
   "transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/10 " +
-  // brilho bem leve, sem “mancha”
-  "after:pointer-events-none after:absolute after:inset-0 after:bg-white/[0.02]";
+  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/10";
 
 export function Dashboard({
   expenses,
@@ -337,11 +345,7 @@ export function Dashboard({
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={weeklyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.10)" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 12 }}
-                      stroke="rgba(255,255,255,0.55)"
-                    />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="rgba(255,255,255,0.55)" />
                     <YAxis
                       tick={{ fontSize: 12 }}
                       stroke="rgba(255,255,255,0.55)"
