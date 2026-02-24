@@ -41,24 +41,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ExpenseForm } from "./ExpenseForm";
 import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
 
+/**
+ * Glass CLEAN (sem mancha):
+ * - fundo mais opaco (não vaza o background)
+ * - sem gradiente / radial overlay
+ */
 const glassCard =
   "relative overflow-hidden rounded-3xl " +
   "border border-white/10 " +
-  "bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl " +
-  "shadow-[0_10px_40px_rgba(0,0,0,0.35)] shadow-emerald-500/5 " +
+  "bg-zinc-950/80 backdrop-blur-md " +
+  "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)] " +
   "transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/12 " +
-  "before:content-[''] before:absolute before:inset-0 before:pointer-events-none " +
-  "before:bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.10),transparent_35%)] " +
-  "after:content-[''] after:absolute after:inset-0 after:pointer-events-none after:opacity-0 " +
-  "after:bg-[radial-gradient(circle_at_50%_120%,rgba(16,185,129,0.18),transparent_60%)] " +
-  "hover:after:opacity-100 after:transition-opacity after:duration-300";
+  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/10";
 
+/** Card grande da tabela no mesmo padrão */
 const tableCard =
   "relative overflow-hidden rounded-3xl " +
   "border border-white/10 " +
-  "bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl " +
-  "shadow-[0_10px_40px_rgba(0,0,0,0.35)] shadow-emerald-500/5";
+  "bg-zinc-950/80 backdrop-blur-md " +
+  "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)]";
 
 const STATUS_CONFIG: Record<
   TransactionStatus,
@@ -193,8 +194,7 @@ export function ExpenseTable({
                   </Button>
 
                   <div className="relative overflow-hidden rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/20">
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
-                    <DollarSign className="relative z-10 h-5 w-5 text-primary" />
+                    <DollarSign className="h-5 w-5 text-primary" />
                   </div>
                 </div>
               </div>
@@ -230,8 +230,7 @@ export function ExpenseTable({
                   </Button>
 
                   <div className="relative overflow-hidden rounded-2xl bg-[hsl(var(--success))]/10 p-3 ring-1 ring-[hsl(var(--success))]/20">
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
-                    <CheckCircle2 className="relative z-10 h-5 w-5 text-[hsl(var(--success))]" />
+                    <CheckCircle2 className="h-5 w-5 text-[hsl(var(--success))]" />
                   </div>
                 </div>
               </div>
@@ -267,8 +266,7 @@ export function ExpenseTable({
                   </Button>
 
                   <div className="relative overflow-hidden rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/20">
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
-                    <Clock className="relative z-10 h-5 w-5 text-primary" />
+                    <Clock className="h-5 w-5 text-primary" />
                   </div>
                 </div>
               </div>
@@ -309,12 +307,11 @@ export function ExpenseTable({
                       "relative overflow-hidden rounded-2xl p-3 ring-1",
                       overdueCount > 0
                         ? "bg-destructive/10 ring-destructive/20"
-                        : "bg-muted/40 ring-white/10",
+                        : "bg-white/5 ring-white/10",
                     ].join(" ")}
                   >
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.16),transparent_45%)]" />
                     <AlertTriangle
-                      className={`relative z-10 h-5 w-5 ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"
+                      className={`h-5 w-5 ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"
                         }`}
                     />
                   </div>
@@ -328,9 +325,6 @@ export function ExpenseTable({
       {/* Table Card */}
       <FadeIn delay={0.2}>
         <Card className={tableCard}>
-          {/* Reflexo sutil no vidro */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,255,255,0.10),transparent_35%)]" />
-
           <CardHeader className="relative z-10 pb-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
@@ -517,6 +511,8 @@ export function ExpenseTable({
             <DialogTitle>{editingExpense ? "Editar gasto" : "Novo gasto"}</DialogTitle>
           </DialogHeader>
 
+          {/* Se seu ExpenseForm já usa defaultStatus internamente, perfeito.
+            Se não, me avisa que eu ajusto a prop aqui (sem quebrar). */}
           <ExpenseForm
             expense={editingExpense}
             currentDate={currentDate}
