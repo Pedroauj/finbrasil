@@ -13,8 +13,9 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-      className,
+      // container "glass" clean
+      "inline-flex h-11 items-center justify-center rounded-2xl border border-white/10 bg-background/40 p-1 text-muted-foreground backdrop-blur-xl",
+      className
     )}
     {...props}
   />
@@ -28,16 +29,16 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "relative inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all",
-      // Neon hover glow
-      "before:absolute before:inset-0 before:rounded-sm before:opacity-0 before:transition-opacity before:duration-300",
-      "before:shadow-[0_0_12px_hsl(var(--primary)/0.4),inset_0_0_12px_hsl(var(--primary)/0.1)]",
-      "hover:before:opacity-100 hover:text-primary",
-      // Active neon state
-      "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_0_16px_hsl(var(--primary)/0.25),0_2px_8px_hsl(var(--primary)/0.15)]",
-      "data-[state=active]:border data-[state=active]:border-primary/30",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      className,
+      // pill clean
+      "inline-flex items-center justify-center whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-all",
+      "ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      "disabled:pointer-events-none disabled:opacity-50",
+      // hover
+      "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+      // active
+      "data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-300",
+      "data-[state=active]:shadow-[0_0_0_1px_rgba(16,185,129,0.25)]",
+      className
     )}
     {...props}
   />
@@ -52,7 +53,7 @@ const TabsContent = React.forwardRef<
     ref={ref}
     className={cn(
       "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className,
+      className
     )}
     {...props}
   >
