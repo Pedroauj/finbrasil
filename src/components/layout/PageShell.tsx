@@ -13,26 +13,26 @@ export function PageShell({ children, title, subtitle, rightSlot }: PageShellPro
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <BackgroundFX />
 
-      <div className="relative mx-auto min-h-screen max-w-6xl px-4 py-6">
+      {/* ✅ Container geral mais largo + menos margem lateral */}
+      <div className="relative mx-auto min-h-screen w-full max-w-[1400px] px-2 sm:px-4 lg:px-6 py-6">
         {(title || subtitle || rightSlot) && (
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               {title && (
                 <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
               )}
-              {subtitle && (
-                <p className="mt-1 text-sm text-white/60">{subtitle}</p>
-              )}
+              {subtitle && <p className="mt-1 text-sm text-white/60">{subtitle}</p>}
             </div>
             {rightSlot && <div className="flex items-center gap-2">{rightSlot}</div>}
           </div>
         )}
 
+        {/* ✅ Card/painel principal (premium/glass) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-2xl shadow-emerald-500/5 backdrop-blur-xl sm:p-6"
+          className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl shadow-emerald-500/5 backdrop-blur-xl sm:p-6"
         >
           {children}
         </motion.div>
