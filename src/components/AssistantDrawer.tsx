@@ -1,389 +1,389 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Send, Wand2, Check, X, BarChart3, TrendingUp, ListOrdered } from "lucide-react";
+import { Sparkles, Send, Wand2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { parseExpenseText } from "@/lib/expenseParser";
-import { buildAddExpenseAction } from "@/lib/assistantActions";
-import { format, getDaysInMonth } from "date-fns";
-import { formatCurrency, Expense } from "@/types/expense";
+import { format } from "date-fns";
 
 type Props = {
-    baseDate: Date; // data atual do app (store.currentDate)
-    expenses: Expense[];
-    budget?: number;
-    monthBalance?: number;
-    onAddExpense: (expense: {
-        date: string;
-        description: string;
-        category: string;
-        amount: number;
-        status: "paid" | "planned" | "overdue";
-    }) => void;
+  baseDate: Date;
+  onAddExpense: (expense: {
+    date: string; // YYYY-MM-DD
+    description: string;
+    category: string;
+    amount: number;
+    status: "paid" | "planned" | "overdue";
+  }) => void;
 };
 
-type Msg =
-    | { role: "assistant"; text: string }
-    | { role: "user"; text: string };
+type Msg = { role: "assistant" | "user"; text: string };
+
+type PendingExpense = {
+  date: string; // YYYY-MM-DD
+  description: string;
+  category: string;
+  amount: number;
+  status: "paid" | "planned" | "overdue";
+};
+
+type DraftExpense = Partial<PendingExpense>;
 
 function normalize(s: string) {
-    return s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
-function isSameMonth(a: Date, b: Date) {
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+function formatCurrencyBRL(n: number) {
+  try {
+    return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  } catch {
+    return `R$ ${n.toFixed(2).replace(".", ",")}`;
+  }
+}
+
+function parseAmount(text: string): number | null {
+  // pega primeiro número, aceita "32,90", "32.90", "R$ 32,90", "1.234,56"
+  const m = text.match(/(?:r\$?\s*)?(\d{1,3}(?:[.\s]\d{3})*|\d+)([.,]\d{1,2})?/i);
+  if (!m) return null;
+  const intPart = m[1].replace(/[.\s]/g, "");
+  const dec = (m[2] ?? "").replace(",", ".");
+  const num = Number(`${intPart}${dec}`);
+  return Number.isFinite(num) ? num : null;
+}
+
+function inferStatus(text: string): "paid" | "planned" | "overdue" | null {
+  const t = normalize(text);
+  if (t.includes("pago") || t.includes("paguei") || t.includes("paga")) return "paid";
+  if (t.includes("previsto") || t.includes("planejado") || t.includes("planejada")) return "planned";
+  if (t.includes("atrasado") || t.includes("atrasada") || t.includes("vencido") || t.includes("vencida")) return "overdue";
+  return null;
+}
+
+function inferDate(text: string, baseDate: Date): string | null {
+  const t = normalize(text);
+
+  const toISO = (d: Date) => format(d, "yyyy-MM-dd");
+
+  if (t.includes("hoje")) return toISO(baseDate);
+
+  if (t.includes("ontem")) {
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() - 1);
+    return toISO(d);
+  }
+
+  // "dia 05" ou "dia 5"
+  const mDia = t.match(/\bdia\s+(\d{1,2})\b/);
+  if (mDia) {
+    const day = Number(mDia[1]);
+    if (day >= 1 && day <= 31) {
+      const d = new Date(baseDate);
+      d.setDate(day);
+      return toISO(d);
+    }
+  }
+
+  // dd/mm(/yyyy)
+  const mBR = t.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+  if (mBR) {
+    const dd = Number(mBR[1]);
+    const mm = Number(mBR[2]);
+    const yyRaw = mBR[3];
+    const yyyy = yyRaw ? (yyRaw.length === 2 ? 2000 + Number(yyRaw) : Number(yyRaw)) : baseDate.getFullYear();
+    if (dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12) {
+      const d = new Date(yyyy, mm - 1, dd);
+      return toISO(d);
+    }
+  }
+
+  return null;
+}
+
+function cleanDescription(text: string): string {
+  let t = normalize(text);
+
+  // remove status palavras
+  t = t
+    .replace(/\b(pago|paguei|paga|previsto|planejado|planejada|atrasado|atrasada|vencido|vencida)\b/g, " ")
+    .replace(/\b(hoje|ontem)\b/g, " ")
+    .replace(/\bdia\s+\d{1,2}\b/g, " ")
+    .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ")
+    .replace(/(?:r\$?\s*)?(\d{1,3}(?:[.\s]\d{3})*|\d+)([.,]\d{1,2})?/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // volta sem normalizar (só capitaliza básico)
+  if (!t) return "";
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
 function statusLabel(s: "paid" | "planned" | "overdue") {
-    if (s === "paid") return "Pago";
-    if (s === "planned") return "Previsto";
-    return "Atrasado";
+  if (s === "paid") return "Pago";
+  if (s === "planned") return "Previsto";
+  return "Atrasado";
 }
 
-export function AssistantDrawer({ baseDate, expenses, budget, monthBalance, onAddExpense }: Props) {
-    const [open, setOpen] = useState(false);
-    const [text, setText] = useState("");
-    const [messages, setMessages] = useState<Msg[]>([
-        {
-            role: "assistant",
-            text:
-                "Fala comigo 👇\n" +
-                "• “47,90 mercado ontem” (eu lanço)\n" +
-                "• “como estou esse mês?”\n" +
-                "• “top categorias”\n" +
-                "• “previsão do mês”",
-        },
-    ]);
+export function AssistantDrawer({ baseDate, onAddExpense }: Props) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [messages, setMessages] = useState<Msg[]>([
+    { role: "assistant", text: "Me fala um gasto tipo: “47,90 mercado ontem” que eu lanço pra você." },
+  ]);
 
-    const [pending, setPending] = useState<null | ReturnType<typeof parseExpenseText>>(null);
+  const [pending, setPending] = useState<PendingExpense | null>(null);
 
-    const monthExpenses = useMemo(() => {
-        return expenses.filter((e) => isSameMonth(new Date(e.date), baseDate));
-    }, [expenses, baseDate]);
+  // draft + passo do follow-up (quando falta algo)
+  const [draft, setDraft] = useState<DraftExpense | null>(null);
+  const [need, setNeed] = useState<"amount" | "description" | "category" | "status" | "date" | null>(null);
 
-    const monthTotals = useMemo(() => {
-        const total = monthExpenses.reduce((s, e) => s + e.amount, 0);
-        const paid = monthExpenses.filter((e) => e.status === "paid").reduce((s, e) => s + e.amount, 0);
-        const planned = monthExpenses.filter((e) => e.status === "planned").reduce((s, e) => s + e.amount, 0);
-        const overdue = monthExpenses.filter((e) => e.status === "overdue").reduce((s, e) => s + e.amount, 0);
-        const overdueCount = monthExpenses.filter((e) => e.status === "overdue").length;
+  const suggestions = useMemo(
+    () => ["47,90 mercado ontem", "uber 32,50 hoje", "internet 119,90 dia 05 previsto", "farmácia 28,00 pago"],
+    []
+  );
 
-        return { total, paid, planned, overdue, overdueCount, count: monthExpenses.length };
-    }, [monthExpenses]);
+  function pushAssistant(text: string) {
+    setMessages((m) => [...m, { role: "assistant", text }]);
+  }
 
-    const topCategories = useMemo(() => {
-        const map = new Map<string, number>();
-        for (const e of monthExpenses) {
-            map.set(e.category, (map.get(e.category) ?? 0) + e.amount);
-        }
-        return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
-    }, [monthExpenses]);
+  function askNext(maybeDraft: DraftExpense) {
+    // decide próximo campo faltante
+    if (maybeDraft.amount == null) {
+      setNeed("amount");
+      pushAssistant('Qual foi o **valor**? (ex: "32,90")');
+      return;
+    }
+    if (!maybeDraft.description) {
+      setNeed("description");
+      pushAssistant('Qual foi a **descrição**? (ex: "mercado", "uber")');
+      return;
+    }
+    if (!maybeDraft.category) {
+      setNeed("category");
+      pushAssistant('Qual a **categoria**? (ex: "Alimentação")');
+      return;
+    }
+    if (!maybeDraft.status) {
+      setNeed("status");
+      pushAssistant('Status: **pago**, **previsto** ou **atrasado**?');
+      return;
+    }
+    if (!maybeDraft.date) {
+      setNeed("date");
+      pushAssistant('Qual a **data**? (ex: "hoje", "ontem", "dia 05" ou "12/02")');
+      return;
+    }
 
-    const forecast = useMemo(() => {
-        const day = baseDate.getDate();
-        const daysInMonth = getDaysInMonth(baseDate);
+    // completo → vira pending
+    const full = maybeDraft as PendingExpense;
+    setDraft(null);
+    setNeed(null);
+    setPending(full);
 
-        // ritmo baseado no total do mês até agora
-        const daily = day > 0 ? monthTotals.total / day : monthTotals.total;
-        const projected = daily * daysInMonth;
-
-        return { daily, projected, daysInMonth, day };
-    }, [baseDate, monthTotals.total]);
-
-    const quickSuggestions = useMemo(
-        () => [
-            { label: "Como estou esse mês?", icon: <BarChart3 className="h-3.5 w-3.5" />, value: "como estou esse mês" },
-            { label: "Top categorias", icon: <ListOrdered className="h-3.5 w-3.5" />, value: "top categorias" },
-            { label: "Previsão do mês", icon: <TrendingUp className="h-3.5 w-3.5" />, value: "previsão do mês" },
-        ],
-        []
+    pushAssistant(
+      `Entendi isso aqui 👇\n` +
+        `• ${full.description}\n` +
+        `• ${formatCurrencyBRL(full.amount)}\n` +
+        `• ${full.category}\n` +
+        `• ${statusLabel(full.status)}\n` +
+        `• ${format(new Date(full.date), "dd/MM/yyyy")}\n\n` +
+        `Confirmar?`
     );
+  }
 
-    const expenseExamples = useMemo(
-        () => ["47,90 mercado ontem", "uber 32,50 hoje", "internet 119,90 dia 05 previsto", "farmácia 28,00 pago"],
-        []
-    );
+  function startFromText(input: string) {
+    const amount = parseAmount(input);
+    const date = inferDate(input, baseDate) ?? undefined;
+    const status = inferStatus(input) ?? undefined;
 
-    function replyHowAmI() {
-        const monthName = format(baseDate, "MMMM/yyyy");
-        const budgetLine =
-            typeof budget === "number"
-                ? `Orçamento: ${formatCurrency(budget)} (${budget > 0 ? Math.round((monthTotals.total / budget) * 100) : 0}% usado)`
-                : "Orçamento: (não definido)";
+    // categoria: por enquanto default
+    const category = "Outros";
 
-        const balanceLine =
-            typeof monthBalance === "number" ? `Saldo do mês: ${formatCurrency(monthBalance)}` : "";
+    const description = cleanDescription(input);
 
-        const overdueLine =
-            monthTotals.overdueCount > 0
-                ? `⚠️ Atrasados: ${monthTotals.overdueCount} (${formatCurrency(monthTotals.overdue)})`
-                : `✅ Atrasados: 0`;
+    const nextDraft: DraftExpense = {
+      amount: amount ?? undefined,
+      description: description || undefined,
+      category,
+      status,
+      date,
+    };
 
-        const text =
-            `📌 Resumo de ${monthName}\n` +
-            `• Total: ${formatCurrency(monthTotals.total)} (${monthTotals.count} lançamentos)\n` +
-            `• Pagos: ${formatCurrency(monthTotals.paid)}\n` +
-            `• Previstos: ${formatCurrency(monthTotals.planned)}\n` +
-            `${overdueLine}\n` +
-            `${budgetLine}\n` +
-            (balanceLine ? `${balanceLine}\n` : "") +
-            `\nSe quiser, me manda um gasto por texto que eu lanço também.`;
+    setDraft(nextDraft);
 
-        setMessages((m) => [...m, { role: "assistant", text }]);
+    // se veio tudo completo já, vai direto
+    askNext(nextDraft);
+  }
+
+  function fillDraftWithAnswer(answer: string) {
+    if (!draft || !need) return false;
+
+    const a = answer.trim();
+    const an = normalize(a);
+
+    if (an === "cancelar" || an === "cancela" || an === "cancel") {
+      setDraft(null);
+      setNeed(null);
+      pushAssistant("Beleza — cancelei.");
+      return true;
     }
 
-    function replyTopCategories() {
-        const monthName = format(baseDate, "MMMM/yyyy");
-        if (topCategories.length === 0) {
-            setMessages((m) => [
-                ...m,
-                { role: "assistant", text: `Ainda não tem gastos em ${monthName}. Me manda um tipo “47,90 mercado ontem”.` },
-            ]);
-            return;
-        }
+    const updated: DraftExpense = { ...draft };
 
-        const lines = topCategories
-            .map(([cat, amt], i) => `${i + 1}. ${cat} — ${formatCurrency(amt)}`)
-            .join("\n");
-
-        setMessages((m) => [
-            ...m,
-            {
-                role: "assistant",
-                text: `🏆 Top categorias em ${monthName}\n${lines}\n\nQuer que eu te diga onde dá pra cortar primeiro?`,
-            },
-        ]);
+    if (need === "amount") {
+      const v = parseAmount(a);
+      if (v == null) {
+        pushAssistant('Não peguei o valor. Manda assim: "32,90" (ou "R$ 32,90").');
+        return true;
+      }
+      updated.amount = v;
+    } else if (need === "description") {
+      if (a.length < 2) {
+        pushAssistant('Me fala uma descrição curtinha tipo "mercado", "uber"...');
+        return true;
+      }
+      updated.description = a;
+    } else if (need === "category") {
+      if (a.length < 2) {
+        pushAssistant('Categoria muito curta. Ex: "Alimentação", "Transporte"...');
+        return true;
+      }
+      updated.category = a;
+    } else if (need === "status") {
+      const st = inferStatus(a);
+      if (!st) {
+        pushAssistant('Me fala: **pago**, **previsto** ou **atrasado**.');
+        return true;
+      }
+      updated.status = st;
+    } else if (need === "date") {
+      const d = inferDate(a, baseDate);
+      if (!d) {
+        pushAssistant('Não entendi a data. Ex: "hoje", "ontem", "dia 05" ou "12/02".');
+        return true;
+      }
+      updated.date = d;
     }
 
-    function replyForecast() {
-        const monthName = format(baseDate, "MMMM/yyyy");
-        const projected = forecast.projected;
+    setDraft(updated);
+    askNext(updated);
+    return true;
+  }
 
-        let extra = "";
-        if (typeof budget === "number" && budget > 0) {
-            const diff = projected - budget;
-            if (diff > 0) extra = `\n⚠️ No ritmo atual, você pode passar do orçamento em ~${formatCurrency(diff)}.`;
-            else extra = `\n✅ No ritmo atual, você tende a ficar ~${formatCurrency(Math.abs(diff))} abaixo do orçamento.`;
-        }
+  function submit() {
+    const input = text.trim();
+    if (!input) return;
 
-        setMessages((m) => [
-            ...m,
-            {
-                role: "assistant",
-                text:
-                    `🔮 Previsão de ${monthName}\n` +
-                    `• Ritmo médio: ${formatCurrency(forecast.daily)} por dia\n` +
-                    `• Projeção do mês: ${formatCurrency(projected)}\n` +
-                    extra +
-                    `\n\nSe quiser, eu posso sugerir 1 meta prática pra semana.`,
-            },
-        ]);
+    setMessages((m) => [...m, { role: "user", text: input }]);
+    setText("");
+
+    // se tá em modo follow-up, usa a resposta pra completar
+    if (draft && need) {
+      fillDraftWithAnswer(input);
+      return;
     }
 
-    function handleIntent(inputRaw: string): boolean {
-        const t = normalize(inputRaw);
+    // começo normal
+    startFromText(input);
+  }
 
-        // intents (analista)
-        if (t.includes("como estou") || t.includes("resumo") || t.includes("status do mes") || t.includes("status do mês")) {
-            replyHowAmI();
-            return true;
-        }
-        if (t.includes("top categorias") || t.includes("maior categoria") || t.includes("mais gastei") || t.includes("ranking")) {
-            replyTopCategories();
-            return true;
-        }
-        if (t.includes("previsao") || t.includes("previsão") || t.includes("projecao") || t.includes("projeção") || t.includes("ate o fim")) {
-            replyForecast();
-            return true;
-        }
+  function confirm() {
+    if (!pending) return;
+    onAddExpense(pending);
+    setPending(null);
+    pushAssistant("Fechado ✅ Lancei o gasto.");
+  }
 
-        return false;
-    }
+  function cancel() {
+    setPending(null);
+    pushAssistant("Beleza — não lancei.");
+  }
 
-    function submit() {
-        const input = text.trim();
-        if (!input) return;
+  return (
+    <>
+      {/* Botão flutuante */}
+      <motion.div className="fixed bottom-5 left-5 z-50" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
+        <Button onClick={() => setOpen(true)} className="h-12 rounded-full px-4 shadow-lg shadow-emerald-500/20" variant="secondary">
+          <Sparkles className="h-4 w-4 mr-2" />
+          Assistente
+        </Button>
+      </motion.div>
 
-        setMessages((m) => [...m, { role: "user", text: input }]);
-        setText("");
+      {/* Drawer */}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div className="fixed inset-0 z-50 bg-black/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setOpen(false)} />
 
-        // 1) Tenta intents “analista”
-        if (handleIntent(input)) return;
-
-        // 2) Senão, tenta lançar como gasto
-        const parsed = parseExpenseText(input, baseDate);
-        const action = buildAddExpenseAction(parsed);
-
-        if (action.type === "none") {
-            setMessages((m) => [
-                ...m,
-                {
-                    role: "assistant",
-                    text:
-                        `Não consegui lançar. ${action.message}\n` +
-                        `Me manda assim: “valor descrição data (opcional)”. Ex: “47,90 mercado ontem”.`,
-                },
-            ]);
-            return;
-        }
-
-        setPending(parsed);
-        setMessages((m) => [
-            ...m,
-            {
-                role: "assistant",
-                text:
-                    `Entendi isso aqui 👇\n` +
-                    `• ${parsed.description}\n` +
-                    `• ${formatCurrency(parsed.amount)}\n` +
-                    `• ${parsed.category}\n` +
-                    `• ${statusLabel(parsed.status)}\n` +
-                    `• ${format(new Date(parsed.date), "dd/MM/yyyy")}\n\n` +
-                    `Confirmar?`,
-            },
-        ]);
-    }
-
-    function confirm() {
-        if (!pending) return;
-        onAddExpense({
-            date: pending.date,
-            description: pending.description,
-            category: pending.category,
-            amount: pending.amount,
-            status: pending.status,
-        });
-        setPending(null);
-        setMessages((m) => [...m, { role: "assistant", text: "Fechado ✅ Lancei o gasto." }]);
-    }
-
-    function cancel() {
-        setPending(null);
-        setMessages((m) => [...m, { role: "assistant", text: "Beleza — não lancei." }]);
-    }
-
-    return (
-        <>
-            {/* Botão flutuante do assistente */}
             <motion.div
-                className="fixed bottom-5 left-5 z-50"
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
+              className="fixed right-0 top-0 z-50 h-full w-full max-w-md border-l border-white/10 bg-slate-950/90 backdrop-blur-xl p-4"
+              initial={{ x: 420 }}
+              animate={{ x: 0 }}
+              exit={{ x: 420 }}
+              transition={{ type: "spring", stiffness: 520, damping: 40 }}
             >
-                <Button
-                    onClick={() => setOpen(true)}
-                    className="h-12 rounded-full px-4 shadow-lg shadow-emerald-500/20"
-                    variant="secondary"
-                >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Assistente
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/90">
+                  <Wand2 className="h-4 w-4" />
+                  <span className="font-semibold">Assistente FinBrasil</span>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="text-white/70 hover:text-white">
+                  <X className="h-4 w-4" />
                 </Button>
+              </div>
+
+              <div className="mt-4 space-y-3 h-[72vh] overflow-auto pr-1">
+                {messages.map((m, idx) => (
+                  <Card
+                    key={idx}
+                    className={`border-white/10 bg-white/5 p-3 text-sm whitespace-pre-line ${m.role === "user" ? "ml-10" : "mr-10"}`}
+                  >
+                    <div className="text-white/90">{m.text}</div>
+                  </Card>
+                ))}
+              </div>
+
+              {pending && (
+                <div className="mt-3 flex gap-2">
+                  <Button onClick={confirm} className="flex-1 gap-2">
+                    <Check className="h-4 w-4" /> Confirmar
+                  </Button>
+                  <Button onClick={cancel} variant="secondary" className="flex-1 gap-2">
+                    <X className="h-4 w-4" /> Cancelar
+                  </Button>
+                </div>
+              )}
+
+              <div className="mt-3 flex gap-2">
+                <Input
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder={draft && need ? "Responda aqui (ou 'cancelar')" : 'Ex: "47,90 mercado ontem"'}
+                  onKeyDown={(e) => e.key === "Enter" && submit()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+                <Button onClick={submit} className="gap-2">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setText(s)}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 hover:text-white hover:bg-white/10 transition"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </motion.div>
-
-            {/* Drawer */}
-            <AnimatePresence>
-                {open && (
-                    <>
-                        <motion.div
-                            className="fixed inset-0 z-50 bg-black/40"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setOpen(false)}
-                        />
-
-                        <motion.div
-                            className="fixed right-0 top-0 z-50 h-full w-full max-w-md border-l border-white/10 bg-slate-950/90 backdrop-blur-xl p-4"
-                            initial={{ x: 420 }}
-                            animate={{ x: 0 }}
-                            exit={{ x: 420 }}
-                            transition={{ type: "spring", stiffness: 520, damping: 40 }}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-white/90">
-                                    <Wand2 className="h-4 w-4" />
-                                    <span className="font-semibold">Assistente FinBrasil</span>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setOpen(false)}
-                                    className="text-white/70 hover:text-white"
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-
-                            {/* Chips inteligentes */}
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {quickSuggestions.map((s) => (
-                                    <button
-                                        key={s.value}
-                                        onClick={() => {
-                                            setMessages((m) => [...m, { role: "user", text: s.label }]);
-                                            handleIntent(s.value);
-                                        }}
-                                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 hover:text-white hover:bg-white/10 transition"
-                                    >
-                                        {s.icon}
-                                        {s.label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="mt-4 space-y-3 h-[62vh] overflow-auto pr-1">
-                                {messages.map((m, idx) => (
-                                    <Card
-                                        key={idx}
-                                        className={`border-white/10 bg-white/5 p-3 text-sm whitespace-pre-line ${m.role === "user" ? "ml-10" : "mr-10"
-                                            }`}
-                                    >
-                                        <div className="text-white/90">{m.text}</div>
-                                    </Card>
-                                ))}
-                            </div>
-
-                            {pending && (
-                                <div className="mt-3 flex gap-2">
-                                    <Button onClick={confirm} className="flex-1 gap-2">
-                                        <Check className="h-4 w-4" /> Confirmar
-                                    </Button>
-                                    <Button onClick={cancel} variant="secondary" className="flex-1 gap-2">
-                                        <X className="h-4 w-4" /> Cancelar
-                                    </Button>
-                                </div>
-                            )}
-
-                            <div className="mt-3 flex gap-2">
-                                <Input
-                                    value={text}
-                                    onChange={(e) => setText(e.target.value)}
-                                    placeholder='Ex: "47,90 mercado ontem" ou "como estou esse mês?"'
-                                    onKeyDown={(e) => e.key === "Enter" && submit()}
-                                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
-                                />
-                                <Button onClick={submit} className="gap-2">
-                                    <Send className="h-4 w-4" />
-                                </Button>
-                            </div>
-
-                            {/* sugestões de gastos */}
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {expenseExamples.map((s) => (
-                                    <button
-                                        key={s}
-                                        onClick={() => setText(s)}
-                                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 hover:text-white hover:bg-white/10 transition"
-                                    >
-                                        {s}
-                                    </button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </>
-    );
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }

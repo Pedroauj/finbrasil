@@ -61,14 +61,12 @@ const Index = () => {
     []
   );
 
-  // Trigger alinhado + suporte ao pill/hover
   const tabTriggerClass =
     "group relative flex h-full items-center justify-center gap-2 rounded-xl py-0 leading-none " +
     "transition-colors duration-200 " +
     "text-white/70 hover:text-white " +
     "data-[state=active]:text-slate-950";
 
-  // Ação do FAB: vai pra aba gastos + dispara evento global (pra você conectar no ExpenseTable)
   const handleFabClick = () => {
     setActiveTab("expenses");
     window.dispatchEvent(new CustomEvent("open-add-expense"));
@@ -146,6 +144,27 @@ const Index = () => {
                       <motion.div
                         layoutId="tab-indicator"
                         className="absolute inset-[2px] rounded-[10px]
+              return (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className={tabTriggerClass}
+                  onMouseEnter={() => setHoveredTab(value)}
+                  onMouseLeave={() => setHoveredTab(null)}
+                >
+                  {isHovered && (
+                    <motion.div
+                      layoutId="tab-hover"
+                    className="absolute inset-[2px] rounded-[10px] bg-white/7"
+                    transition={{ type: "spring", stiffness: 520, damping: 38 }}
+                    />
+                  )}
+
+                    {isActive && (
+                      <motion.div
+                        layoutId="tab-indicator"
+                        className="absolute inset-[2px] rounded-[10px]
+                      799c190cc64ca76e792a1475345bb4c5400591f1
                                  bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600
                                  shadow-lg shadow-emerald-500/30
                                  before:absolute before:inset-0 before:rounded-[10px]
@@ -167,141 +186,159 @@ const Index = () => {
               })}
             </TabsList>
           </FadeIn>
+          <span className="relative z-10 flex items-center gap-2">
+            <Icon className="h-4 w-4" />
+            <span className="hidden sm:inline text-sm">{label}</span>
+          </span>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-            >
-              <TabsContent value="dashboard" className="mt-0">
-                <Dashboard
-                  expenses={store.expenses}
-                  budget={store.budget}
-                  prevMonthExpenses={store.prevMonthExpenses}
-                  currentDate={store.currentDate}
-                  cards={store.creditCards}
-                  invoices={store.invoices}
-                  monthBalance={store.monthBalance}
-                />
-              </TabsContent>
+          <span className="pointer-events-none absolute inset-[2px] rounded-[10px] opacity-0 transition group-hover:opacity-100 bg-emerald-500/8" />
+        </TabsTrigger>
+        );
+            })}
+      </TabsList>
+    </FadeIn>
+799c190cc64ca76e792a1475345bb4c5400591f1
 
-              <TabsContent value="expenses" className="mt-0">
-                <ExpenseTable
-                  expenses={store.expenses}
-                  customCategories={store.customCategories}
-                  currentDate={store.currentDate}
-                  accounts={store.financialAccounts}
-                  onAdd={store.addExpense}
-                  onUpdate={store.updateExpense}
-                  onDelete={store.deleteExpense}
-                  onAddCategory={store.addCustomCategory}
-                />
-              </TabsContent>
+    < AnimatePresence mode = "wait" >
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+      >
+        <TabsContent value="dashboard" className="mt-0">
+          <Dashboard
+            expenses={store.expenses}
+            budget={store.budget}
+            prevMonthExpenses={store.prevMonthExpenses}
+            currentDate={store.currentDate}
+            cards={store.creditCards}
+            invoices={store.invoices}
+            monthBalance={store.monthBalance}
+          />
+        </TabsContent>
 
-              <TabsContent value="accounts" className="mt-0">
-                <AccountManager
-                  accounts={store.financialAccounts}
-                  transfers={store.accountTransfers}
-                  adjustments={store.accountAdjustments}
-                  onAdd={store.addFinancialAccount}
-                  onUpdate={store.updateFinancialAccount}
-                  onDelete={store.deleteFinancialAccount}
-                  onTransfer={store.transferBetweenAccounts}
-                  onAdjust={store.addAccountAdjustment}
-                  onDeleteAdjustment={store.deleteAccountAdjustment}
-                  onToggleArchive={store.toggleAccountArchive}
-                />
-              </TabsContent>
+        <TabsContent value="expenses" className="mt-0">
+          <ExpenseTable
+            expenses={store.expenses}
+            customCategories={store.customCategories}
+            currentDate={store.currentDate}
+            accounts={store.financialAccounts}
+            onAdd={store.addExpense}
+            onUpdate={store.updateExpense}
+            onDelete={store.deleteExpense}
+            onAddCategory={store.addCustomCategory}
+          />
+        </TabsContent>
 
-              <TabsContent value="cards" className="mt-0">
-                <div className="space-y-6">
-                  <InvoiceAlerts
-                    cards={store.creditCards}
-                    invoices={store.invoices}
-                    currentDate={store.currentDate}
-                  />
-                  <CreditCardManager
-                    cards={store.creditCards}
-                    invoices={store.invoices}
-                    categories={categories}
-                    currentDate={store.currentDate}
-                    onAddCard={store.addCreditCard}
-                    onDeleteCard={store.deleteCreditCard}
-                    onAddInvoiceItem={store.addInvoiceItem}
-                    onAddInstallments={store.addInstallments}
-                    onRemoveInvoiceItem={store.removeInvoiceItem}
-                    onRemoveInstallmentGroup={store.removeInstallmentGroup}
-                    onTogglePaid={store.toggleInvoicePaid}
-                  />
-                </div>
-              </TabsContent>
+        <TabsContent value="accounts" className="mt-0">
+          <AccountManager
+            accounts={store.financialAccounts}
+            transfers={store.accountTransfers}
+            adjustments={store.accountAdjustments}
+            onAdd={store.addFinancialAccount}
+            onUpdate={store.updateFinancialAccount}
+            onDelete={store.deleteFinancialAccount}
+            onTransfer={store.transferBetweenAccounts}
+            onAdjust={store.addAccountAdjustment}
+            onDeleteAdjustment={store.deleteAccountAdjustment}
+            onToggleArchive={store.toggleAccountArchive}
+          />
+        </TabsContent>
 
-              <TabsContent value="recurring" className="mt-0">
-                <RecurringExpenses
-                  recurringExpenses={store.recurringExpenses}
-                  customCategories={store.customCategories}
-                  onAdd={store.addRecurringExpense}
-                  onToggle={store.toggleRecurringExpense}
-                  onDelete={store.deleteRecurringExpense}
-                  onAddCategory={store.addCustomCategory}
-                />
-              </TabsContent>
+        <TabsContent value="cards" className="mt-0">
+          <div className="space-y-6">
+            <InvoiceAlerts
+              cards={store.creditCards}
+              invoices={store.invoices}
+              currentDate={store.currentDate}
+            />
+            <CreditCardManager
+              cards={store.creditCards}
+              invoices={store.invoices}
+              categories={categories}
+              currentDate={store.currentDate}
+              onAddCard={store.addCreditCard}
+              onDeleteCard={store.deleteCreditCard}
+              onAddInvoiceItem={store.addInvoiceItem}
+              onAddInstallments={store.addInstallments}
+              onRemoveInvoiceItem={store.removeInvoiceItem}
+              onRemoveInstallmentGroup={store.removeInstallmentGroup}
+              onTogglePaid={store.toggleInvoicePaid}
+            />
+          </div>
+        </TabsContent>
 
-              <TabsContent value="budget" className="mt-0">
-                <IncomeManager
-                  salary={store.salary}
-                  extraIncomes={store.extraIncomes}
-                  budget={store.budget}
-                  customCategories={store.customCategories}
-                  currentDate={store.currentDate}
-                  onSaveSalary={store.saveSalary}
-                  onDeleteSalary={store.deleteSalary}
-                  onAddExtraIncome={store.addExtraIncome}
-                  onUpdateExtraIncome={store.updateExtraIncome}
-                  onDeleteExtraIncome={store.deleteExtraIncome}
-                  onSaveBudget={store.setBudget}
-                />
-              </TabsContent>
+        <TabsContent value="recurring" className="mt-0">
+          <RecurringExpenses
+            recurringExpenses={store.recurringExpenses}
+            customCategories={store.customCategories}
+            onAdd={store.addRecurringExpense}
+            onToggle={store.toggleRecurringExpense}
+            onDelete={store.deleteRecurringExpense}
+            onAddCategory={store.addCustomCategory}
+          />
+        </TabsContent>
 
-              <TabsContent value="calendar" className="mt-0">
-                <FinancialCalendar
-                  expenses={store.expenses}
-                  customCategories={store.customCategories}
-                  currentDate={store.currentDate}
-                  onAdd={store.addExpense}
-                  onUpdate={store.updateExpense}
-                  onDelete={store.deleteExpense}
-                  onAddCategory={store.addCustomCategory}
-                />
-              </TabsContent>
-            </motion.div>
-          </AnimatePresence>
-        </Tabs>
+        <TabsContent value="budget" className="mt-0">
+          <IncomeManager
+            salary={store.salary}
+            extraIncomes={store.extraIncomes}
+            budget={store.budget}
+            customCategories={store.customCategories}
+            currentDate={store.currentDate}
+            onSaveSalary={store.saveSalary}
+            onDeleteSalary={store.deleteSalary}
+            onAddExtraIncome={store.addExtraIncome}
+            onUpdateExtraIncome={store.updateExtraIncome}
+            onDeleteExtraIncome={store.deleteExtraIncome}
+            onSaveBudget={store.setBudget}
+          />
+        </TabsContent>
 
-        {/* FAB */}
-        <FloatingAddButton onClick={handleFabClick} label="Novo gasto" />
+        <TabsContent value="calendar" className="mt-0">
+          <FinancialCalendar
+            expenses={store.expenses}
+            customCategories={store.customCategories}
+            currentDate={store.currentDate}
+            onAdd={store.addExpense}
+            onUpdate={store.updateExpense}
+            onDelete={store.deleteExpense}
+            onAddCategory={store.addCustomCategory}
+          />
+        </TabsContent>
+      </motion.div>
+          </AnimatePresence >
+        </Tabs >
 
-        {/* 🧠 Assistente */}
-        <AssistantDrawer
-          baseDate={store.currentDate}
-          expenses={store.expenses}
-          budget={store.budget}
-          monthBalance={store.monthBalance}
-          onAddExpense={(e) =>
-            store.addExpense({
-              date: e.date,
-              description: e.description,
-              category: e.category,
-              amount: e.amount,
-              status: e.status,
-            })
+  {/* FAB */ }
+  < FloatingAddButton onClick = { handleFabClick } label = "Novo gasto" />
+
+    {/* 🧠 Assistente */ }
+    < AssistantDrawer
+baseDate = { store.currentDate }
+expenses = { store.expenses }
+budget = { store.budget }
+monthBalance = { store.monthBalance }
+onAddExpense = {(e) =>
+store.addExpense({
+  date: e.date,
+  description: e.description,
+  category: e.category,
+  amount: e.amount,
+  status: e.status,
+})
           }
         />
-      </div>
-    </PageShell>
+      </div >
+  {/* 🧠 Assistente (versão do zero) */ }
+  < AssistantDrawer
+baseDate = { store.currentDate }
+onAddExpense = {(e) => store.addExpense(e)}
+      />
+799c190cc64ca76e792a1475345bb4c5400591f1
+    </PageShell >
   );
 };
 
