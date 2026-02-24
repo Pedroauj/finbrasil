@@ -400,8 +400,6 @@ export function ExpenseTable({
             currentDate={currentDate}
             categories={allCategories}
             accounts={accounts}
-            // 👇 vai precisar de suporte no ExpenseForm (veja abaixo)
-            defaultStatus={defaultStatus}
             onSubmit={(data) => {
               if (editingExpense) onUpdate(editingExpense.id, data);
               else onAdd(data);
