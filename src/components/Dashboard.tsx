@@ -45,9 +45,9 @@ interface DashboardProps {
 }
 
 const glassCard =
-  "rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl " +
-  "shadow-2xl shadow-emerald-500/5 transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[2px] hover:shadow-emerald-500/10";
+  "rounded-3xl border border-border/50 bg-card/80 backdrop-blur-xl " +
+  "shadow-2xl shadow-primary/5 transition-all duration-300 will-change-transform " +
+  "hover:-translate-y-[2px] hover:shadow-primary/10";
 
 export function Dashboard({
   expenses,
@@ -114,27 +114,24 @@ export function Dashboard({
 
   return (
     <div className="space-y-6">
-      {/* Saldo Acumulado */}
       <FadeIn>
         <CashBalance balance={monthBalance} />
       </FadeIn>
 
-      {/* Alertas de Cartão de Crédito */}
       <FadeIn delay={0.05}>
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </FadeIn>
 
-      {/* Summary Cards */}
       <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StaggerItem>
           <Card className={glassCard}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Total Gasto
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-white/90">
+                  <p className="mt-1 text-2xl font-bold text-foreground/90">
                     {formatCurrency(totalSpent)}
                   </p>
 
@@ -159,8 +156,8 @@ export function Dashboard({
                   )}
                 </div>
 
-                <div className="rounded-2xl bg-emerald-500/15 ring-1 ring-emerald-400/20 p-3.5">
-                  <DollarSign className="h-6 w-6 text-emerald-200" />
+                <div className="rounded-2xl bg-primary/15 ring-1 ring-primary/20 p-3.5">
+                  <DollarSign className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
@@ -172,7 +169,7 @@ export function Dashboard({
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Orçamento Restante
                   </p>
                   <p className={`mt-1 text-2xl font-bold ${statusColor}`}>
@@ -187,7 +184,7 @@ export function Dashboard({
                       ? "bg-destructive/10 ring-destructive/20"
                       : nearBudget
                         ? "bg-[hsl(var(--warning))]/10 ring-[hsl(var(--warning))]/20"
-                        : "bg-emerald-500/10 ring-emerald-400/20",
+                        : "bg-[hsl(var(--success))]/10 ring-[hsl(var(--success))]/20",
                   ].join(" ")}
                 >
                   {overBudget ? (
@@ -205,12 +202,12 @@ export function Dashboard({
 
               {budget.total > 0 && (
                 <div className="mt-4">
-                  <div className="mb-1.5 flex justify-between text-xs text-white/60">
+                  <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
                     <span>{percentUsed.toFixed(0)}% usado</span>
                     <span>{formatCurrency(budget.total)}</span>
                   </div>
 
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
                       style={{ width: `${Math.min(percentUsed, 100)}%` }}
@@ -227,11 +224,11 @@ export function Dashboard({
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Nº de Gastos
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-white/90">{expenses.length}</p>
-                  <p className="mt-2 text-xs text-white/60">
+                  <p className="mt-1 text-2xl font-bold text-foreground/90">{expenses.length}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Média:{" "}
                     {expenses.length > 0
                       ? formatCurrency(totalSpent / expenses.length)
@@ -239,8 +236,8 @@ export function Dashboard({
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-cyan-500/10 ring-1 ring-cyan-300/20 p-3.5">
-                  <Target className="h-6 w-6 text-cyan-200" />
+                <div className="rounded-2xl bg-accent/10 ring-1 ring-accent/20 p-3.5">
+                  <Target className="h-6 w-6 text-accent" />
                 </div>
               </div>
             </CardContent>
@@ -248,7 +245,6 @@ export function Dashboard({
         </StaggerItem>
       </StaggerContainer>
 
-      {/* Alert Orçamento */}
       {(overBudget || nearBudget) && budget.total > 0 && (
         <FadeIn>
           <div
@@ -269,18 +265,17 @@ export function Dashboard({
         </FadeIn>
       )}
 
-      {/* Charts */}
       <StaggerContainer staggerDelay={0.12} className="grid gap-6 lg:grid-cols-2">
         <StaggerItem>
           <Card className={glassCard}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-white/90">
+              <CardTitle className="text-lg text-foreground/90">
                 Gastos por Categoria
               </CardTitle>
             </CardHeader>
             <CardContent>
               {categoryData.length === 0 ? (
-                <p className="py-12 text-center text-white/60">Sem dados para exibir</p>
+                <p className="py-12 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
                 <div className="flex flex-col items-center gap-4 sm:flex-row">
                   <ResponsiveContainer width={200} height={200}>
@@ -309,8 +304,8 @@ export function Dashboard({
                           className="h-3 w-3 rounded-full"
                           style={{ backgroundColor: d.color }}
                         />
-                        <span className="text-white/70">{d.name}</span>
-                        <span className="ml-auto font-semibold text-white/90">
+                        <span className="text-muted-foreground">{d.name}</span>
+                        <span className="ml-auto font-semibold text-foreground/90">
                           {formatCurrency(d.value)}
                         </span>
                       </div>
@@ -325,28 +320,28 @@ export function Dashboard({
         <StaggerItem>
           <Card className={glassCard}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-white/90">
+              <CardTitle className="text-lg text-foreground/90">
                 Gastos por Semana
               </CardTitle>
             </CardHeader>
             <CardContent>
               {weeklyData.every((w) => w.total === 0) ? (
-                <p className="py-12 text-center text-white/60">Sem dados para exibir</p>
+                <p className="py-12 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={weeklyData}>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      stroke="rgba(255,255,255,0.10)"
+                      className="stroke-border/30"
                     />
                     <XAxis
                       dataKey="name"
                       tick={{ fontSize: 12 }}
-                      stroke="rgba(255,255,255,0.55)"
+                      className="text-muted-foreground"
                     />
                     <YAxis
                       tick={{ fontSize: 12 }}
-                      stroke="rgba(255,255,255,0.55)"
+                      className="text-muted-foreground"
                       tickFormatter={(v) => `R$${v}`}
                     />
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
