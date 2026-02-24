@@ -1,5 +1,4 @@
 import * as React from "react";
-import { motion } from "framer-motion";
 import { useExpenseStore } from "@/hooks/useExpenseStore";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -49,11 +48,6 @@ export default function Index() {
   const [assistantOpen, setAssistantOpen] = React.useState(false);
   const [tab, setTab] = React.useState<TabValue>("dashboard");
 
-  const activeIndex = React.useMemo(
-    () => TAB_ITEMS.findIndex((t) => t.value === tab),
-    [tab]
-  );
-
   const allCategories = React.useMemo(
     () => [...DEFAULT_CATEGORIES, ...store.customCategories],
     [store.customCategories]
@@ -94,14 +88,17 @@ export default function Index() {
     >
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as TabValue)} className="space-y-6">
-        {/* Tabs com indicador deslizante neon */}
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setTab(v as TabValue)}
+        className="space-y-6"
+      >
         <div className="relative">
           <TabsList
             className="
-              relative grid w-full grid-cols-3 sm:grid-cols-6
-              rounded-2xl border border-border/30
-              bg-muted/50 backdrop-blur-xl
+              grid w-full grid-cols-3 sm:grid-cols-6
+              rounded-2xl border border-white/10
+              bg-background/40 backdrop-blur-xl
               p-1
               lg:w-auto lg:inline-grid
             "
@@ -111,27 +108,19 @@ export default function Index() {
                 key={value}
                 value={value}
                 className="
-                  relative gap-2 rounded-xl
+                  gap-2 rounded-xl px-3 py-2
                   text-muted-foreground
                   transition-all
-                  data-[state=active]:text-primary
-                  data-[state=active]:bg-transparent
-                  hover:text-foreground
+                  hover:text-foreground hover:bg-white/5
+                  data-[state=active]:bg-emerald-500/10
+                  data-[state=active]:text-emerald-300
+                  data-[state=active]:shadow-[0_0_0_1px_rgba(16,185,129,0.25)]
                 "
               >
                 <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{label}</span>
               </TabsTrigger>
             ))}
-
-            {/* Indicador deslizante neon */}
-            <motion.div
-              className="pointer-events-none absolute bottom-0 left-0 h-[2px] w-[calc(100%/3)] sm:w-[calc(100%/6)] bg-primary/80"
-              animate={{
-                x: `calc(${activeIndex} * 100%)`,
-              }}
-              transition={{ type: "spring", stiffness: 380, damping: 36 }}
-            />
           </TabsList>
         </div>
 
