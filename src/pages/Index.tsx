@@ -97,7 +97,7 @@ const Index = () => {
       }
     >
       {/* ✅ Painel mais largo / menos margem lateral */}
-      <div className="mx-auto w-full max-w-[1400px] px-2 sm:px-4 lg:px-6 py-6">
+      <div className="py-0">
         {/* Header interno */}
         <header className="mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
           <div className="flex items-center gap-3">
