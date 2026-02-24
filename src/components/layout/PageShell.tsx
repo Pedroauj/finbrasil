@@ -18,14 +18,16 @@ export function PageShell({ children, title, subtitle, rightSlot }: PageShellPro
         {(title || subtitle || rightSlot) && (
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              {title && (
-                <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-              )}
-              {subtitle && (
-                <p className="mt-1 text-sm text-white/60">{subtitle}</p>
-              )}
+              {title && <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>}
+              {subtitle && <p className="mt-1 text-sm text-white/60">{subtitle}</p>}
             </div>
-            {rightSlot && <div className="flex items-center gap-2">{rightSlot}</div>}
+
+            {/* ✅ Ajuste: rightSlot com cara de toolbar e quebra melhor no mobile */}
+            {rightSlot && (
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-start sm:justify-end">
+                {rightSlot}
+              </div>
+            )}
           </div>
         )}
 
