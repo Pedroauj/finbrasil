@@ -13,7 +13,7 @@ export function PageShell({ children, title, subtitle, rightSlot }: PageShellPro
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <BackgroundFX />
 
-      {/* ✅ Container geral mais largo + menos margem lateral */}
+      {/* Container geral mais largo + menos margem lateral */}
       <div className="relative mx-auto min-h-screen w-full max-w-[1400px] px-2 sm:px-4 lg:px-6 py-6">
         {(title || subtitle || rightSlot) && (
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -27,14 +27,26 @@ export function PageShell({ children, title, subtitle, rightSlot }: PageShellPro
           </div>
         )}
 
-        {/* ✅ Card/painel principal (premium/glass) */}
+        {/* Painel principal (glass + glow animado) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl shadow-emerald-500/5 backdrop-blur-xl sm:p-6"
+          className="relative rounded-3xl p-[1px]"
         >
-          {children}
+          {/* Glow “borda viva” */}
+          <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-70 blur-xl">
+            <motion.div
+              className="absolute inset-0 rounded-3xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(16,185,129,0.55),rgba(34,211,238,0.35),rgba(16,185,129,0.55))]"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+
+          {/* Card */}
+          <div className="relative rounded-3xl border border-white/10 bg-white/5 shadow-2xl shadow-emerald-500/5 backdrop-blur-xl">
+            <div className="p-4 sm:p-6">{children}</div>
+          </div>
         </motion.div>
       </div>
     </div>
