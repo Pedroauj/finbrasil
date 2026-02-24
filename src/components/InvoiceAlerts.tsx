@@ -89,8 +89,8 @@ export function InvoiceAlerts({
           key={alert.id}
           variant={alert.type as any}
           className={[
-            "border border-white/10 bg-white/5 backdrop-blur-xl",
-            "shadow-sm shadow-black/20",
+            "border border-border/50 bg-card/80 backdrop-blur-xl",
+            "shadow-sm",
             "rounded-2xl",
             "pl-4",
           ].join(" ")}

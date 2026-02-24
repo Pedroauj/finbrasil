@@ -523,13 +523,15 @@ export function ExpenseTable({
             categories={allCategories}
             accounts={accounts}
             defaultStatus={defaultStatus}
-            onSubmit={(data) => {
-              if (editingExpense) onUpdate(editingExpense.id, data);
-              else onAdd(data);
-              closeDialog();
-            }}
-            onCancel={closeDialog}
-            onAddCategory={onAddCategory}
+
+489e63fe15ed92c5982d1413edd36868aab287f5
+          onSubmit={(data) => {
+            if (editingExpense) onUpdate(editingExpense.id, data);
+            else onAdd(data);
+            closeDialog();
+          }}
+          onCancel={closeDialog}
+          onAddCategory={onAddCategory}
           />
         </DialogContent>
       </Dialog>
