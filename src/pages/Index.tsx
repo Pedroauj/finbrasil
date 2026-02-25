@@ -91,7 +91,9 @@ function SidebarNav({
                 <Icon
                   className={[
                     "h-4 w-4 transition",
-                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground",
                   ].join(" ")}
                 />
                 <span className="flex-1 text-left">{label}</span>
@@ -285,12 +287,12 @@ export default function Index() {
         <div className="flex flex-1 flex-col">
           {/* Topbar */}
           <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.25)]">
-            <div className="flex items-center gap-3 px-4 py-2.5">
+            <div className="flex items-center gap-3 px-4 py-3">
               {/* Mobile menu */}
               <div className="xl:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
+                    <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl">
                       <Menu className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
@@ -300,23 +302,20 @@ export default function Index() {
                 </Sheet>
               </div>
 
+              {/* ✅ Título da aba (sem "FinBrasil — Gestão Financeira") */}
               <div className="flex-1">
-                <div className="text-sm font-semibold">{pageTitle}</div>
-                <div className="text-xs text-muted-foreground">
-                  FinBrasil — Gestão Financeira
-                </div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  {pageTitle}
+                </h1>
               </div>
 
               {/* Right actions */}
               <div className="flex items-center gap-2">
-                <MonthNavigator
-                  currentDate={store.currentDate}
-                  onNavigate={store.navigateMonth}
-                />
+                <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
 
                 <Button
                   variant="outline"
-                  className="gap-2 rounded-xl h-10"
+                  className="h-10 gap-2 rounded-xl"
                   onClick={() => setAssistantOpen(true)}
                 >
                   <Bot className="h-4 w-4" />
@@ -325,11 +324,7 @@ export default function Index() {
 
                 <ModeToggle />
 
-                <Button
-                  variant="outline"
-                  className="gap-2 rounded-xl h-10"
-                  onClick={signOut}
-                >
+                <Button variant="outline" className="h-10 gap-2 rounded-xl" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>
@@ -338,7 +333,7 @@ export default function Index() {
           </header>
 
           {/* Content */}
-          <main className="flex-1 px-4 sm:px-5 py-5">{Content}</main>
+          <main className="flex-1 px-4 py-5 sm:px-5">{Content}</main>
         </div>
       </div>
 
