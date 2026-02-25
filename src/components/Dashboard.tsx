@@ -50,17 +50,18 @@ interface DashboardProps {
 }
 
 /**
- * Glass CLEAN (sem “manchado”):
- * - Fundo mais opaco (não deixa o gradiente do background aparecer através)
- * - Sem gradiente/radial overlay
+ * Card padrão SaaS premium:
+ * - neutro e consistente em light/dark (token-based)
+ * - borda sutil + blur discreto
+ * - hover elegante (sem neon)
  */
-const glassCard =
+const appCard =
   "relative overflow-hidden rounded-3xl " +
-  "border border-white/10 " +
-  "bg-zinc-950/80 backdrop-blur-md " +
-  "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)] " +
+  "border border-border/60 " +
+  "bg-card/70 backdrop-blur " +
+  "shadow-sm " +
   "transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/10";
+  "hover:-translate-y-[2px] hover:shadow-md";
 
 export function Dashboard({
   expenses,
@@ -140,14 +141,14 @@ export function Dashboard({
       {/* Summary Cards */}
       <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardContent className="relative z-10 p-6">
+          <Card className={appCard}>
+            <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Total Gasto
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-white/90">
+                  <p className="mt-1 text-2xl font-bold text-foreground">
                     {formatCurrency(totalSpent)}
                   </p>
 
@@ -172,9 +173,9 @@ export function Dashboard({
                   )}
                 </div>
 
-                <div className="relative overflow-hidden rounded-2xl bg-emerald-500/15 ring-1 ring-emerald-400/20 p-3.5">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
-                  <DollarSign className="relative z-10 h-6 w-6 text-emerald-200" />
+                <div className="relative overflow-hidden rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3.5">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
+                  <DollarSign className="relative z-10 h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
@@ -182,11 +183,11 @@ export function Dashboard({
         </StaggerItem>
 
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardContent className="relative z-10 p-6">
+          <Card className={appCard}>
+            <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Orçamento Restante
                   </p>
                   <p className={`mt-1 text-2xl font-bold ${statusColor}`}>
@@ -198,20 +199,20 @@ export function Dashboard({
                   className={[
                     "relative overflow-hidden rounded-2xl p-3.5 ring-1",
                     overBudget
-                      ? "bg-destructive/10 ring-destructive/20"
+                      ? "bg-destructive/10 ring-destructive/15"
                       : nearBudget
-                        ? "bg-[hsl(var(--warning))]/10 ring-[hsl(var(--warning))]/20"
-                        : "bg-emerald-500/10 ring-emerald-400/20",
+                        ? "bg-[hsl(var(--warning))]/10 ring-[hsl(var(--warning))]/15"
+                        : "bg-primary/10 ring-primary/15",
                   ].join(" ")}
                 >
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.16),transparent_45%)]" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
                   {overBudget ? (
                     <AlertTriangle className="relative z-10 h-6 w-6 text-destructive" />
                   ) : (
                     <Wallet
                       className="relative z-10 h-6 w-6"
                       style={{
-                        color: nearBudget ? "hsl(var(--warning))" : "hsl(var(--success))",
+                        color: nearBudget ? "hsl(var(--warning))" : "hsl(var(--primary))",
                       }}
                     />
                   )}
@@ -220,12 +221,12 @@ export function Dashboard({
 
               {budget.total > 0 && (
                 <div className="mt-4">
-                  <div className="mb-1.5 flex justify-between text-xs text-white/60">
+                  <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
                     <span>{percentUsed.toFixed(0)}% usado</span>
                     <span>{formatCurrency(budget.total)}</span>
                   </div>
 
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/60">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
                       style={{ width: `${Math.min(percentUsed, 100)}%` }}
@@ -238,15 +239,17 @@ export function Dashboard({
         </StaggerItem>
 
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardContent className="relative z-10 p-6">
+          <Card className={appCard}>
+            <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Nº de Gastos
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-white/90">{expenses.length}</p>
-                  <p className="mt-2 text-xs text-white/60">
+                  <p className="mt-1 text-2xl font-bold text-foreground">
+                    {expenses.length}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Média:{" "}
                     {expenses.length > 0
                       ? formatCurrency(totalSpent / expenses.length)
@@ -254,9 +257,9 @@ export function Dashboard({
                   </p>
                 </div>
 
-                <div className="relative overflow-hidden rounded-2xl bg-cyan-500/10 ring-1 ring-cyan-300/20 p-3.5">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.16),transparent_45%)]" />
-                  <Target className="relative z-10 h-6 w-6 text-cyan-200" />
+                <div className="relative overflow-hidden rounded-2xl bg-muted/50 ring-1 ring-border/60 p-3.5">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
+                  <Target className="relative z-10 h-6 w-6 text-foreground/80" />
                 </div>
               </div>
             </CardContent>
@@ -269,7 +272,7 @@ export function Dashboard({
         <FadeIn>
           <div
             className={[
-              "flex items-center gap-3 rounded-2xl border p-4 backdrop-blur-xl",
+              "flex items-center gap-3 rounded-2xl border p-4 backdrop-blur",
               overBudget
                 ? "border-destructive/20 bg-destructive/10 text-destructive"
                 : "border-[hsl(var(--warning))]/20 bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
@@ -288,13 +291,17 @@ export function Dashboard({
       {/* Charts */}
       <StaggerContainer staggerDelay={0.12} className="grid gap-6 lg:grid-cols-2">
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardHeader className="relative z-10 pb-2">
-              <CardTitle className="text-lg text-white/90">Gastos por Categoria</CardTitle>
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-foreground">
+                Gastos por Categoria
+              </CardTitle>
             </CardHeader>
-            <CardContent className="relative z-10">
+            <CardContent>
               {categoryData.length === 0 ? (
-                <p className="py-12 text-center text-white/60">Sem dados para exibir</p>
+                <p className="py-12 text-center text-muted-foreground">
+                  Sem dados para exibir
+                </p>
               ) : (
                 <div className="flex flex-col items-center gap-4 sm:flex-row">
                   <ResponsiveContainer width={200} height={200}>
@@ -319,9 +326,12 @@ export function Dashboard({
                   <div className="flex w-full flex-col gap-2.5 text-sm">
                     {categoryData.map((d) => (
                       <div key={d.name} className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: d.color }} />
-                        <span className="text-white/70">{d.name}</span>
-                        <span className="ml-auto font-semibold text-white/90">
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: d.color }}
+                        />
+                        <span className="text-muted-foreground">{d.name}</span>
+                        <span className="ml-auto font-semibold text-foreground">
                           {formatCurrency(d.value)}
                         </span>
                       </div>
@@ -334,21 +344,29 @@ export function Dashboard({
         </StaggerItem>
 
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardHeader className="relative z-10 pb-2">
-              <CardTitle className="text-lg text-white/90">Gastos por Semana</CardTitle>
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-foreground">
+                Gastos por Semana
+              </CardTitle>
             </CardHeader>
-            <CardContent className="relative z-10">
+            <CardContent>
               {weeklyData.every((w) => w.total === 0) ? (
-                <p className="py-12 text-center text-white/60">Sem dados para exibir</p>
+                <p className="py-12 text-center text-muted-foreground">
+                  Sem dados para exibir
+                </p>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={weeklyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.10)" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="rgba(255,255,255,0.55)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                    />
                     <YAxis
                       tick={{ fontSize: 12 }}
-                      stroke="rgba(255,255,255,0.55)"
+                      stroke="hsl(var(--muted-foreground))"
                       tickFormatter={(v) => `R$${v}`}
                     />
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
