@@ -58,9 +58,7 @@ function SidebarNav({
       <div className="p-4">
         <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur px-4 py-4 shadow-sm">
           <div className="text-base font-semibold leading-tight">FinBrasil</div>
-
           <div className="mt-1 text-xs text-muted-foreground">Gestão Financeira</div>
-
           <div className="mt-2 text-xs text-muted-foreground opacity-80 leading-relaxed">
             Controle total do seu dinheiro
           </div>
@@ -147,7 +145,6 @@ export default function Index() {
 
   const onNewExpense = React.useCallback(() => {
     window.dispatchEvent(new Event("open-add-expense"));
-    // se quiser: setNav("expenses"); (eu não forcei pra não “pular tela”)
   }, []);
 
   const Content = React.useMemo(() => {
@@ -297,7 +294,7 @@ export default function Index() {
                 </Sheet>
               </div>
 
-              {/* ✅ Título da aba (sem "FinBrasil — Gestão Financeira") */}
+              {/* Título da aba */}
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                   {pageTitle}
@@ -306,7 +303,10 @@ export default function Index() {
 
               {/* Right actions */}
               <div className="flex items-center gap-2">
-                <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
+                <MonthNavigator
+                  currentDate={store.currentDate}
+                  onNavigate={store.navigateMonth}
+                />
 
                 <Button
                   variant="outline"
@@ -319,7 +319,11 @@ export default function Index() {
 
                 <ModeToggle />
 
-                <Button variant="outline" className="h-10 gap-2 rounded-xl" onClick={signOut}>
+                <Button
+                  variant="outline"
+                  className="h-10 gap-2 rounded-xl"
+                  onClick={signOut}
+                >
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>
@@ -332,7 +336,7 @@ export default function Index() {
         </div>
       </div>
 
-      {/* ✅ FAB apenas no mobile (evita duplicar com o botão da sidebar) */}
+      {/* FAB apenas no mobile (evita duplicar com o botão da sidebar) */}
       <div className="xl:hidden">
         <FloatingAddButton onClick={onNewExpense} />
       </div>
