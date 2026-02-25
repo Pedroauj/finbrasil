@@ -51,20 +51,17 @@ function SidebarNav({
 }) {
   return (
     <div className="flex h-full flex-col">
-      {/* Brand (mais SaaS/premium) */}
+      {/* Brand */}
       <div className="p-4">
-        <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 px-3 py-3 shadow-sm">
-          <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/15" />
-          <div className="leading-tight">
-            <div className="text-sm font-semibold">FinBrasil</div>
-            <div className="text-xs text-muted-foreground">Gestão Financeira</div>
-          </div>
+        <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur px-4 py-3 shadow-sm">
+          <div className="text-sm font-semibold leading-tight">FinBrasil</div>
+          <div className="text-xs text-muted-foreground">Gestão Financeira</div>
         </div>
       </div>
 
       {/* Nav */}
       <div className="px-3">
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
             const isActive = active === value;
             return (
@@ -72,7 +69,7 @@ function SidebarNav({
                 key={value}
                 onClick={() => onNavigate(value)}
                 className={[
-                  "group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  "group flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-sm transition",
                   "hover:bg-muted/50",
                   isActive ? "bg-primary/10 text-foreground" : "text-muted-foreground",
                 ].join(" ")}
@@ -80,9 +77,7 @@ function SidebarNav({
                 <Icon
                   className={[
                     "h-4 w-4 transition",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground",
+                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
                   ].join(" ")}
                 />
                 <span className="flex-1 text-left">{label}</span>
@@ -92,7 +87,7 @@ function SidebarNav({
         </div>
       </div>
 
-      {/* Bottom spacer */}
+      {/* Bottom */}
       <div className="mt-auto p-4">
         <div className="rounded-2xl border border-border/50 bg-card/40 px-4 py-3 text-xs text-muted-foreground">
           Controle total do seu dinheiro
@@ -123,22 +118,20 @@ export default function Index() {
     switch (nav) {
       case "dashboard":
         return (
-          <div className="space-y-6">
-            <Dashboard
-              expenses={store.expenses}
-              budget={store.budget}
-              prevMonthExpenses={store.prevMonthExpenses}
-              currentDate={store.currentDate}
-              cards={store.creditCards}
-              invoices={store.invoices}
-              monthBalance={store.monthBalance}
-            />
-          </div>
+          <Dashboard
+            expenses={store.expenses}
+            budget={store.budget}
+            prevMonthExpenses={store.prevMonthExpenses}
+            currentDate={store.currentDate}
+            cards={store.creditCards}
+            invoices={store.invoices}
+            monthBalance={store.monthBalance}
+          />
         );
 
       case "expenses":
         return (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <ExpenseTable
               expenses={store.expenses}
               customCategories={store.customCategories}
@@ -167,7 +160,7 @@ export default function Index() {
 
       case "cards":
         return (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <CreditCardManager
               cards={store.creditCards}
               invoices={store.invoices}
@@ -186,7 +179,7 @@ export default function Index() {
 
       case "recurring":
         return (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <RecurringExpenses
               recurringExpenses={store.recurringExpenses}
               customCategories={store.customCategories}
@@ -200,7 +193,7 @@ export default function Index() {
 
       case "calendar":
         return (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <FinancialCalendar
               expenses={store.expenses}
               customCategories={store.customCategories}
@@ -215,7 +208,7 @@ export default function Index() {
 
       case "accounts":
         return (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <AccountManager
               accounts={store.financialAccounts}
               transfers={store.accountTransfers}
@@ -238,27 +231,27 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* background premium bem sutil */}
+      {/* background premium sutil */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
 
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
-        {/* Sidebar desktop (sem linha dura) */}
+        {/* Sidebar desktop */}
         <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.25)]">
           <SidebarNav active={nav} onNavigate={setNav} />
         </aside>
 
         {/* Main */}
         <div className="flex flex-1 flex-col">
-          {/* Topbar (sem border-b branco, só hairline shadow) */}
+          {/* Topbar */}
           <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.25)]">
-            <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex items-center gap-3 px-4 py-2.5">
               {/* Mobile menu */}
               <div className="xl:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-xl">
+                    <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
                       <Menu className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
@@ -271,7 +264,7 @@ export default function Index() {
               <div className="flex-1">
                 <div className="text-sm font-semibold">{pageTitle}</div>
                 <div className="text-xs text-muted-foreground">
-                  FinBrasil · Gestão Financeira
+                  FinBrasil — Gestão Financeira
                 </div>
               </div>
 
@@ -284,10 +277,10 @@ export default function Index() {
 
                 <Button
                   variant="outline"
-                  className="gap-2 rounded-xl"
+                  className="gap-2 rounded-xl h-10"
                   onClick={() => setAssistantOpen(true)}
                 >
-                  <Bot className="h-4 w-4 text-primary" />
+                  <Bot className="h-4 w-4" />
                   <span className="hidden sm:inline">Assistente</span>
                 </Button>
 
@@ -295,7 +288,7 @@ export default function Index() {
 
                 <Button
                   variant="outline"
-                  className="gap-2 rounded-xl"
+                  className="gap-2 rounded-xl h-10"
                   onClick={signOut}
                 >
                   <LogOut className="h-4 w-4" />
@@ -306,8 +299,8 @@ export default function Index() {
           </header>
 
           {/* Content */}
-          <main className="flex-1 px-4 py-6">
-            <div className="mx-auto w-full max-w-[1320px]">{Content}</div>
+          <main className="flex-1 px-4 sm:px-5 py-5">
+            {Content}
           </main>
         </div>
       </div>
