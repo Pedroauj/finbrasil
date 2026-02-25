@@ -33,7 +33,7 @@ export function PageShell({ children, title, subtitle, rightSlot }: PageShellPro
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="rounded-3xl border border-border/50 bg-card/80 shadow-2xl shadow-primary/5 backdrop-blur-xl"
+          className="rounded-3xl border border-border/60 bg-card/70 shadow-sm backdrop-blur"
         >
           <div className="p-4 sm:p-6">{children}</div>
         </motion.div>
@@ -45,28 +45,8 @@ export function PageShell({ children, title, subtitle, rightSlot }: PageShellPro
 function BackgroundFX() {
   return (
     <>
-      {/* Dark mode background */}
-      <div className="pointer-events-none absolute inset-0 dark:bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.10),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(34,211,238,0.08),transparent_50%),linear-gradient(135deg,#0b1220_0%,#060a14_45%,#04140f_100%)] bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.06),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(34,211,238,0.04),transparent_50%),linear-gradient(135deg,hsl(220_20%_97%)_0%,hsl(220_20%_95%)_100%)]" />
-
-      {/* Grid */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.06] dark:opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.08)_1px,transparent_1px)] dark:[background-image:linear-gradient(to_right,rgba(255,255,255,0.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.25)_1px,transparent_1px)] [background-size:72px_72px]" />
-
-      {/* Ambient lights */}
-      <motion.div
-        className="pointer-events-none absolute -inset-x-32 top-[10%] h-[220px] rounded-[999px] bg-emerald-500/5 dark:bg-emerald-500/10 blur-2xl transform-gpu"
-        animate={{ x: [-120, 120, -120] }}
-        transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
-      />
-      <motion.div
-        className="pointer-events-none absolute -inset-x-32 top-[34%] h-[260px] rounded-[999px] bg-cyan-500/3 dark:bg-cyan-500/8 blur-2xl transform-gpu"
-        animate={{ x: [140, -140, 140] }}
-        transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
-      />
-      <motion.div
-        className="pointer-events-none absolute -inset-x-32 top-[60%] h-[240px] rounded-[999px] bg-emerald-500/3 dark:bg-emerald-500/7 blur-2xl transform-gpu"
-        animate={{ x: [-90, 90, -90] }}
-        transition={{ duration: 38, repeat: Infinity, ease: "linear" }}
-      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.10),transparent_55%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.08),transparent_50%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,rgba(0,0,0,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.08)_1px,transparent_1px)] dark:[background-image:linear-gradient(to_right,rgba(255,255,255,0.22)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.22)_1px,transparent_1px)] [background-size:72px_72px]" />
     </>
   );
 }
