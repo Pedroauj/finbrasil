@@ -20,10 +20,10 @@ export function FloatingAddButton({
       <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
         <Button
           onClick={onClick}
-          className="group relative h-12 rounded-full px-4 shadow-md"
+          className="group relative h-12 rounded-full px-4 shadow-[0_1px_0_hsl(var(--border)/0.35),0_14px_34px_-24px_rgba(0,0,0,0.55)]"
         >
-          {/* Glow sutil (premium) */}
-          <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 transition group-hover:opacity-100" />
+          {/* Glow bem sutil */}
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/18 blur-xl opacity-0 transition group-hover:opacity-100" />
 
           <span className="relative flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 ring-1 ring-primary/15">
