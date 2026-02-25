@@ -54,7 +54,18 @@ interface DashboardProps {
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
-  "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
+  "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md " +
+  // ✅ garante altura igual dentro do grid
+  "h-full flex flex-col";
+
+const summaryContent = "p-5 h-full flex flex-col";
+const summaryTopRow = "flex items-start justify-between gap-4";
+const summaryMetaSlot = "mt-2 min-h-[18px]"; // ✅ reserva espaço pro “vs mês anterior”
+const summaryBottomSlot = "mt-3.5 min-h-[44px]"; // ✅ reserva espaço pro progresso do orçamento
+
+// ✅ altura padrão pros gráficos (evita coluna direita maior)
+const chartBox = "rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm";
+const chartHeight = 240;
 
 function IconBadge({
   variant = "primary",
@@ -130,11 +141,11 @@ export function Dashboard({
     return cumulativeExpensesDaily({ expenses: expensesThisMonth, baseDate: currentDate });
   }, [expensesThisMonth, currentDate]);
 
-  // ✅ NOVO: Receitas vs Despesas (mês atual)
+  // ✅ Receitas vs Despesas (mês atual)
   const incomeVsExpenseData = useMemo(() => {
     const income = Number(monthBalance?.income || 0);
-    // Despesa = gastos do mês + faturas pagas (pra não "sumir" gasto de cartão pago)
-    const expense = Number(monthBalance?.expenses || 0) + Number(monthBalance?.paidInvoices || 0);
+    const expense =
+      Number(monthBalance?.expenses || 0) + Number(monthBalance?.paidInvoices || 0);
 
     return [
       { name: "Receitas", total: income },
@@ -142,7 +153,7 @@ export function Dashboard({
     ];
   }, [monthBalance]);
 
-  // ✅ NOVO: Top 10 gastos do mês (por amount)
+  // ✅ Top 10 gastos do mês
   const top10Expenses = useMemo(() => {
     return topExpenses(expensesThisMonth, 10);
   }, [expensesThisMonth]);
@@ -185,49 +196,56 @@ export function Dashboard({
       </FadeIn>
 
       {/* Summary */}
-      <StaggerContainer className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <StaggerItem>
+      <StaggerContainer className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerItem className="h-full">
           <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-4">
+            <CardContent className={summaryContent}>
+              <div className={summaryTopRow}>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Total gasto</p>
                   <p className="mt-1 text-2xl font-bold text-foreground">
                     {formatCurrency(totalSpent)}
                   </p>
 
-                  {prevTotal > 0 && (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs">
-                      {totalSpent > prevTotal ? (
-                        <TrendingUp className="h-3.5 w-3.5 text-destructive" />
-                      ) : (
-                        <TrendingDown className="h-3.5 w-3.5 text-[hsl(var(--success))]" />
-                      )}
-                      <span
-                        className={
-                          totalSpent > prevTotal
-                            ? "text-destructive"
-                            : "text-[hsl(var(--success))]"
-                        }
-                      >
-                        {changePct.toFixed(0)}% vs mês anterior
-                      </span>
-                    </div>
-                  )}
+                  <div className={summaryMetaSlot}>
+                    {prevTotal > 0 ? (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        {totalSpent > prevTotal ? (
+                          <TrendingUp className="h-3.5 w-3.5 text-destructive" />
+                        ) : (
+                          <TrendingDown className="h-3.5 w-3.5 text-[hsl(var(--success))]" />
+                        )}
+                        <span
+                          className={
+                            totalSpent > prevTotal
+                              ? "text-destructive"
+                              : "text-[hsl(var(--success))]"
+                          }
+                        >
+                          {changePct.toFixed(0)}% vs mês anterior
+                        </span>
+                      </div>
+                    ) : (
+                      <div /> // ✅ placeholder pra manter altura
+                    )}
+                  </div>
                 </div>
 
                 <IconBadge variant="primary">
                   <DollarSign className="h-6 w-6" />
                 </IconBadge>
               </div>
+
+              {/* ✅ slot fixo pra igualar alturas entre cards */}
+              <div className={summaryBottomSlot} />
             </CardContent>
           </Card>
         </StaggerItem>
 
-        <StaggerItem>
+        <StaggerItem className="h-full">
           <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-4">
+            <CardContent className={summaryContent}>
+              <div className={summaryTopRow}>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Orçamento restante</p>
                   <p className={`mt-1 text-2xl font-bold ${statusColor}`}>
@@ -236,48 +254,65 @@ export function Dashboard({
                 </div>
 
                 <IconBadge variant={overBudget ? "destructive" : nearBudget ? "warning" : "primary"}>
-                  {overBudget ? <AlertTriangle className="h-6 w-6" /> : <Wallet className="h-6 w-6" />}
+                  {overBudget ? (
+                    <AlertTriangle className="h-6 w-6" />
+                  ) : (
+                    <Wallet className="h-6 w-6" />
+                  )}
                 </IconBadge>
               </div>
 
-              {budget.total > 0 && (
-                <div className="mt-3.5">
-                  <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-                    <span>{percentUsed.toFixed(0)}% usado</span>
-                    <span>{formatCurrency(budget.total)}</span>
-                  </div>
+              {/* ✅ sempre reserva espaço do progresso (mesmo quando não tem orçamento) */}
+              <div className={summaryBottomSlot}>
+                {budget.total > 0 ? (
+                  <>
+                    <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
+                      <span>{percentUsed.toFixed(0)}% usado</span>
+                      <span>{formatCurrency(budget.total)}</span>
+                    </div>
 
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/45">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
-                      style={{ width: `${Math.min(percentUsed, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/45">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
+                        style={{ width: `${Math.min(percentUsed, 100)}%` }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div /> // ✅ placeholder
+                )}
+              </div>
             </CardContent>
           </Card>
         </StaggerItem>
 
-        <StaggerItem>
+        <StaggerItem className="h-full">
           <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-4">
+            <CardContent className={summaryContent}>
+              <div className={summaryTopRow}>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">Nº de gastos</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{expensesThisMonth.length}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Média:{" "}
-                    {expensesThisMonth.length > 0
-                      ? formatCurrency(totalSpent / expensesThisMonth.length)
-                      : "R$ 0,00"}
+                  <p className="mt-1 text-2xl font-bold text-foreground">
+                    {expensesThisMonth.length}
                   </p>
+
+                  <div className={summaryMetaSlot}>
+                    <p className="text-xs text-muted-foreground">
+                      Média:{" "}
+                      {expensesThisMonth.length > 0
+                        ? formatCurrency(totalSpent / expensesThisMonth.length)
+                        : "R$ 0,00"}
+                    </p>
+                  </div>
                 </div>
 
                 <IconBadge variant="muted">
                   <Target className="h-6 w-6" />
                 </IconBadge>
               </div>
+
+              {/* ✅ slot fixo pra igualar alturas entre cards */}
+              <div className={summaryBottomSlot} />
             </CardContent>
           </Card>
         </StaggerItem>
@@ -312,9 +347,9 @@ export function Dashboard({
       )}
 
       {/* Charts */}
-      <StaggerContainer staggerDelay={0.12} className="grid gap-4 lg:grid-cols-2">
+      <StaggerContainer staggerDelay={0.12} className="grid items-stretch gap-4 lg:grid-cols-2">
         {/* Gastos por categoria */}
-        <StaggerItem>
+        <StaggerItem className="h-full">
           <Card className={appCard}>
             <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
@@ -323,12 +358,12 @@ export function Dashboard({
               </div>
             </CardHeader>
 
-            <CardContent className="px-5 pb-5 pt-2">
+            <CardContent className="px-5 pb-5 pt-2 flex-1">
               {categoryData.length === 0 ? (
                 <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
                 <div className="flex flex-col items-center gap-4 sm:flex-row">
-                  <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
+                  <div className={chartBox}>
                     <ResponsiveContainer width={180} height={180}>
                       <PieChart>
                         <Pie
@@ -355,10 +390,7 @@ export function Dashboard({
                   <div className="flex w-full flex-col gap-2 text-sm">
                     {categoryData.slice(0, 7).map((d) => (
                       <div key={d.name} className="flex items-center gap-2">
-                        <div
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: d.color }}
-                        />
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
                         <span className="text-muted-foreground">{d.name}</span>
                         <span className="ml-auto font-semibold text-foreground">
                           {formatCurrency(d.value)}
@@ -378,7 +410,7 @@ export function Dashboard({
         </StaggerItem>
 
         {/* Gastos por semana */}
-        <StaggerItem>
+        <StaggerItem className="h-full">
           <Card className={appCard}>
             <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
@@ -387,12 +419,12 @@ export function Dashboard({
               </div>
             </CardHeader>
 
-            <CardContent className="px-5 pb-5 pt-2">
+            <CardContent className="px-5 pb-5 pt-2 flex-1">
               {weeklyData.every((w) => w.total === 0) ? (
                 <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
-                <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
-                  <ResponsiveContainer width="100%" height={220}>
+                <div className={chartBox}>
+                  <ResponsiveContainer width="100%" height={chartHeight}>
                     <BarChart data={weeklyData}>
                       <CartesianGrid
                         strokeDasharray="3 6"
@@ -427,7 +459,7 @@ export function Dashboard({
         </StaggerItem>
 
         {/* Status dos gastos */}
-        <StaggerItem>
+        <StaggerItem className="h-full">
           <Card className={appCard}>
             <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
@@ -436,12 +468,12 @@ export function Dashboard({
               </div>
             </CardHeader>
 
-            <CardContent className="px-5 pb-5 pt-2">
+            <CardContent className="px-5 pb-5 pt-2 flex-1">
               {statusData.every((s) => s.total === 0) ? (
                 <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
                 <div className="flex flex-col items-center gap-4 sm:flex-row">
-                  <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
+                  <div className={chartBox}>
                     <ResponsiveContainer width={180} height={180}>
                       <PieChart>
                         <Pie
@@ -491,7 +523,7 @@ export function Dashboard({
         </StaggerItem>
 
         {/* Gasto acumulado no mês */}
-        <StaggerItem>
+        <StaggerItem className="h-full">
           <Card className={appCard}>
             <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
@@ -500,12 +532,12 @@ export function Dashboard({
               </div>
             </CardHeader>
 
-            <CardContent className="px-5 pb-5 pt-2">
+            <CardContent className="px-5 pb-5 pt-2 flex-1">
               {cumulativeData.every((d) => d.total === 0) ? (
                 <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
-                <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
-                  <ResponsiveContainer width="100%" height={220}>
+                <div className={chartBox}>
+                  <ResponsiveContainer width="100%" height={chartHeight}>
                     <AreaChart data={cumulativeData}>
                       <CartesianGrid
                         strokeDasharray="3 6"
@@ -545,8 +577,8 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
-        {/* ✅ NOVO: Receitas vs Despesas */}
-        <StaggerItem>
+        {/* Receitas vs Despesas */}
+        <StaggerItem className="h-full">
           <Card className={appCard}>
             <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
@@ -555,12 +587,12 @@ export function Dashboard({
               </div>
             </CardHeader>
 
-            <CardContent className="px-5 pb-5 pt-2">
+            <CardContent className="px-5 pb-5 pt-2 flex-1">
               {incomeVsExpenseData.every((d) => d.total === 0) ? (
                 <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
-                <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
-                  <ResponsiveContainer width="100%" height={220}>
+                <div className={chartBox}>
+                  <ResponsiveContainer width="100%" height={chartHeight}>
                     <BarChart data={incomeVsExpenseData} barGap={10}>
                       <CartesianGrid
                         strokeDasharray="3 6"
@@ -594,8 +626,8 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
-        {/* ✅ NOVO: Top 10 gastos do mês */}
-        <StaggerItem>
+        {/* Top 10 gastos do mês */}
+        <StaggerItem className="h-full">
           <Card className={appCard}>
             <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
@@ -607,12 +639,12 @@ export function Dashboard({
               </div>
             </CardHeader>
 
-            <CardContent className="px-5 pb-5 pt-2">
+            <CardContent className="px-5 pb-5 pt-2 flex-1">
               {top10Expenses.length === 0 ? (
                 <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
-                <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
-                  <ResponsiveContainer width="100%" height={260}>
+                <div className={chartBox}>
+                  <ResponsiveContainer width="100%" height={chartHeight}>
                     <BarChart data={top10Expenses} layout="vertical" margin={{ left: 8, right: 8 }}>
                       <CartesianGrid
                         strokeDasharray="3 6"
