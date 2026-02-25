@@ -244,16 +244,16 @@ export default function Index() {
 
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
-      <div className="mx-auto flex min-h-screen max-w-7xl">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         {/* Sidebar desktop */}
-        <aside className="hidden w-72 border-r bg-background/60 backdrop-blur xl:block">
+        <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.35)]">
           <SidebarNav active={nav} onNavigate={setNav} />
         </aside>
 
         {/* Main */}
         <div className="flex flex-1 flex-col">
           {/* Topbar */}
-          <header className="sticky top-0 z-20 border-b bg-background/70 backdrop-blur">
+          <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.35)]">
             <div className="flex items-center gap-3 px-4 py-3">
               {/* Mobile menu */}
               <div className="xl:hidden">
