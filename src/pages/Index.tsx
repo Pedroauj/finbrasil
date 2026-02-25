@@ -53,83 +53,82 @@ function SidebarNav({
   onNewExpense: () => void;
 }) {
   return (
-    <div className="flex h-full flex-col">
-      {/* Brand */}
-      <div className="p-4">
-        <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur px-4 py-3 shadow-sm">
-          <div className="text-sm font-semibold leading-tight">FinBrasil</div>
-          <div className="text-xs text-muted-foreground">Gestão Financeira</div>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <div className="px-3">
-        <div className="space-y-1">
-          {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
-            const isActive = active === value;
-
-            return (
-              <button
-                key={value}
-                onClick={() => onNavigate(value)}
-                className={[
-                  "relative group flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm transition",
-                  "hover:bg-muted/50",
-                  // premium feel
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  isActive
-                    ? [
-                      "text-foreground",
-                      "bg-primary/10",
-                      "shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]",
-                      // barrinha fina + elegante
-                      "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-primary before:opacity-90",
-                    ].join(" ")
-                    : "text-muted-foreground",
-                ].join(" ")}
-              >
-                <Icon
-                  className={[
-                    "h-4 w-4 transition",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground",
-                  ].join(" ")}
-                />
-                <span className="flex-1 text-left">{label}</span>
-
-                {/* micro brilho no hover (bem sutil) */}
-                <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_30%_40%,hsl(var(--primary)/0.10),transparent_65%)]" />
-              </button>
-            );
-          })}
+    {/* Brand */ }
+    < div className = "p-4" >
+      <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur px-4 py-4 shadow-sm">
+        <div className="text-base font-semibold leading-tight">
+          FinBrasil
         </div>
 
-        {/* ✅ Botão Novo Gasto abaixo das abas */}
-        <div className="mt-4 px-1">
-          <Button
-            onClick={onNewExpense}
-            className="group relative h-11 w-full rounded-2xl font-semibold shadow-sm"
-          >
-            {/* glow sutil premium */}
-            <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <span className="relative flex items-center justify-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
-                <Plus className="h-4 w-4 text-primary-foreground" />
-              </span>
-              <span>Novo gasto</span>
-            </span>
-          </Button>
+        <div className="mt-1 text-xs text-muted-foreground">
+          Gestão Financeira
         </div>
-      </div>
 
-      {/* Bottom */}
-      <div className="mt-auto p-4">
-        <div className="rounded-2xl border border-border/50 bg-card/40 px-4 py-3 text-xs text-muted-foreground">
+        <div className="mt-2 text-[11px] text-muted-foreground/80 leading-relaxed">
           Controle total do seu dinheiro
         </div>
       </div>
-    </div>
+</div >
+    {/* Nav */ }
+    < div className = "px-3" >
+      <div className="space-y-1">
+        {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
+          const isActive = active === value;
+
+          return (
+            <button
+              key={value}
+              onClick={() => onNavigate(value)}
+              className={[
+                "relative group flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm transition",
+                "hover:bg-muted/50",
+                // premium feel
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                isActive
+                  ? [
+                    "text-foreground",
+                    "bg-primary/10",
+                    "shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]",
+                    // barrinha fina + elegante
+                    "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-primary before:opacity-90",
+                  ].join(" ")
+                  : "text-muted-foreground",
+              ].join(" ")}
+            >
+              <Icon
+                className={[
+                  "h-4 w-4 transition",
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground group-hover:text-foreground",
+                ].join(" ")}
+              />
+              <span className="flex-1 text-left">{label}</span>
+
+              {/* micro brilho no hover (bem sutil) */}
+              <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_30%_40%,hsl(var(--primary)/0.10),transparent_65%)]" />
+            </button>
+          );
+        })}
+      </div>
+
+  {/* ✅ Botão Novo Gasto abaixo das abas */ }
+  <div className="mt-4 px-1">
+    <Button
+      onClick={onNewExpense}
+      className="group relative h-11 w-full rounded-2xl font-semibold shadow-sm"
+    >
+      {/* glow sutil premium */}
+      <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <span className="relative flex items-center justify-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
+          <Plus className="h-4 w-4 text-primary-foreground" />
+        </span>
+        <span>Novo gasto</span>
+      </span>
+    </Button>
+  </div>
+      </div >
   );
 }
 
