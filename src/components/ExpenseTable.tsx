@@ -474,6 +474,7 @@ export function ExpenseTable({
             currentDate={currentDate}
             categories={allCategories}
             accounts={accounts}
+            defaultStatus={defaultStatus}
             onSubmit={(data) => {
               if (editingExpense) onUpdate(editingExpense.id, data);
               else onAdd(data);
@@ -481,7 +482,6 @@ export function ExpenseTable({
             }}
             onCancel={closeDialog}
             onAddCategory={onAddCategory}
-            {...(!editingExpense ? ({ defaultStatus } as any) : {})}
           />
         </DialogContent>
       </Dialog>
