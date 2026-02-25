@@ -9,6 +9,7 @@ import {
     Calendar,
     Wallet,
     Settings2,
+    Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,10 +39,12 @@ function SidebarNav({
     active,
     onNavigate,
     footer,
+    onNewExpense,
 }: {
     active: NavKey;
     onNavigate: (k: NavKey) => void;
     footer?: ReactNode;
+    onNewExpense?: () => void;
 }) {
     return (
         <div className="flex h-full flex-col">
@@ -66,32 +69,51 @@ function SidebarNav({
                                 key={item.key}
                                 onClick={() => onNavigate(item.key)}
                                 className={cn(
-                                    "relative group flex w-full items-center gap-2 rounded-xl px-3 h-10 text-sm transition",
+                                    "relative group flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm transition",
+                                    "hover:bg-muted/50",
                                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                                    "hover:bg-muted/40",
                                     isActive
                                         ? cn(
-                                            "bg-primary/12 text-foreground",
-                                            "shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18),inset_0_14px_24px_-18px_hsl(var(--primary)/0.35)]",
-                                            "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-primary",
-                                            "after:absolute after:inset-0 after:rounded-xl after:bg-[radial-gradient(80%_120%_at_20%_0%,hsl(var(--primary)/0.12),transparent_55%)] after:opacity-100"
+                                            "text-foreground bg-primary/10",
+                                            "shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]",
+                                            "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-primary before:opacity-90"
                                         )
                                         : "text-muted-foreground"
                                 )}
                             >
                                 <Icon
                                     className={cn(
-                                        "relative z-10 h-4 w-4 transition",
+                                        "h-4 w-4 transition",
                                         isActive
                                             ? "text-primary"
                                             : "text-muted-foreground group-hover:text-foreground"
                                     )}
                                 />
-                                <span className="relative z-10 flex-1 text-left">{item.label}</span>
+                                <span className="flex-1 text-left">{item.label}</span>
+
+                                <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_30%_40%,hsl(var(--primary)/0.10),transparent_65%)]" />
                             </button>
                         );
                     })}
                 </div>
+
+                {/* Botão Novo gasto opcional */}
+                {onNewExpense && (
+                    <div className="mt-4 px-1">
+                        <Button
+                            onClick={onNewExpense}
+                            className="group relative h-11 w-full rounded-2xl font-semibold shadow-sm"
+                        >
+                            <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                            <span className="relative flex items-center justify-center gap-2">
+                                <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
+                                    <Plus className="h-4 w-4 text-primary-foreground" />
+                                </span>
+                                <span>Novo gasto</span>
+                            </span>
+                        </Button>
+                    </div>
+                )}
             </div>
 
             <div className="mt-auto p-4">{footer}</div>
@@ -106,6 +128,7 @@ export function AppShell({
     rightActions,
     footer,
     children,
+    onNewExpense,
 }: {
     active: NavKey;
     onNavigate: (k: NavKey) => void;
@@ -113,6 +136,7 @@ export function AppShell({
     rightActions?: ReactNode;
     footer?: ReactNode;
     children: ReactNode;
+    onNewExpense?: () => void;
 }) {
     return (
         <div className="min-h-screen bg-background">
@@ -120,7 +144,12 @@ export function AppShell({
 
             <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
                 <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.25)]">
-                    <SidebarNav active={active} onNavigate={onNavigate} footer={footer} />
+                    <SidebarNav
+                        active={active}
+                        onNavigate={onNavigate}
+                        footer={footer}
+                        onNewExpense={onNewExpense}
+                    />
                 </aside>
 
                 <div className="flex flex-1 flex-col">
@@ -134,7 +163,12 @@ export function AppShell({
                                         </Button>
                                     </SheetTrigger>
                                     <SheetContent side="left" className="w-80 p-0">
-                                        <SidebarNav active={active} onNavigate={onNavigate} footer={footer} />
+                                        <SidebarNav
+                                            active={active}
+                                            onNavigate={onNavigate}
+                                            footer={footer}
+                                            onNewExpense={onNewExpense}
+                                        />
                                     </SheetContent>
                                 </Sheet>
                             </div>
