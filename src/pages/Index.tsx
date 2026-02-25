@@ -51,14 +51,13 @@ function SidebarNav({
 }) {
   return (
     <div className="flex h-full flex-col">
-      {/* Brand */}
+      {/* Brand (mais SaaS/premium) */}
       <div className="p-4">
-        <div className="rounded-2xl border bg-card/60 backdrop-blur px-4 py-4 shadow-sm">
-          <div className="text-sm font-semibold leading-tight">
-            FinBrasil
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Gestão Financeira
+        <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 px-3 py-3 shadow-sm">
+          <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/15" />
+          <div className="leading-tight">
+            <div className="text-sm font-semibold">FinBrasil</div>
+            <div className="text-xs text-muted-foreground">Gestão Financeira</div>
           </div>
         </div>
       </div>
@@ -74,8 +73,8 @@ function SidebarNav({
                 onClick={() => onNavigate(value)}
                 className={[
                   "group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
-                  "hover:bg-muted/60",
-                  isActive ? "bg-muted text-foreground" : "text-muted-foreground",
+                  "hover:bg-muted/50",
+                  isActive ? "bg-primary/10 text-foreground" : "text-muted-foreground",
                 ].join(" ")}
               >
                 <Icon
@@ -95,7 +94,7 @@ function SidebarNav({
 
       {/* Bottom spacer */}
       <div className="mt-auto p-4">
-        <div className="rounded-2xl border bg-card/40 px-4 py-3 text-xs text-muted-foreground">
+        <div className="rounded-2xl border border-border/50 bg-card/40 px-4 py-3 text-xs text-muted-foreground">
           Controle total do seu dinheiro
         </div>
       </div>
@@ -239,21 +238,21 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* background premium sutil */}
+      {/* background premium bem sutil */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
 
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
-        {/* Sidebar desktop */}
-        <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.35)]">
+        {/* Sidebar desktop (sem linha dura) */}
+        <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.25)]">
           <SidebarNav active={nav} onNavigate={setNav} />
         </aside>
 
         {/* Main */}
         <div className="flex flex-1 flex-col">
-          {/* Topbar */}
-          <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.35)]">
+          {/* Topbar (sem border-b branco, só hairline shadow) */}
+          <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.25)]">
             <div className="flex items-center gap-3 px-4 py-3">
               {/* Mobile menu */}
               <div className="xl:hidden">
@@ -270,11 +269,9 @@ export default function Index() {
               </div>
 
               <div className="flex-1">
-                <div className="text-sm font-semibold">
-                  {pageTitle}
-                </div>
+                <div className="text-sm font-semibold">{pageTitle}</div>
                 <div className="text-xs text-muted-foreground">
-                  FinBrasil — Gestão Financeira
+                  FinBrasil · Gestão Financeira
                 </div>
               </div>
 
@@ -290,7 +287,7 @@ export default function Index() {
                   className="gap-2 rounded-xl"
                   onClick={() => setAssistantOpen(true)}
                 >
-                  <Bot className="h-4 w-4" />
+                  <Bot className="h-4 w-4 text-primary" />
                   <span className="hidden sm:inline">Assistente</span>
                 </Button>
 
@@ -310,7 +307,7 @@ export default function Index() {
 
           {/* Content */}
           <main className="flex-1 px-4 py-6">
-            {Content}
+            <div className="mx-auto w-full max-w-[1320px]">{Content}</div>
           </main>
         </div>
       </div>
