@@ -61,26 +61,47 @@ function SidebarNav({
 
       {/* Nav */}
       <div className="px-3">
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
             const isActive = active === value;
+
             return (
               <button
                 key={value}
                 onClick={() => onNavigate(value)}
                 className={[
-                  "group flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-sm transition",
-                  "hover:bg-muted/50",
-                  isActive ? "bg-primary/10 text-foreground" : "text-muted-foreground",
-                ].join(" ")}
+                  // base (mais "grosso" / premium)
+                  "group relative flex w-full items-center gap-3",
+                  "rounded-2xl px-4 py-3 text-[13px] font-medium",
+                  "transition-all duration-200",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+
+                  // inativo
+                  !isActive &&
+                  "text-muted-foreground hover:text-foreground hover:bg-muted/35",
+
+                  // ativo (pílula premium)
+                  isActive &&
+                  "text-foreground bg-primary/10 ring-1 ring-primary/20 shadow-sm",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
                 <Icon
                   className={[
-                    "h-4 w-4 transition",
-                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                    "h-5 w-5 transition-colors",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground",
                   ].join(" ")}
                 />
-                <span className="flex-1 text-left">{label}</span>
+
+                <span className="flex-1 text-left leading-none">{label}</span>
+
+                {/* glow/overlay sutil só no ativo */}
+                {isActive && (
+                  <span className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_25%_20%,hsl(var(--primary)/0.12),transparent_55%)]" />
+                )}
               </button>
             );
           })}
@@ -251,7 +272,11 @@ export default function Index() {
               <div className="xl:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-xl h-10 w-10"
+                    >
                       <Menu className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
@@ -299,9 +324,7 @@ export default function Index() {
           </header>
 
           {/* Content */}
-          <main className="flex-1 px-4 sm:px-5 py-5">
-            {Content}
-          </main>
+          <main className="flex-1 px-4 sm:px-5 py-5">{Content}</main>
         </div>
       </div>
 
