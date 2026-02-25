@@ -40,25 +40,15 @@ interface DashboardProps {
   monthBalance: MonthBalance;
 }
 
-/**
- * Card padrão premium (token-based):
- * - neutro e consistente em light/dark
- * - borda sutil + blur discreto
- * - hover elegante
- */
 const appCard =
-  "relative overflow-hidden rounded-3xl " +
-  "border border-border/60 " +
-  "bg-card/70 backdrop-blur " +
-  "shadow-sm " +
-  "transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[1px] hover:shadow-md";
+  "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
+  "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
 
 function IconBadge({
   variant = "primary",
   children,
 }: {
-  variant?: "primary" | "muted" | "warning" | "destructive" | "success";
+  variant?: "primary" | "muted" | "warning" | "destructive";
   children: React.ReactNode;
 }) {
   const styles =
@@ -66,19 +56,25 @@ function IconBadge({
       ? "bg-destructive/10 ring-destructive/15 text-destructive"
       : variant === "warning"
         ? "bg-[hsl(var(--warning))]/10 ring-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]"
-        : variant === "success"
-          ? "bg-[hsl(var(--success))]/10 ring-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
-          : variant === "muted"
-            ? "bg-muted/50 ring-border/60 text-foreground/80"
-            : "bg-primary/10 ring-primary/15 text-primary";
+        : variant === "muted"
+          ? "bg-muted/50 ring-border/60 text-foreground/80"
+          : "bg-primary/10 ring-primary/15 text-primary";
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-3.5 ring-1 ${styles}`}>
+    <div className={`relative overflow-hidden rounded-2xl p-3 ring-1 ${styles}`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
       <div className="relative z-10">{children}</div>
     </div>
   );
 }
+
+const tooltipStyle: React.CSSProperties = {
+  borderRadius: 16,
+  border: "1px solid hsl(var(--border) / 0.6)",
+  background: "hsl(var(--card) / 0.88)",
+  backdropFilter: "blur(10px)",
+  boxShadow: "0 14px 34px -24px rgba(0,0,0,0.55)",
+};
 
 export function Dashboard({
   expenses,
@@ -144,29 +140,25 @@ export function Dashboard({
     prevTotal > 0 ? Math.abs(((totalSpent - prevTotal) / prevTotal) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Caixa */}
+    <div className="space-y-5">
       <FadeIn>
         <CashBalance balance={monthBalance} />
       </FadeIn>
 
-      {/* Alertas */}
       <FadeIn delay={0.05}>
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </FadeIn>
 
       {/* Summary */}
-      <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Total Gasto */}
+      <StaggerContainer className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StaggerItem>
           <Card className={appCard}>
-            <CardContent className="p-6">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Total gasto
                   </p>
-
                   <p className="mt-1 text-2xl font-bold text-foreground">
                     {formatCurrency(totalSpent)}
                   </p>
@@ -199,24 +191,20 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
-        {/* Orçamento */}
         <StaggerItem>
           <Card className={appCard}>
-            <CardContent className="p-6">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Orçamento restante
                   </p>
-
                   <p className={`mt-1 text-2xl font-bold ${statusColor}`}>
                     {budget.total > 0 ? formatCurrency(remaining) : "Não definido"}
                   </p>
                 </div>
 
-                <IconBadge
-                  variant={overBudget ? "destructive" : nearBudget ? "warning" : "primary"}
-                >
+                <IconBadge variant={overBudget ? "destructive" : nearBudget ? "warning" : "primary"}>
                   {overBudget ? (
                     <AlertTriangle className="h-6 w-6" />
                   ) : (
@@ -226,13 +214,13 @@ export function Dashboard({
               </div>
 
               {budget.total > 0 && (
-                <div className="mt-4">
+                <div className="mt-3.5">
                   <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
                     <span>{percentUsed.toFixed(0)}% usado</span>
                     <span>{formatCurrency(budget.total)}</span>
                   </div>
 
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/50">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/45">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
                       style={{ width: `${Math.min(percentUsed, 100)}%` }}
@@ -244,18 +232,15 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
-        {/* Nº Gastos */}
         <StaggerItem>
           <Card className={appCard}>
-            <CardContent className="p-6">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Nº de gastos
                   </p>
-
                   <p className="mt-1 text-2xl font-bold text-foreground">{expenses.length}</p>
-
                   <p className="mt-2 text-xs text-muted-foreground">
                     Média:{" "}
                     {expenses.length > 0 ? formatCurrency(totalSpent / expenses.length) : "R$ 0,00"}
@@ -271,15 +256,12 @@ export function Dashboard({
         </StaggerItem>
       </StaggerContainer>
 
-      {/* Alert orçamento */}
       {(overBudget || nearBudget) && budget.total > 0 && (
         <FadeIn>
           <div
             className={[
               "flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 backdrop-blur p-4 shadow-sm",
-              overBudget
-                ? "text-destructive"
-                : "text-[hsl(var(--warning))]",
+              overBudget ? "text-destructive" : "text-[hsl(var(--warning))]",
             ].join(" ")}
           >
             <span
@@ -303,34 +285,31 @@ export function Dashboard({
       )}
 
       {/* Charts */}
-      <StaggerContainer staggerDelay={0.12} className="grid gap-6 lg:grid-cols-2">
-        {/* Categoria */}
+      <StaggerContainer staggerDelay={0.12} className="grid gap-4 lg:grid-cols-2">
         <StaggerItem>
           <Card className={appCard}>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg text-foreground">Gastos por categoria</CardTitle>
+                <CardTitle className="text-base text-foreground">Gastos por categoria</CardTitle>
                 <span className="text-xs text-muted-foreground">Ranking do mês</span>
               </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="px-5 pb-5 pt-2">
               {categoryData.length === 0 ? (
-                <p className="py-12 text-center text-muted-foreground">
-                  Sem dados para exibir
-                </p>
+                <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
-                <div className="flex flex-col items-center gap-5 sm:flex-row">
+                <div className="flex flex-col items-center gap-4 sm:flex-row">
                   <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
-                    <ResponsiveContainer width={190} height={190}>
+                    <ResponsiveContainer width={180} height={180}>
                       <PieChart>
                         <Pie
                           data={categoryData}
                           dataKey="value"
                           cx="50%"
                           cy="50%"
-                          outerRadius={78}
-                          innerRadius={52}
+                          outerRadius={74}
+                          innerRadius={50}
                           paddingAngle={2}
                         >
                           {categoryData.map((entry, i) => (
@@ -339,32 +318,22 @@ export function Dashboard({
                         </Pie>
                         <Tooltip
                           formatter={(value: number) => formatCurrency(value)}
-                          contentStyle={{
-                            borderRadius: 16,
-                            border: "1px solid hsl(var(--border) / 0.6)",
-                            background: "hsl(var(--card) / 0.85)",
-                            backdropFilter: "blur(10px)",
-                            boxShadow: "0 14px 34px -24px rgba(0,0,0,0.55)",
-                          }}
+                          contentStyle={tooltipStyle}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
 
-                  <div className="flex w-full flex-col gap-2.5 text-sm">
+                  <div className="flex w-full flex-col gap-2 text-sm">
                     {categoryData.slice(0, 7).map((d) => (
                       <div key={d.name} className="flex items-center gap-2">
-                        <div
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: d.color }}
-                        />
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
                         <span className="text-muted-foreground">{d.name}</span>
                         <span className="ml-auto font-semibold text-foreground">
                           {formatCurrency(d.value)}
                         </span>
                       </div>
                     ))}
-
                     {categoryData.length > 7 && (
                       <div className="pt-1 text-xs text-muted-foreground">
                         +{categoryData.length - 7} categorias
@@ -377,24 +346,21 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
-        {/* Semana */}
         <StaggerItem>
           <Card className={appCard}>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 pt-5 px-5">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg text-foreground">Gastos por semana</CardTitle>
+                <CardTitle className="text-base text-foreground">Gastos por semana</CardTitle>
                 <span className="text-xs text-muted-foreground">Distribuição</span>
               </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="px-5 pb-5 pt-2">
               {weeklyData.every((w) => w.total === 0) ? (
-                <p className="py-12 text-center text-muted-foreground">
-                  Sem dados para exibir
-                </p>
+                <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
               ) : (
                 <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
-                  <ResponsiveContainer width="100%" height={230}>
+                  <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={weeklyData}>
                       <CartesianGrid
                         strokeDasharray="3 6"
@@ -417,19 +383,9 @@ export function Dashboard({
                       />
                       <Tooltip
                         formatter={(value: number) => formatCurrency(value)}
-                        contentStyle={{
-                          borderRadius: 16,
-                          border: "1px solid hsl(var(--border) / 0.6)",
-                          background: "hsl(var(--card) / 0.85)",
-                          backdropFilter: "blur(10px)",
-                          boxShadow: "0 14px 34px -24px rgba(0,0,0,0.55)",
-                        }}
+                        contentStyle={tooltipStyle}
                       />
-                      <Bar
-                        dataKey="total"
-                        fill="hsl(var(--primary))"
-                        radius={[10, 10, 0, 0]}
-                      />
+                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
