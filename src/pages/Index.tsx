@@ -26,6 +26,7 @@ import {
   LogOut,
   Bot,
   Menu,
+  Plus,
 } from "lucide-react";
 
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
@@ -45,9 +46,11 @@ type NavValue = (typeof NAV_ITEMS)[number]["value"];
 function SidebarNav({
   active,
   onNavigate,
+  onAddExpense,
 }: {
   active: NavValue;
   onNavigate: (v: NavValue) => void;
+  onAddExpense: () => void;
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -59,52 +62,46 @@ function SidebarNav({
         </div>
       </div>
 
-      {/* Nav */}
+      {/* Nav + Primary action */}
       <div className="px-3">
-        <div className="space-y-1">
-          {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
-            const isActive = active === value;
+        <div className="space-y-2">
+          {/* Primary button (lateral) */}
+          <Button
+            onClick={onAddExpense}
+            className="h-11 w-full justify-between rounded-2xl px-4 font-semibold shadow-sm"
+          >
+            <span>Novo gasto</span>
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
+              <Plus className="h-4 w-4 text-primary-foreground" />
+            </span>
+          </Button>
 
-            return (
-              <button
-                key={value}
-                onClick={() => onNavigate(value)}
-                className={[
-                  // base (mais "grosso" / premium)
-                  "group relative flex w-full items-center gap-3",
-                  "rounded-2xl px-4 py-3 text-[13px] font-medium",
-                  "transition-all duration-200",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-
-                  // inativo
-                  !isActive &&
-                  "text-muted-foreground hover:text-foreground hover:bg-muted/35",
-
-                  // ativo (pílula premium)
-                  isActive &&
-                  "text-foreground bg-primary/10 ring-1 ring-primary/20 shadow-sm",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <Icon
+          {/* Nav list */}
+          <div className="space-y-1">
+            {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
+              const isActive = active === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => onNavigate(value)}
                   className={[
-                    "h-5 w-5 transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground",
+                    "group flex w-full items-center gap-2 rounded-2xl px-3",
+                    "h-11 text-sm transition",
+                    "hover:bg-muted/50",
+                    isActive ? "bg-primary/10 text-foreground" : "text-muted-foreground",
                   ].join(" ")}
-                />
-
-                <span className="flex-1 text-left leading-none">{label}</span>
-
-                {/* glow/overlay sutil só no ativo */}
-                {isActive && (
-                  <span className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_25%_20%,hsl(var(--primary)/0.12),transparent_55%)]" />
-                )}
-              </button>
-            );
-          })}
+                >
+                  <Icon
+                    className={[
+                      "h-4 w-4 transition",
+                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                    ].join(" ")}
+                  />
+                  <span className="flex-1 text-left">{label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -134,6 +131,10 @@ export default function Index() {
     const found = NAV_ITEMS.find((i) => i.value === nav);
     return found?.label ?? "FinBrasil";
   }, [nav]);
+
+  const openAddExpense = React.useCallback(() => {
+    window.dispatchEvent(new Event("open-add-expense"));
+  }, []);
 
   const Content = React.useMemo(() => {
     switch (nav) {
@@ -260,7 +261,7 @@ export default function Index() {
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         {/* Sidebar desktop */}
         <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.25)]">
-          <SidebarNav active={nav} onNavigate={setNav} />
+          <SidebarNav active={nav} onNavigate={setNav} onAddExpense={openAddExpense} />
         </aside>
 
         {/* Main */}
@@ -272,37 +273,28 @@ export default function Index() {
               <div className="xl:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="rounded-xl h-10 w-10"
-                    >
+                    <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl">
                       <Menu className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-80 p-0">
-                    <SidebarNav active={nav} onNavigate={setNav} />
+                    <SidebarNav active={nav} onNavigate={setNav} onAddExpense={openAddExpense} />
                   </SheetContent>
                 </Sheet>
               </div>
 
               <div className="flex-1">
                 <div className="text-sm font-semibold">{pageTitle}</div>
-                <div className="text-xs text-muted-foreground">
-                  FinBrasil — Gestão Financeira
-                </div>
+                <div className="text-xs text-muted-foreground">FinBrasil — Gestão Financeira</div>
               </div>
 
               {/* Right actions */}
               <div className="flex items-center gap-2">
-                <MonthNavigator
-                  currentDate={store.currentDate}
-                  onNavigate={store.navigateMonth}
-                />
+                <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
 
                 <Button
                   variant="outline"
-                  className="gap-2 rounded-xl h-10"
+                  className="h-11 gap-2 rounded-2xl px-4"
                   onClick={() => setAssistantOpen(true)}
                 >
                   <Bot className="h-4 w-4" />
@@ -311,11 +303,7 @@ export default function Index() {
 
                 <ModeToggle />
 
-                <Button
-                  variant="outline"
-                  className="gap-2 rounded-xl h-10"
-                  onClick={signOut}
-                >
+                <Button variant="outline" className="h-11 gap-2 rounded-2xl px-4" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>
@@ -324,13 +312,14 @@ export default function Index() {
           </header>
 
           {/* Content */}
-          <main className="flex-1 px-4 sm:px-5 py-5">{Content}</main>
+          <main className="flex-1 px-4 py-5 sm:px-5">{Content}</main>
         </div>
       </div>
 
-      <FloatingAddButton
-        onClick={() => window.dispatchEvent(new Event("open-add-expense"))}
-      />
+      {/* FAB só no mobile/tablet (porque no desktop já tem o botão na sidebar) */}
+      <div className="xl:hidden">
+        <FloatingAddButton onClick={openAddExpense} />
+      </div>
     </div>
   );
 }
