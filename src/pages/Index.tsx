@@ -240,7 +240,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* background premium sutil */}
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.10),transparent_55%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.08),transparent_50%)]" />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
 
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
