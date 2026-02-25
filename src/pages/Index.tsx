@@ -13,8 +13,8 @@ import { MonthNavigator } from "@/components/MonthNavigator";
 import { ModeToggle } from "@/components/ModeToggle";
 import { DEFAULT_CATEGORIES } from "@/types/expense";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import {
   LayoutDashboard,
@@ -25,13 +25,13 @@ import {
   Wallet,
   LogOut,
   Bot,
+  Menu,
 } from "lucide-react";
 
-import { PageShell } from "@/components/layout/PageShell";
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AssistantPanel } from "@/components/AssistantPanel";
 
-const TAB_ITEMS = [
+const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "expenses", label: "Gastos", icon: TableProperties },
   { value: "cards", label: "Cartões", icon: CardIcon },
@@ -40,167 +40,284 @@ const TAB_ITEMS = [
   { value: "accounts", label: "Contas", icon: Wallet },
 ] as const;
 
-type TabValue = (typeof TAB_ITEMS)[number]["value"];
+type NavValue = (typeof NAV_ITEMS)[number]["value"];
+
+function SidebarNav({
+  active,
+  onNavigate,
+}: {
+  active: NavValue;
+  onNavigate: (v: NavValue) => void;
+}) {
+  return (
+    <div className="flex h-full flex-col">
+      {/* Brand */}
+      <div className="p-4">
+        <div className="rounded-2xl border bg-card/60 backdrop-blur px-4 py-4 shadow-sm">
+          <div className="text-sm font-semibold leading-tight">
+            FinBrasil
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Gestão Financeira
+          </div>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <div className="px-3">
+        <div className="space-y-1">
+          {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
+            const isActive = active === value;
+            return (
+              <button
+                key={value}
+                onClick={() => onNavigate(value)}
+                className={[
+                  "group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  "hover:bg-muted/60",
+                  isActive ? "bg-muted text-foreground" : "text-muted-foreground",
+                ].join(" ")}
+              >
+                <Icon
+                  className={[
+                    "h-4 w-4 transition",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground",
+                  ].join(" ")}
+                />
+                <span className="flex-1 text-left">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom spacer */}
+      <div className="mt-auto p-4">
+        <div className="rounded-2xl border bg-card/40 px-4 py-3 text-xs text-muted-foreground">
+          Controle total do seu dinheiro
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Index() {
   const { signOut } = useAuth();
   const store = useExpenseStore();
+
   const [assistantOpen, setAssistantOpen] = React.useState(false);
-  const [tab, setTab] = React.useState<TabValue>("dashboard");
+  const [nav, setNav] = React.useState<NavValue>("dashboard");
 
   const allCategories = React.useMemo(
     () => [...DEFAULT_CATEGORIES, ...store.customCategories],
     [store.customCategories]
   );
 
+  const pageTitle = React.useMemo(() => {
+    const found = NAV_ITEMS.find((i) => i.value === nav);
+    return found?.label ?? "FinBrasil";
+  }, [nav]);
+
+  const Content = React.useMemo(() => {
+    switch (nav) {
+      case "dashboard":
+        return (
+          <div className="space-y-6">
+            <Dashboard
+              expenses={store.expenses}
+              budget={store.budget}
+              prevMonthExpenses={store.prevMonthExpenses}
+              currentDate={store.currentDate}
+              cards={store.creditCards}
+              invoices={store.invoices}
+              monthBalance={store.monthBalance}
+            />
+          </div>
+        );
+
+      case "expenses":
+        return (
+          <div className="space-y-6">
+            <ExpenseTable
+              expenses={store.expenses}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              accounts={store.financialAccounts}
+              onAdd={store.addExpense}
+              onUpdate={store.updateExpense}
+              onDelete={store.deleteExpense}
+              onAddCategory={store.addCustomCategory}
+            />
+            <IncomeManager
+              salary={store.salary}
+              extraIncomes={store.extraIncomes}
+              budget={store.budget}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              onSaveSalary={store.saveSalary}
+              onDeleteSalary={store.deleteSalary}
+              onAddExtraIncome={store.addExtraIncome}
+              onUpdateExtraIncome={store.updateExtraIncome}
+              onDeleteExtraIncome={store.deleteExtraIncome}
+              onSaveBudget={store.setBudget}
+            />
+          </div>
+        );
+
+      case "cards":
+        return (
+          <div className="space-y-6">
+            <CreditCardManager
+              cards={store.creditCards}
+              invoices={store.invoices}
+              categories={allCategories}
+              currentDate={store.currentDate}
+              onAddCard={store.addCreditCard}
+              onDeleteCard={store.deleteCreditCard}
+              onAddInvoiceItem={store.addInvoiceItem}
+              onAddInstallments={store.addInstallments}
+              onRemoveInvoiceItem={store.removeInvoiceItem}
+              onRemoveInstallmentGroup={store.removeInstallmentGroup}
+              onTogglePaid={store.toggleInvoicePaid}
+            />
+          </div>
+        );
+
+      case "recurring":
+        return (
+          <div className="space-y-6">
+            <RecurringExpenses
+              recurringExpenses={store.recurringExpenses}
+              customCategories={store.customCategories}
+              onAdd={store.addRecurringExpense}
+              onToggle={store.toggleRecurringExpense}
+              onDelete={store.deleteRecurringExpense}
+              onAddCategory={store.addCustomCategory}
+            />
+          </div>
+        );
+
+      case "calendar":
+        return (
+          <div className="space-y-6">
+            <FinancialCalendar
+              expenses={store.expenses}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              onAdd={store.addExpense}
+              onUpdate={store.updateExpense}
+              onDelete={store.deleteExpense}
+              onAddCategory={store.addCustomCategory}
+            />
+          </div>
+        );
+
+      case "accounts":
+        return (
+          <div className="space-y-6">
+            <AccountManager
+              accounts={store.financialAccounts}
+              transfers={store.accountTransfers}
+              adjustments={store.accountAdjustments}
+              onAdd={store.addFinancialAccount}
+              onUpdate={store.updateFinancialAccount}
+              onDelete={store.deleteFinancialAccount}
+              onTransfer={store.transferBetweenAccounts}
+              onAdjust={store.addAccountAdjustment}
+              onDeleteAdjustment={store.deleteAccountAdjustment}
+              onToggleArchive={store.toggleAccountArchive}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  }, [nav, store, allCategories]);
+
   return (
-    <PageShell
-      title="FinBrasil - Gestão Financeira"
-      subtitle="Controle total do seu dinheiro"
-      rightSlot={
-        <>
-          <MonthNavigator
-            currentDate={store.currentDate}
-            onNavigate={store.navigateMonth}
-          />
+    <div className="min-h-screen bg-background">
+      {/* background premium sutil */}
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.10),transparent_55%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.08),transparent_50%)]" />
 
-          <Button
-            variant="outline"
-            className="gap-2 border-white/10 bg-white/5 hover:bg-white/10"
-            onClick={() => setAssistantOpen(true)}
-          >
-            <Bot className="h-4 w-4" />
-            <span className="hidden sm:inline">Assistente</span>
-          </Button>
-
-          <ModeToggle />
-
-          <Button
-            variant="outline"
-            className="gap-2 border-white/10 bg-white/5 hover:bg-white/10"
-            onClick={signOut}
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Sair</span>
-          </Button>
-        </>
-      }
-    >
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
-      <Tabs
-        value={tab}
-        onValueChange={(v) => setTab(v as TabValue)}
-        className="space-y-6"
-      >
-        <div className="relative">
-          {/* Aqui só definimos o GRID/RESPONSIVO — o visual vem do tabs.tsx */}
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-grid">
-            {TAB_ITEMS.map(({ value, label, icon: Icon }) => (
-              <TabsTrigger key={value} value={value} className="gap-2">
-                <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <div className="mx-auto flex min-h-screen max-w-7xl">
+        {/* Sidebar desktop */}
+        <aside className="hidden w-72 border-r bg-background/60 backdrop-blur xl:block">
+          <SidebarNav active={nav} onNavigate={setNav} />
+        </aside>
+
+        {/* Main */}
+        <div className="flex flex-1 flex-col">
+          {/* Topbar */}
+          <header className="sticky top-0 z-20 border-b bg-background/70 backdrop-blur">
+            <div className="flex items-center gap-3 px-4 py-3">
+              {/* Mobile menu */}
+              <div className="xl:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-xl">
+                      <Menu className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-80 p-0">
+                    <SidebarNav active={nav} onNavigate={setNav} />
+                  </SheetContent>
+                </Sheet>
+              </div>
+
+              <div className="flex-1">
+                <div className="text-sm font-semibold">
+                  {pageTitle}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  FinBrasil — Gestão Financeira
+                </div>
+              </div>
+
+              {/* Right actions */}
+              <div className="flex items-center gap-2">
+                <MonthNavigator
+                  currentDate={store.currentDate}
+                  onNavigate={store.navigateMonth}
+                />
+
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-xl"
+                  onClick={() => setAssistantOpen(true)}
+                >
+                  <Bot className="h-4 w-4" />
+                  <span className="hidden sm:inline">Assistente</span>
+                </Button>
+
+                <ModeToggle />
+
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-xl"
+                  onClick={signOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          {/* Content */}
+          <main className="flex-1 px-4 py-6">
+            {Content}
+          </main>
         </div>
-
-        <TabsContent value="dashboard" className="space-y-6">
-          <Dashboard
-            expenses={store.expenses}
-            budget={store.budget}
-            prevMonthExpenses={store.prevMonthExpenses}
-            currentDate={store.currentDate}
-            cards={store.creditCards}
-            invoices={store.invoices}
-            monthBalance={store.monthBalance}
-          />
-        </TabsContent>
-
-        <TabsContent value="expenses" className="space-y-6">
-          <ExpenseTable
-            expenses={store.expenses}
-            customCategories={store.customCategories}
-            currentDate={store.currentDate}
-            accounts={store.financialAccounts}
-            onAdd={store.addExpense}
-            onUpdate={store.updateExpense}
-            onDelete={store.deleteExpense}
-            onAddCategory={store.addCustomCategory}
-          />
-          <IncomeManager
-            salary={store.salary}
-            extraIncomes={store.extraIncomes}
-            budget={store.budget}
-            customCategories={store.customCategories}
-            currentDate={store.currentDate}
-            onSaveSalary={store.saveSalary}
-            onDeleteSalary={store.deleteSalary}
-            onAddExtraIncome={store.addExtraIncome}
-            onUpdateExtraIncome={store.updateExtraIncome}
-            onDeleteExtraIncome={store.deleteExtraIncome}
-            onSaveBudget={store.setBudget}
-          />
-        </TabsContent>
-
-        <TabsContent value="cards" className="space-y-6">
-          <CreditCardManager
-            cards={store.creditCards}
-            invoices={store.invoices}
-            categories={allCategories}
-            currentDate={store.currentDate}
-            onAddCard={store.addCreditCard}
-            onDeleteCard={store.deleteCreditCard}
-            onAddInvoiceItem={store.addInvoiceItem}
-            onAddInstallments={store.addInstallments}
-            onRemoveInvoiceItem={store.removeInvoiceItem}
-            onRemoveInstallmentGroup={store.removeInstallmentGroup}
-            onTogglePaid={store.toggleInvoicePaid}
-          />
-        </TabsContent>
-
-        <TabsContent value="recurring" className="space-y-6">
-          <RecurringExpenses
-            recurringExpenses={store.recurringExpenses}
-            customCategories={store.customCategories}
-            onAdd={store.addRecurringExpense}
-            onToggle={store.toggleRecurringExpense}
-            onDelete={store.deleteRecurringExpense}
-            onAddCategory={store.addCustomCategory}
-          />
-        </TabsContent>
-
-        <TabsContent value="calendar" className="space-y-6">
-          <FinancialCalendar
-            expenses={store.expenses}
-            customCategories={store.customCategories}
-            currentDate={store.currentDate}
-            onAdd={store.addExpense}
-            onUpdate={store.updateExpense}
-            onDelete={store.deleteExpense}
-            onAddCategory={store.addCustomCategory}
-          />
-        </TabsContent>
-
-        <TabsContent value="accounts" className="space-y-6">
-          <AccountManager
-            accounts={store.financialAccounts}
-            transfers={store.accountTransfers}
-            adjustments={store.accountAdjustments}
-            onAdd={store.addFinancialAccount}
-            onUpdate={store.updateFinancialAccount}
-            onDelete={store.deleteFinancialAccount}
-            onTransfer={store.transferBetweenAccounts}
-            onAdjust={store.addAccountAdjustment}
-            onDeleteAdjustment={store.deleteAccountAdjustment}
-            onToggleArchive={store.toggleAccountArchive}
-          />
-        </TabsContent>
-      </Tabs>
+      </div>
 
       <FloatingAddButton
         onClick={() => window.dispatchEvent(new Event("open-add-expense"))}
       />
-    </PageShell>
+    </div>
   );
 }
