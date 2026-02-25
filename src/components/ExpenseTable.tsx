@@ -41,25 +41,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ExpenseForm } from "./ExpenseForm";
 import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
 
-/**
- * Glass CLEAN (sem mancha):
- * - fundo mais opaco (não vaza o background)
- * - sem gradiente / radial overlay
- */
-const glassCard =
-  "relative overflow-hidden rounded-3xl " +
-  "border border-white/10 " +
-  "bg-zinc-950/80 backdrop-blur-md " +
-  "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)] " +
-  "transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[2px] hover:border-emerald-400/20 hover:shadow-emerald-500/10";
+const appCard =
+  "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
+  "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
 
-/** Card grande da tabela no mesmo padrão */
 const tableCard =
-  "relative overflow-hidden rounded-3xl " +
-  "border border-white/10 " +
-  "bg-zinc-950/80 backdrop-blur-md " +
-  "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)]";
+  "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm";
 
 const STATUS_CONFIG: Record<
   TransactionStatus,
@@ -107,7 +94,7 @@ export function ExpenseTable({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  // 👇 quando abre "novo gasto", a gente pode pré-definir o status
+  // pré-set de status ao criar
   const [defaultStatus, setDefaultStatus] = useState<TransactionStatus>("planned");
 
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -129,15 +116,9 @@ export function ExpenseTable({
   }, [expenses, filterCategory, filterStatus, searchTerm]);
 
   const total = filtered.reduce((sum, e) => sum + e.amount, 0);
-  const paidTotal = filtered
-    .filter((e) => e.status === "paid")
-    .reduce((s, e) => s + e.amount, 0);
-  const plannedTotal = filtered
-    .filter((e) => e.status === "planned")
-    .reduce((s, e) => s + e.amount, 0);
-  const overdueTotal = filtered
-    .filter((e) => e.status === "overdue")
-    .reduce((s, e) => s + e.amount, 0);
+  const paidTotal = filtered.filter((e) => e.status === "paid").reduce((s, e) => s + e.amount, 0);
+  const plannedTotal = filtered.filter((e) => e.status === "planned").reduce((s, e) => s + e.amount, 0);
+  const overdueTotal = filtered.filter((e) => e.status === "overdue").reduce((s, e) => s + e.amount, 0);
   const overdueCount = filtered.filter((e) => e.status === "overdue").length;
 
   function openNewExpense(status?: TransactionStatus) {
@@ -156,7 +137,6 @@ export function ExpenseTable({
     setEditingExpense(null);
   }
 
-  // ✅ Conecta com o FAB do Index.tsx (evento global)
   useEffect(() => {
     const handler = () => openNewExpense("planned");
     window.addEventListener("open-add-expense", handler);
@@ -165,26 +145,22 @@ export function ExpenseTable({
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-5">
+      {/* Summary Cards (compact) */}
+      <StaggerContainer className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardContent className="relative z-10 p-5">
-              <div className="flex items-center justify-between gap-3">
+          <Card className={appCard}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Total do Mês
-                  </p>
-                  <p className="text-2xl font-bold mt-1">{formatCurrency(total)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {filtered.length} transação(ões)
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground">Total do mês</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(total)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{filtered.length} transação(ões)</p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="icon"
                     className="h-9 w-9 rounded-xl"
                     title="Adicionar gasto"
@@ -193,7 +169,7 @@ export function ExpenseTable({
                     <Plus className="h-4 w-4" />
                   </Button>
 
-                  <div className="relative overflow-hidden rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/20">
+                  <div className="rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3">
                     <DollarSign className="h-5 w-5 text-primary" />
                   </div>
                 </div>
@@ -203,24 +179,22 @@ export function ExpenseTable({
         </StaggerItem>
 
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardContent className="relative z-10 p-5">
-              <div className="flex items-center justify-between gap-3">
+          <Card className={appCard}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Pagos
-                  </p>
-                  <p className="text-2xl font-bold mt-1 text-[hsl(var(--success))]">
+                  <p className="text-xs font-medium text-muted-foreground">Pagos</p>
+                  <p className="mt-1 text-2xl font-bold text-[hsl(var(--success))]">
                     {formatCurrency(paidTotal)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {filtered.filter((e) => e.status === "paid").length} gasto(s)
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="icon"
                     className="h-9 w-9 rounded-xl"
                     title="Adicionar gasto pago"
@@ -229,7 +203,7 @@ export function ExpenseTable({
                     <Plus className="h-4 w-4" />
                   </Button>
 
-                  <div className="relative overflow-hidden rounded-2xl bg-[hsl(var(--success))]/10 p-3 ring-1 ring-[hsl(var(--success))]/20">
+                  <div className="rounded-2xl bg-[hsl(var(--success))]/10 ring-1 ring-[hsl(var(--success))]/15 p-3">
                     <CheckCircle2 className="h-5 w-5 text-[hsl(var(--success))]" />
                   </div>
                 </div>
@@ -239,24 +213,20 @@ export function ExpenseTable({
         </StaggerItem>
 
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardContent className="relative z-10 p-5">
-              <div className="flex items-center justify-between gap-3">
+          <Card className={appCard}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Previstos
-                  </p>
-                  <p className="text-2xl font-bold mt-1 text-primary">
-                    {formatCurrency(plannedTotal)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs font-medium text-muted-foreground">Previstos</p>
+                  <p className="mt-1 text-2xl font-bold text-primary">{formatCurrency(plannedTotal)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {filtered.filter((e) => e.status === "planned").length} gasto(s)
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="icon"
                     className="h-9 w-9 rounded-xl"
                     title="Adicionar gasto previsto"
@@ -265,7 +235,7 @@ export function ExpenseTable({
                     <Plus className="h-4 w-4" />
                   </Button>
 
-                  <div className="relative overflow-hidden rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/20">
+                  <div className="rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3">
                     <Clock className="h-5 w-5 text-primary" />
                   </div>
                 </div>
@@ -275,25 +245,20 @@ export function ExpenseTable({
         </StaggerItem>
 
         <StaggerItem>
-          <Card className={glassCard}>
-            <CardContent className="relative z-10 p-5">
-              <div className="flex items-center justify-between gap-3">
+          <Card className={appCard}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Atrasados
-                  </p>
-                  <p
-                    className={`text-2xl font-bold mt-1 ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"
-                      }`}
-                  >
+                  <p className="text-xs font-medium text-muted-foreground">Atrasados</p>
+                  <p className={`mt-1 text-2xl font-bold ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"}`}>
                     {formatCurrency(overdueTotal)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{overdueCount} gasto(s)</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{overdueCount} gasto(s)</p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="icon"
                     className="h-9 w-9 rounded-xl"
                     title="Adicionar gasto atrasado"
@@ -304,16 +269,13 @@ export function ExpenseTable({
 
                   <div
                     className={[
-                      "relative overflow-hidden rounded-2xl p-3 ring-1",
+                      "rounded-2xl p-3 ring-1",
                       overdueCount > 0
-                        ? "bg-destructive/10 ring-destructive/20"
-                        : "bg-white/5 ring-white/10",
+                        ? "bg-destructive/10 ring-destructive/15"
+                        : "bg-muted/50 ring-border/60",
                     ].join(" ")}
                   >
-                    <AlertTriangle
-                      className={`h-5 w-5 ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"
-                        }`}
-                    />
+                    <AlertTriangle className={`h-5 w-5 ${overdueCount > 0 ? "text-destructive" : "text-foreground/70"}`} />
                   </div>
                 </div>
               </div>
@@ -323,24 +285,25 @@ export function ExpenseTable({
       </StaggerContainer>
 
       {/* Table Card */}
-      <FadeIn delay={0.2}>
+      <FadeIn delay={0.12}>
         <Card className={tableCard}>
-          <CardHeader className="relative z-10 pb-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <ListChecks className="h-5 w-5 text-primary" />
-                <CardTitle className="text-xl">Gastos do Mês</CardTitle>
+                <CardTitle className="text-lg">Gastos do mês</CardTitle>
               </div>
-              <Button onClick={() => openNewExpense("planned")} className="gap-2 rounded-xl">
-                <Plus className="h-4 w-4" /> Adicionar Gasto
+
+              <Button onClick={() => openNewExpense("planned")} className="gap-2 rounded-xl h-10">
+                <Plus className="h-4 w-4" /> Adicionar gasto
               </Button>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row mt-2">
+            <div className="mt-2 flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por descrição..."
+                  placeholder="Buscar por descrição…"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 rounded-xl"
@@ -358,7 +321,7 @@ export function ExpenseTable({
               </div>
 
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-full sm:w-48 rounded-xl">
+                <SelectTrigger className="w-full sm:w-52 rounded-xl">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -372,11 +335,11 @@ export function ExpenseTable({
               </Select>
 
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-36 rounded-xl">
+                <SelectTrigger className="w-full sm:w-40 rounded-xl">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos status</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="paid">Pago</SelectItem>
                   <SelectItem value="planned">Previsto</SelectItem>
                   <SelectItem value="overdue">Atrasado</SelectItem>
@@ -385,15 +348,15 @@ export function ExpenseTable({
             </div>
           </CardHeader>
 
-          <CardContent className="relative z-10 p-0">
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="w-28">Data</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead className="w-36">Categoria</TableHead>
-                    <TableHead className="w-24">Status</TableHead>
+                    <TableHead className="w-44">Categoria</TableHead>
+                    <TableHead className="w-28">Status</TableHead>
                     <TableHead className="w-32 text-right">Valor</TableHead>
                     <TableHead className="w-24 text-right">Ações</TableHead>
                   </TableRow>
@@ -402,7 +365,7 @@ export function ExpenseTable({
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <ListChecks className="h-8 w-8 text-muted-foreground/40" />
                           <p>
@@ -420,7 +383,7 @@ export function ExpenseTable({
                       return (
                         <TableRow
                           key={expense.id}
-                          className="group transition-colors duration-150 hover:bg-white/5"
+                          className="group transition-colors duration-150 hover:bg-muted/40"
                         >
                           <TableCell className="font-medium text-sm">
                             {format(new Date(expense.date), "dd/MM/yyyy")}
@@ -428,7 +391,7 @@ export function ExpenseTable({
 
                           <TableCell>
                             <span className="flex items-center gap-1.5">
-                              {expense.description}
+                              <span className="text-foreground">{expense.description}</span>
                               {expense.isRecurring && (
                                 <span title="Recorrente">
                                   <RefreshCw className="h-3 w-3 text-primary" />
@@ -440,10 +403,8 @@ export function ExpenseTable({
                           <TableCell>
                             <Badge
                               variant="secondary"
-                              className="font-normal rounded-lg"
-                              style={{
-                                borderLeft: `3px solid ${getCategoryColor(expense.category)}`,
-                              }}
+                              className="font-normal rounded-lg border border-border/60 bg-card/50"
+                              style={{ borderLeft: `3px solid ${getCategoryColor(expense.category)}` }}
                             >
                               {expense.category}
                             </Badge>
@@ -464,7 +425,7 @@ export function ExpenseTable({
                           </TableCell>
 
                           <TableCell className="text-right">
-                            <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <div className="flex justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -492,7 +453,7 @@ export function ExpenseTable({
             </div>
 
             {filtered.length > 0 && (
-              <div className="flex items-center justify-between border-t border-white/10 px-4 py-3 text-sm">
+              <div className="flex items-center justify-between border-t border-border/60 px-4 py-3 text-sm">
                 <span className="text-muted-foreground">{filtered.length} gasto(s)</span>
                 <span className="font-semibold">Total: {formatCurrency(total)}</span>
               </div>
@@ -501,18 +462,13 @@ export function ExpenseTable({
         </Card>
       </FadeIn>
 
-      {/* ✅ Modal flutuante (popup) */}
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}
-      >
+      {/* Modal */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editingExpense ? "Editar gasto" : "Novo gasto"}</DialogTitle>
           </DialogHeader>
 
-          {/* Se seu ExpenseForm já usa defaultStatus internamente, perfeito.
-            Se não, me avisa que eu ajusto a prop aqui (sem quebrar). */}
           <ExpenseForm
             expense={editingExpense}
             currentDate={currentDate}
@@ -525,6 +481,7 @@ export function ExpenseTable({
             }}
             onCancel={closeDialog}
             onAddCategory={onAddCategory}
+            {...(!editingExpense ? ({ defaultStatus } as any) : {})}
           />
         </DialogContent>
       </Dialog>

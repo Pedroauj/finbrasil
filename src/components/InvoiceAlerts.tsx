@@ -41,7 +41,7 @@ export function InvoiceAlerts({
       cardAlerts.push({
         id: `${card.id}-closing`,
         type: "info",
-        title: `Fatura próxima do fechamento: ${card.name}`,
+        title: `Fechamento próximo — ${card.name}`,
         description:
           daysToClosing === 0
             ? "Sua fatura fecha hoje."
@@ -50,16 +50,14 @@ export function InvoiceAlerts({
       });
     }
 
-    const invoice = invoices.find(
-      (i) => i.cardId === card.id && i.month === monthKey
-    );
+    const invoice = invoices.find((i) => i.cardId === card.id && i.month === monthKey);
     const isPaid = invoice?.isPaid || false;
 
     if (!isPaid && daysToDue >= 0 && daysToDue <= 5) {
       cardAlerts.push({
         id: `${card.id}-due`,
         type: daysToDue <= 1 ? "destructive" : "warning",
-        title: `Vencimento próximo: ${card.name}`,
+        title: `Vencimento próximo — ${card.name}`,
         description:
           daysToDue === 0
             ? "Sua fatura vence hoje. Não esqueça de pagar."
@@ -74,27 +72,15 @@ export function InvoiceAlerts({
   if (alerts.length === 0) return null;
 
   return (
-    <div
-      className={[
-        "space-y-3",
-        "animate-in fade-in-0 slide-in-from-top-2 duration-300",
-        className ?? "",
-      ].join(" ")}
-    >
+    <div className={["space-y-2.5", "animate-in fade-in-0 slide-in-from-top-2 duration-300", className ?? ""].join(" ")}>
       {alerts.map((alert) => (
         <Alert
           key={alert.id}
           variant={alert.type as any}
-          className={[
-            "rounded-2xl border border-border/60 bg-card/70 backdrop-blur",
-            "shadow-sm",
-            "pl-4",
-          ].join(" ")}
+          className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur shadow-sm pl-4"
         >
           {alert.icon}
-          <AlertTitle className="text-sm font-semibold">
-            {alert.title}
-          </AlertTitle>
+          <AlertTitle className="text-sm font-semibold">{alert.title}</AlertTitle>
           <AlertDescription className="text-xs text-muted-foreground">
             {alert.description}
           </AlertDescription>
