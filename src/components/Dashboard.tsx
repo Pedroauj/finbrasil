@@ -21,23 +21,14 @@ import {
 } from "recharts";
 import { endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth } from "date-fns";
 
-import type {
-  Expense,
-  CreditCard,
-  CreditCardInvoice,
-  Budget,
-} from "@/types/expense";
+import type { Expense, CreditCard, CreditCardInvoice, Budget } from "@/types/expense";
 import { formatCurrency, getCategoryColor } from "@/types/expense";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceAlerts } from "./InvoiceAlerts";
 import { CashBalance } from "./CashBalance";
 import type { MonthBalance } from "@/hooks/useExpenseStore";
-import {
-  StaggerContainer,
-  StaggerItem,
-  FadeIn,
-} from "@/components/ui/animations";
+import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
 
 interface DashboardProps {
   expenses: Expense[];
@@ -50,10 +41,10 @@ interface DashboardProps {
 }
 
 /**
- * Card padrão SaaS premium:
- * - neutro e consistente em light/dark (token-based)
+ * Card padrão premium (token-based):
+ * - neutro e consistente em light/dark
  * - borda sutil + blur discreto
- * - hover elegante (sem neon)
+ * - hover elegante
  */
 const appCard =
   "relative overflow-hidden rounded-3xl " +
@@ -61,7 +52,33 @@ const appCard =
   "bg-card/70 backdrop-blur " +
   "shadow-sm " +
   "transition-all duration-300 will-change-transform " +
-  "hover:-translate-y-[2px] hover:shadow-md";
+  "hover:-translate-y-[1px] hover:shadow-md";
+
+function IconBadge({
+  variant = "primary",
+  children,
+}: {
+  variant?: "primary" | "muted" | "warning" | "destructive" | "success";
+  children: React.ReactNode;
+}) {
+  const styles =
+    variant === "destructive"
+      ? "bg-destructive/10 ring-destructive/15 text-destructive"
+      : variant === "warning"
+        ? "bg-[hsl(var(--warning))]/10 ring-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]"
+        : variant === "success"
+          ? "bg-[hsl(var(--success))]/10 ring-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
+          : variant === "muted"
+            ? "bg-muted/50 ring-border/60 text-foreground/80"
+            : "bg-primary/10 ring-primary/15 text-primary";
+
+  return (
+    <div className={`relative overflow-hidden rounded-2xl p-3.5 ring-1 ${styles}`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
 
 export function Dashboard({
   expenses,
@@ -96,10 +113,7 @@ export function Dashboard({
   const weeklyData = useMemo(() => {
     const mStart = startOfMonth(currentDate);
     const mEnd = endOfMonth(currentDate);
-    const weeks = eachWeekOfInterval(
-      { start: mStart, end: mEnd },
-      { weekStartsOn: 1 }
-    );
+    const weeks = eachWeekOfInterval({ start: mStart, end: mEnd }, { weekStartsOn: 1 });
 
     return weeks.map((weekStart, i) => {
       const wEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -126,28 +140,33 @@ export function Dashboard({
       ? "bg-[hsl(var(--warning))]"
       : "bg-[hsl(var(--success))]";
 
+  const changePct =
+    prevTotal > 0 ? Math.abs(((totalSpent - prevTotal) / prevTotal) * 100) : 0;
+
   return (
     <div className="space-y-6">
-      {/* Saldo Acumulado */}
+      {/* Caixa */}
       <FadeIn>
         <CashBalance balance={monthBalance} />
       </FadeIn>
 
-      {/* Alertas de Cartão de Crédito */}
+      {/* Alertas */}
       <FadeIn delay={0.05}>
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </FadeIn>
 
-      {/* Summary Cards */}
+      {/* Summary */}
       <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Total Gasto */}
         <StaggerItem>
           <Card className={appCard}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Total Gasto
+                    Total gasto
                   </p>
+
                   <p className="mt-1 text-2xl font-bold text-foreground">
                     {formatCurrency(totalSpent)}
                   </p>
@@ -166,57 +185,44 @@ export function Dashboard({
                             : "text-[hsl(var(--success))]"
                         }
                       >
-                        {Math.abs(((totalSpent - prevTotal) / prevTotal) * 100).toFixed(0)}%{" "}
-                        vs mês anterior
+                        {changePct.toFixed(0)}% vs mês anterior
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="relative overflow-hidden rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3.5">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
-                  <DollarSign className="relative z-10 h-6 w-6 text-primary" />
-                </div>
+                <IconBadge variant="primary">
+                  <DollarSign className="h-6 w-6" />
+                </IconBadge>
               </div>
             </CardContent>
           </Card>
         </StaggerItem>
 
+        {/* Orçamento */}
         <StaggerItem>
           <Card className={appCard}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Orçamento Restante
+                    Orçamento restante
                   </p>
+
                   <p className={`mt-1 text-2xl font-bold ${statusColor}`}>
                     {budget.total > 0 ? formatCurrency(remaining) : "Não definido"}
                   </p>
                 </div>
 
-                <div
-                  className={[
-                    "relative overflow-hidden rounded-2xl p-3.5 ring-1",
-                    overBudget
-                      ? "bg-destructive/10 ring-destructive/15"
-                      : nearBudget
-                        ? "bg-[hsl(var(--warning))]/10 ring-[hsl(var(--warning))]/15"
-                        : "bg-primary/10 ring-primary/15",
-                  ].join(" ")}
+                <IconBadge
+                  variant={overBudget ? "destructive" : nearBudget ? "warning" : "primary"}
                 >
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
                   {overBudget ? (
-                    <AlertTriangle className="relative z-10 h-6 w-6 text-destructive" />
+                    <AlertTriangle className="h-6 w-6" />
                   ) : (
-                    <Wallet
-                      className="relative z-10 h-6 w-6"
-                      style={{
-                        color: nearBudget ? "hsl(var(--warning))" : "hsl(var(--primary))",
-                      }}
-                    />
+                    <Wallet className="h-6 w-6" />
                   )}
-                </div>
+                </IconBadge>
               </div>
 
               {budget.total > 0 && (
@@ -226,7 +232,7 @@ export function Dashboard({
                     <span>{formatCurrency(budget.total)}</span>
                   </div>
 
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/60">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/50">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
                       style={{ width: `${Math.min(percentUsed, 100)}%` }}
@@ -238,47 +244,55 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
+        {/* Nº Gastos */}
         <StaggerItem>
           <Card className={appCard}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Nº de Gastos
+                    Nº de gastos
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">
-                    {expenses.length}
-                  </p>
+
+                  <p className="mt-1 text-2xl font-bold text-foreground">{expenses.length}</p>
+
                   <p className="mt-2 text-xs text-muted-foreground">
                     Média:{" "}
-                    {expenses.length > 0
-                      ? formatCurrency(totalSpent / expenses.length)
-                      : "R$ 0,00"}
+                    {expenses.length > 0 ? formatCurrency(totalSpent / expenses.length) : "R$ 0,00"}
                   </p>
                 </div>
 
-                <div className="relative overflow-hidden rounded-2xl bg-muted/50 ring-1 ring-border/60 p-3.5">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--foreground)/0.10),transparent_45%)]" />
-                  <Target className="relative z-10 h-6 w-6 text-foreground/80" />
-                </div>
+                <IconBadge variant="muted">
+                  <Target className="h-6 w-6" />
+                </IconBadge>
               </div>
             </CardContent>
           </Card>
         </StaggerItem>
       </StaggerContainer>
 
-      {/* Alert Orçamento */}
+      {/* Alert orçamento */}
       {(overBudget || nearBudget) && budget.total > 0 && (
         <FadeIn>
           <div
             className={[
-              "flex items-center gap-3 rounded-2xl border p-4 backdrop-blur",
+              "flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 backdrop-blur p-4 shadow-sm",
               overBudget
-                ? "border-destructive/20 bg-destructive/10 text-destructive"
-                : "border-[hsl(var(--warning))]/20 bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
+                ? "text-destructive"
+                : "text-[hsl(var(--warning))]",
             ].join(" ")}
           >
-            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span
+              className={[
+                "grid h-9 w-9 place-items-center rounded-xl ring-1",
+                overBudget
+                  ? "bg-destructive/10 ring-destructive/15"
+                  : "bg-[hsl(var(--warning))]/10 ring-[hsl(var(--warning))]/15",
+              ].join(" ")}
+            >
+              <AlertTriangle className="h-4 w-4" />
+            </span>
+
             <p className="text-sm font-medium">
               {overBudget
                 ? `Você ultrapassou o orçamento em ${formatCurrency(Math.abs(remaining))}!`
@@ -290,44 +304,58 @@ export function Dashboard({
 
       {/* Charts */}
       <StaggerContainer staggerDelay={0.12} className="grid gap-6 lg:grid-cols-2">
+        {/* Categoria */}
         <StaggerItem>
           <Card className={appCard}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-foreground">
-                Gastos por Categoria
-              </CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg text-foreground">Gastos por categoria</CardTitle>
+                <span className="text-xs text-muted-foreground">Ranking do mês</span>
+              </div>
             </CardHeader>
+
             <CardContent>
               {categoryData.length === 0 ? (
                 <p className="py-12 text-center text-muted-foreground">
                   Sem dados para exibir
                 </p>
               ) : (
-                <div className="flex flex-col items-center gap-4 sm:flex-row">
-                  <ResponsiveContainer width={200} height={200}>
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        dataKey="value"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        innerRadius={50}
-                        paddingAngle={2}
-                      >
-                        {categoryData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div className="flex flex-col items-center gap-5 sm:flex-row">
+                  <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
+                    <ResponsiveContainer width={190} height={190}>
+                      <PieChart>
+                        <Pie
+                          data={categoryData}
+                          dataKey="value"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={78}
+                          innerRadius={52}
+                          paddingAngle={2}
+                        >
+                          {categoryData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number) => formatCurrency(value)}
+                          contentStyle={{
+                            borderRadius: 16,
+                            border: "1px solid hsl(var(--border) / 0.6)",
+                            background: "hsl(var(--card) / 0.85)",
+                            backdropFilter: "blur(10px)",
+                            boxShadow: "0 14px 34px -24px rgba(0,0,0,0.55)",
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
 
                   <div className="flex w-full flex-col gap-2.5 text-sm">
-                    {categoryData.map((d) => (
+                    {categoryData.slice(0, 7).map((d) => (
                       <div key={d.name} className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded-full"
+                          className="h-2.5 w-2.5 rounded-full"
                           style={{ backgroundColor: d.color }}
                         />
                         <span className="text-muted-foreground">{d.name}</span>
@@ -336,6 +364,12 @@ export function Dashboard({
                         </span>
                       </div>
                     ))}
+
+                    {categoryData.length > 7 && (
+                      <div className="pt-1 text-xs text-muted-foreground">
+                        +{categoryData.length - 7} categorias
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -343,36 +377,62 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
+        {/* Semana */}
         <StaggerItem>
           <Card className={appCard}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-foreground">
-                Gastos por Semana
-              </CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg text-foreground">Gastos por semana</CardTitle>
+                <span className="text-xs text-muted-foreground">Distribuição</span>
+              </div>
             </CardHeader>
+
             <CardContent>
               {weeklyData.every((w) => w.total === 0) ? (
                 <p className="py-12 text-center text-muted-foreground">
                   Sem dados para exibir
                 </p>
               ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={weeklyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <YAxis
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                      tickFormatter={(v) => `R$${v}`}
-                    />
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm">
+                  <ResponsiveContainer width="100%" height={230}>
+                    <BarChart data={weeklyData}>
+                      <CartesianGrid
+                        strokeDasharray="3 6"
+                        stroke="hsl(var(--border) / 0.55)"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 12 }}
+                        stroke="hsl(var(--muted-foreground))"
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 12 }}
+                        stroke="hsl(var(--muted-foreground))"
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(v) => `R$${v}`}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          borderRadius: 16,
+                          border: "1px solid hsl(var(--border) / 0.6)",
+                          background: "hsl(var(--card) / 0.85)",
+                          backdropFilter: "blur(10px)",
+                          boxShadow: "0 14px 34px -24px rgba(0,0,0,0.55)",
+                        }}
+                      />
+                      <Bar
+                        dataKey="total"
+                        fill="hsl(var(--primary))"
+                        radius={[10, 10, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               )}
             </CardContent>
           </Card>
