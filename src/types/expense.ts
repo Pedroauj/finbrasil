@@ -101,10 +101,6 @@ export function getSalaryForMonth(salaries: Salary[] | undefined, base: Date): n
   return found ? Number(found.amount || 0) : 0;
 }
 
-export function getMonthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
 /** =========================
  *  Agrupamentos para gráficos
  *  ========================= */

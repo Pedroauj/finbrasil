@@ -2,6 +2,22 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, FinancialAccount, AccountTransfer, AccountAdjustment, AdjustmentReason, Salary, ExtraIncome, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
+import type {
+  Expense,
+  Budget,
+  RecurringExpense,
+  CreditCard,
+  CreditCardInvoice,
+  InvoiceItem,
+  FinancialAccount,
+  AccountTransfer,
+  AccountAdjustment,
+  AdjustmentReason,
+  Salary,
+  ExtraIncome,
+} from "@/types/expense";
+
+import { getMonthKey } from "@/lib/date";
 
 export interface MonthBalance {
   monthKey: string;
@@ -416,7 +432,7 @@ export function useExpenseStore() {
   // Calculate cumulative balance
   const monthBalance = useMemo((): MonthBalance => {
     const mk = getMonthKey(currentDate);
-    
+
     const allMonthKeys = new Set<string>();
     allExpenses.forEach(e => {
       const d = new Date(e.date);
@@ -435,13 +451,13 @@ export function useExpenseStore() {
     allMonthKeys.add(mk);
 
     const sortedKeys = Array.from(allMonthKeys).sort();
-    
+
     let carryOver = 0;
     let result: MonthBalance = { monthKey: mk, income: 0, expenses: 0, paidInvoices: 0, carryOver: 0, balance: 0 };
 
     for (const key of sortedKeys) {
       const [y, m] = key.split("-").map(Number);
-      
+
       // Income = salary + budget (legacy) + extra incomes
       const salaryIncome = allSalaries.find(s => s.month === m && s.year === y)?.amount || 0;
       const budgetIncome = allBudgets.find(b => b.month === m && b.year === y)?.total_limit || 0;
@@ -456,7 +472,7 @@ export function useExpenseStore() {
           return d.getFullYear() === y && d.getMonth() + 1 === m;
         })
         .reduce((s, e) => s + e.amount, 0);
-      
+
       const monthKeyStr = `${y}-${String(m).padStart(2, "0")}`;
       const paidInvoiceTotal = invoices
         .filter(i => i.month === monthKeyStr && i.isPaid)
@@ -480,13 +496,13 @@ export function useExpenseStore() {
     async (expense: Omit<Expense, "id">) => {
       if (!user) return;
       const insertData: any = {
-          user_id: user.id,
-          description: expense.description,
-          amount: expense.amount,
-          category: expense.category,
-          date: expense.date,
-          status: expense.status || 'paid',
-        };
+        user_id: user.id,
+        description: expense.description,
+        amount: expense.amount,
+        category: expense.category,
+        date: expense.date,
+        status: expense.status || 'paid',
+      };
       if (expense.accountId) insertData.account_id = expense.accountId;
       const { data, error } = await supabase
         .from("expenses")
