@@ -37,22 +37,19 @@ export function InvoiceAlerts({
     const daysToClosing = differenceInDays(closingDate, today);
     const daysToDue = differenceInDays(dueDate, today);
 
-    // Alerta de Fechamento (3 dias antes)
     if (daysToClosing >= 0 && daysToClosing <= 3) {
       cardAlerts.push({
         id: `${card.id}-closing`,
         type: "info",
-        title: `Fatura Próxima do Fechamento: ${card.name}`,
+        title: `Fatura próxima do fechamento: ${card.name}`,
         description:
           daysToClosing === 0
-            ? "Sua fatura fecha hoje!"
-            : `Sua fatura fecha em ${daysToClosing} ${daysToClosing === 1 ? "dia" : "dias"
-            }.`,
+            ? "Sua fatura fecha hoje."
+            : `Sua fatura fecha em ${daysToClosing} ${daysToClosing === 1 ? "dia" : "dias"}.`,
         icon: <CalendarClock className="h-4 w-4" />,
       });
     }
 
-    // Alerta de Vencimento (5 dias antes)
     const invoice = invoices.find(
       (i) => i.cardId === card.id && i.month === monthKey
     );
@@ -62,10 +59,10 @@ export function InvoiceAlerts({
       cardAlerts.push({
         id: `${card.id}-due`,
         type: daysToDue <= 1 ? "destructive" : "warning",
-        title: `Vencimento Próximo: ${card.name}`,
+        title: `Vencimento próximo: ${card.name}`,
         description:
           daysToDue === 0
-            ? "Sua fatura vence hoje! Não esqueça de pagar."
+            ? "Sua fatura vence hoje. Não esqueça de pagar."
             : `Vencimento em ${daysToDue} ${daysToDue === 1 ? "dia" : "dias"}.`,
         icon: <Bell className="h-4 w-4" />,
       });
@@ -89,9 +86,8 @@ export function InvoiceAlerts({
           key={alert.id}
           variant={alert.type as any}
           className={[
-            "border border-border/50 bg-card/80 backdrop-blur-xl",
+            "rounded-2xl border border-border/60 bg-card/70 backdrop-blur",
             "shadow-sm",
-            "rounded-2xl",
             "pl-4",
           ].join(" ")}
         >
@@ -99,7 +95,7 @@ export function InvoiceAlerts({
           <AlertTitle className="text-sm font-semibold">
             {alert.title}
           </AlertTitle>
-          <AlertDescription className="text-xs opacity-90">
+          <AlertDescription className="text-xs text-muted-foreground">
             {alert.description}
           </AlertDescription>
         </Alert>
