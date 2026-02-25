@@ -1,5 +1,4 @@
 import * as React from "react";
-
 import { cn } from "@/lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
@@ -7,10 +6,12 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        // Glass clean (sem "cinza manchado")
-        "rounded-2xl border border-white/10 bg-background/55 text-foreground backdrop-blur-xl",
-        // sombra mais premium e discreta
-        "shadow-[0_12px_35px_-20px_rgba(0,0,0,0.75)]",
+        // SaaS premium token-based (light/dark)
+        "rounded-3xl border border-border/60 bg-card/70 text-foreground backdrop-blur",
+        // sombra discreta e “cara de produto”
+        "shadow-sm",
+        // hover elegante (não neon)
+        "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md",
         className
       )}
       {...props}
@@ -28,7 +29,11 @@ CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-2xl font-semibold leading-none tracking-tight", className)} {...props} />
+    <h3
+      ref={ref}
+      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
   )
 );
 CardTitle.displayName = "CardTitle";
