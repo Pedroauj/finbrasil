@@ -55,11 +55,13 @@ function SidebarNav({
       <div className="p-4">
         <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur px-4 py-3 shadow-sm">
           <div className="text-sm font-semibold leading-tight">FinBrasil</div>
-          <div className="text-xs text-muted-foreground">Gestão Financeira</div>
+          <div className="text-xs text-muted-foreground">
+            Gestão Financeira
+          </div>
         </div>
       </div>
 
-      {/* Nav */}
+      {/* Navigation */}
       <div className="px-3">
         <div className="space-y-1">
           {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
@@ -70,31 +72,42 @@ function SidebarNav({
                 key={value}
                 onClick={() => onNavigate(value)}
                 className={[
-                  "relative group flex w-full items-center gap-2 rounded-xl px-3 h-10 text-sm transition",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  "relative group flex w-full items-center gap-3",
+                  "h-11 rounded-2xl px-4 text-sm font-medium transition-all duration-200",
                   "hover:bg-muted/40",
                   isActive
                     ? [
                       "bg-primary/12 text-foreground",
-                      "shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18),inset_0_14px_24px_-18px_hsl(var(--primary)/0.35)]",
                       "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-primary",
-                      "after:absolute after:inset-0 after:rounded-xl after:bg-[radial-gradient(80%_120%_at_20%_0%,hsl(var(--primary)/0.12),transparent_55%)] after:opacity-100",
+                      "shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18)]",
                     ].join(" ")
                     : "text-muted-foreground",
                 ].join(" ")}
               >
                 <Icon
                   className={[
-                    "relative z-10 h-4 w-4 transition",
+                    "h-4 w-4 transition",
                     isActive
                       ? "text-primary"
                       : "text-muted-foreground group-hover:text-foreground",
                   ].join(" ")}
                 />
-                <span className="relative z-10 flex-1 text-left">{label}</span>
+                <span className="flex-1 text-left">{label}</span>
               </button>
             );
           })}
+        </div>
+
+        {/* 🔥 Botão Novo Gasto abaixo das abas */}
+        <div className="mt-5">
+          <Button
+            onClick={() =>
+              window.dispatchEvent(new Event("open-add-expense"))
+            }
+            className="h-11 w-full rounded-2xl font-semibold shadow-sm"
+          >
+            Novo gasto
+          </Button>
         </div>
       </div>
 
