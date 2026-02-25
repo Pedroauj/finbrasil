@@ -114,29 +114,28 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  }
-
   html {
+    /* Evita micro-shift quando aparece scrollbar */
     scrollbar-gutter: stable;
   }
 
   body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+
+    /* Fallback para estabilidade total */
     overflow-y: scroll;
   }
-}
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  @apply font-semibold tracking-tight;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    @apply font-semibold tracking-tight;
+  }
 }
 
 @layer utilities {
