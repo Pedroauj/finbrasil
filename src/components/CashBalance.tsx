@@ -21,8 +21,9 @@ export function CashBalance({ balance, className }: CashBalanceProps) {
 
   const accentRing = isNegative ? "ring-destructive/20" : "ring-primary/15";
   const accentBar = isNegative ? "bg-destructive" : "bg-primary";
+  const accentText = isNegative ? "text-destructive" : "text-foreground";
 
-  const StatBox = ({
+  function StatBox({
     label,
     value,
     icon,
@@ -32,33 +33,27 @@ export function CashBalance({ balance, className }: CashBalanceProps) {
     value: string;
     icon: React.ReactNode;
     tone?: "neutral" | "positive" | "negative";
-  }) => {
-    const wrap =
+  }) {
+    const badge =
       tone === "negative"
-        ? "bg-destructive/10 ring-destructive/15"
+        ? "bg-destructive/10 ring-destructive/15 text-destructive"
         : tone === "positive"
-          ? "bg-primary/10 ring-primary/15"
-          : "bg-muted/50 ring-border/60";
-
-    const iconColor =
-      tone === "negative"
-        ? "text-destructive"
-        : tone === "positive"
-          ? "text-primary"
-          : "text-foreground/80";
+          ? "bg-primary/10 ring-primary/15 text-primary"
+          : "bg-muted/50 ring-border/60 text-foreground/80";
 
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-muted/20 p-3">
-        <div className={`rounded-xl p-1.5 ring-1 ${wrap}`}>
-          <span className={iconColor}>{icon}</span>
+      <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm">
+        <div className={`rounded-xl p-1.5 ring-1 ${badge}`}>
+          <span className="grid place-items-center">{icon}</span>
         </div>
-        <div>
+
+        <div className="min-w-0">
           <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
-          <p className="text-sm font-bold text-foreground">{value}</p>
+          <p className="text-sm font-bold text-foreground tabular-nums truncate">{value}</p>
         </div>
       </div>
     );
-  };
+  }
 
   return (
     <Card
@@ -71,8 +66,8 @@ export function CashBalance({ balance, className }: CashBalanceProps) {
     >
       <div className={`h-1 w-full ${accentBar}`} />
 
-      <CardContent className="p-6">
-        <div className="mb-5 flex items-center gap-3">
+      <CardContent className="p-5">
+        <div className="mb-4 flex items-center gap-3">
           <div
             className={[
               "rounded-2xl p-3 ring-1",
@@ -81,19 +76,14 @@ export function CashBalance({ balance, className }: CashBalanceProps) {
                 : "bg-primary/10 ring-primary/15",
             ].join(" ")}
           >
-            <Landmark className={["h-6 w-6", isNegative ? "text-destructive" : "text-primary"].join(" ")} />
+            <Landmark className={["h-5 w-5", isNegative ? "text-destructive" : "text-primary"].join(" ")} />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Caixa Total
+              Caixa total
             </p>
-            <p
-              className={[
-                "mt-1 text-2xl font-bold tracking-tight",
-                isNegative ? "text-destructive" : "text-foreground",
-              ].join(" ")}
-            >
+            <p className={["mt-1 text-2xl font-bold tracking-tight", accentText].join(" ")}>
               {formatCurrency(balance.balance)}
             </p>
           </div>
@@ -101,7 +91,7 @@ export function CashBalance({ balance, className }: CashBalanceProps) {
 
         <div className="grid grid-cols-2 gap-3">
           <StatBox
-            label="Saldo Inicial"
+            label="Saldo inicial"
             value={formatCurrency(balance.carryOver)}
             tone={carryNegative ? "negative" : "positive"}
             icon={
@@ -127,41 +117,28 @@ export function CashBalance({ balance, className }: CashBalanceProps) {
             icon={<ArrowDown className="h-4 w-4" />}
           />
 
-          <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-muted/20 p-3">
-            <div
-              className={[
-                "rounded-xl p-1.5 ring-1",
-                isNegative
-                  ? "bg-destructive/10 ring-destructive/15"
-                  : "bg-primary/10 ring-primary/15",
-              ].join(" ")}
-            >
-              {isNegative ? (
-                <TrendingDown className="h-4 w-4 text-destructive" />
+          <StatBox
+            label="Saldo final"
+            value={formatCurrency(balance.balance)}
+            tone={isNegative ? "negative" : "positive"}
+            icon={
+              isNegative ? (
+                <TrendingDown className="h-4 w-4" />
               ) : (
-                <TrendingUp className="h-4 w-4 text-primary" />
-              )}
-            </div>
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground">Saldo Final</p>
-              <p className={["text-sm font-bold", isNegative ? "text-destructive" : "text-foreground"].join(" ")}>
-                {formatCurrency(balance.balance)}
-              </p>
-            </div>
-          </div>
+                <TrendingUp className="h-4 w-4" />
+              )
+            }
+          />
         </div>
 
         {balance.paidInvoices > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-2xl border border-border/60 bg-muted/20 p-3">
-            <div className="rounded-xl p-1.5 ring-1 bg-muted/50 ring-border/60">
-              <MinusCircle className="h-4 w-4 text-foreground/80" />
-            </div>
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground">Faturas Pagas</p>
-              <p className="text-sm font-bold text-foreground">
-                {formatCurrency(balance.paidInvoices)}
-              </p>
-            </div>
+          <div className="mt-3">
+            <StatBox
+              label="Faturas pagas"
+              value={formatCurrency(balance.paidInvoices)}
+              tone="neutral"
+              icon={<MinusCircle className="h-4 w-4" />}
+            />
           </div>
         )}
       </CardContent>
