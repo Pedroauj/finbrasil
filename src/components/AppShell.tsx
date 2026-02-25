@@ -1,6 +1,15 @@
 // src/components/AppShell.tsx
 import { ReactNode } from "react";
-import { Menu, LayoutDashboard, TableProperties, CreditCard, RefreshCw, Calendar, Wallet, Settings2 } from "lucide-react";
+import {
+    Menu,
+    LayoutDashboard,
+    TableProperties,
+    CreditCard,
+    RefreshCw,
+    Calendar,
+    Wallet,
+    Settings2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -36,8 +45,9 @@ function SidebarNav({
 }) {
     return (
         <div className="flex h-full flex-col">
+            {/* Brand */}
             <div className="p-4">
-                <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 px-3 py-3 shadow-sm">
+                <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 backdrop-blur px-3 py-3 shadow-sm">
                     <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/15" />
                     <div className="leading-tight">
                         <div className="text-sm font-semibold">FinBrasil</div>
@@ -46,8 +56,9 @@ function SidebarNav({
                 </div>
             </div>
 
+            {/* Nav (mais “grosso” e consistente) */}
             <div className="px-3">
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = active === item.key;
@@ -57,18 +68,29 @@ function SidebarNav({
                                 key={item.key}
                                 onClick={() => onNavigate(item.key)}
                                 className={cn(
-                                    "group flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-sm transition",
-                                    "hover:bg-muted/50",
-                                    isActive ? "bg-primary/10 text-foreground" : "text-muted-foreground"
+                                    "group relative flex w-full items-center gap-3",
+                                    "rounded-2xl px-4 py-3 text-[13px] font-medium",
+                                    "transition-all duration-200",
+                                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                                    !isActive &&
+                                    "text-muted-foreground hover:text-foreground hover:bg-muted/35",
+                                    isActive &&
+                                    "text-foreground bg-primary/10 ring-1 ring-primary/20 shadow-sm"
                                 )}
                             >
                                 <Icon
                                     className={cn(
-                                        "h-4 w-4 transition",
-                                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                        "h-5 w-5 transition-colors",
+                                        isActive
+                                            ? "text-primary"
+                                            : "text-muted-foreground group-hover:text-foreground"
                                     )}
                                 />
-                                <span className="flex-1 text-left">{item.label}</span>
+                                <span className="flex-1 text-left leading-none">{item.label}</span>
+
+                                {isActive && (
+                                    <span className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_25%_20%,hsl(var(--primary)/0.12),transparent_55%)]" />
+                                )}
                             </button>
                         );
                     })}
@@ -110,19 +132,29 @@ export function AppShell({
                             <div className="xl:hidden">
                                 <Sheet>
                                     <SheetTrigger asChild>
-                                        <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="rounded-xl h-10 w-10"
+                                        >
                                             <Menu className="h-4 w-4" />
                                         </Button>
                                     </SheetTrigger>
                                     <SheetContent side="left" className="w-80 p-0">
-                                        <SidebarNav active={active} onNavigate={onNavigate} footer={footer} />
+                                        <SidebarNav
+                                            active={active}
+                                            onNavigate={onNavigate}
+                                            footer={footer}
+                                        />
                                     </SheetContent>
                                 </Sheet>
                             </div>
 
                             <div className="flex-1">
                                 <div className="text-sm font-semibold">{title}</div>
-                                <div className="text-xs text-muted-foreground">Visão geral e controle</div>
+                                <div className="text-xs text-muted-foreground">
+                                    Visão geral e controle
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-2">{rightActions}</div>
