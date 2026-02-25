@@ -2,12 +2,17 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1.25rem",
       screens: {
         "2xl": "1400px",
       },
@@ -70,23 +75,23 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 6px)",
+      },
+      boxShadow: {
+        // “hairline” + depth realista (premium)
+        premium:
+          "0 1px 0 hsl(var(--border) / 0.35), 0 14px 34px -24px rgba(0,0,0,0.55)",
+        premiumLg:
+          "0 1px 0 hsl(var(--border) / 0.35), 0 22px 50px -34px rgba(0,0,0,0.60)",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
