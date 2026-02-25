@@ -17,17 +17,17 @@ export function FloatingAddButton({
       transition={{ duration: 0.35 }}
       className="fixed bottom-5 right-5 z-50"
     >
-      <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
+      <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
         <Button
           onClick={onClick}
-          className="group relative h-12 rounded-full px-4 shadow-lg shadow-emerald-500/25"
+          className="group relative h-12 rounded-full px-4 shadow-md"
         >
-          {/* Glow */}
-          <span className="pointer-events-none absolute inset-0 rounded-full bg-emerald-500/20 blur-xl opacity-0 transition group-hover:opacity-100" />
+          {/* Glow sutil (premium) */}
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 transition group-hover:opacity-100" />
 
           <span className="relative flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/10">
-              <Plus className="h-4 w-4" />
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 ring-1 ring-primary/15">
+              <Plus className="h-4 w-4 text-primary" />
             </span>
             <span className="hidden sm:inline font-semibold">{label}</span>
           </span>
