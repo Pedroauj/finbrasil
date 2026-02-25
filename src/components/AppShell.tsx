@@ -9,7 +9,6 @@ import {
     Calendar,
     Wallet,
     Settings2,
-    Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -39,14 +38,10 @@ function SidebarNav({
     active,
     onNavigate,
     footer,
-    onAddExpense,
-    addExpenseLabel = "Novo gasto",
 }: {
     active: NavKey;
     onNavigate: (k: NavKey) => void;
     footer?: ReactNode;
-    onAddExpense?: () => void;
-    addExpenseLabel?: string;
 }) {
     return (
         <div className="flex h-full flex-col">
@@ -61,46 +56,41 @@ function SidebarNav({
             </div>
 
             <div className="px-3">
-                <div className="space-y-2">
-                    {/* Primary action (opcional) */}
-                    {onAddExpense && (
-                        <Button
-                            onClick={onAddExpense}
-                            className="h-11 w-full justify-between rounded-2xl px-4 font-semibold shadow-sm"
-                        >
-                            <span>{addExpenseLabel}</span>
-                            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
-                                <Plus className="h-4 w-4 text-primary-foreground" />
-                            </span>
-                        </Button>
-                    )}
+                <div className="space-y-1">
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = active === item.key;
 
-                    <div className="space-y-1">
-                        {navItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = active === item.key;
-
-                            return (
-                                <button
-                                    key={item.key}
-                                    onClick={() => onNavigate(item.key)}
+                        return (
+                            <button
+                                key={item.key}
+                                onClick={() => onNavigate(item.key)}
+                                className={cn(
+                                    "relative group flex w-full items-center gap-2 rounded-xl px-3 h-10 text-sm transition",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                                    "hover:bg-muted/40",
+                                    isActive
+                                        ? cn(
+                                            "bg-primary/12 text-foreground",
+                                            "shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18),inset_0_14px_24px_-18px_hsl(var(--primary)/0.35)]",
+                                            "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-primary",
+                                            "after:absolute after:inset-0 after:rounded-xl after:bg-[radial-gradient(80%_120%_at_20%_0%,hsl(var(--primary)/0.12),transparent_55%)] after:opacity-100"
+                                        )
+                                        : "text-muted-foreground"
+                                )}
+                            >
+                                <Icon
                                     className={cn(
-                                        "group flex w-full items-center gap-2 rounded-2xl px-3 h-11 text-sm transition",
-                                        "hover:bg-muted/50",
-                                        isActive ? "bg-primary/10 text-foreground" : "text-muted-foreground"
+                                        "relative z-10 h-4 w-4 transition",
+                                        isActive
+                                            ? "text-primary"
+                                            : "text-muted-foreground group-hover:text-foreground"
                                     )}
-                                >
-                                    <Icon
-                                        className={cn(
-                                            "h-4 w-4 transition",
-                                            isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                                        )}
-                                    />
-                                    <span className="flex-1 text-left">{item.label}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
+                                />
+                                <span className="relative z-10 flex-1 text-left">{item.label}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -116,8 +106,6 @@ export function AppShell({
     rightActions,
     footer,
     children,
-    onAddExpense,
-    addExpenseLabel,
 }: {
     active: NavKey;
     onNavigate: (k: NavKey) => void;
@@ -125,10 +113,6 @@ export function AppShell({
     rightActions?: ReactNode;
     footer?: ReactNode;
     children: ReactNode;
-
-    /** opcional */
-    onAddExpense?: () => void;
-    addExpenseLabel?: string;
 }) {
     return (
         <div className="min-h-screen bg-background">
@@ -136,13 +120,7 @@ export function AppShell({
 
             <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
                 <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.25)]">
-                    <SidebarNav
-                        active={active}
-                        onNavigate={onNavigate}
-                        footer={footer}
-                        onAddExpense={onAddExpense}
-                        addExpenseLabel={addExpenseLabel}
-                    />
+                    <SidebarNav active={active} onNavigate={onNavigate} footer={footer} />
                 </aside>
 
                 <div className="flex flex-1 flex-col">
@@ -151,18 +129,12 @@ export function AppShell({
                             <div className="xl:hidden">
                                 <Sheet>
                                     <SheetTrigger asChild>
-                                        <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl">
+                                        <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
                                             <Menu className="h-4 w-4" />
                                         </Button>
                                     </SheetTrigger>
                                     <SheetContent side="left" className="w-80 p-0">
-                                        <SidebarNav
-                                            active={active}
-                                            onNavigate={onNavigate}
-                                            footer={footer}
-                                            onAddExpense={onAddExpense}
-                                            addExpenseLabel={addExpenseLabel}
-                                        />
+                                        <SidebarNav active={active} onNavigate={onNavigate} footer={footer} />
                                     </SheetContent>
                                 </Sheet>
                             </div>
@@ -176,7 +148,7 @@ export function AppShell({
                         </div>
                     </header>
 
-                    <main className="flex-1 px-4 py-5 sm:px-5">
+                    <main className="flex-1 px-4 sm:px-5 py-5">
                         <div className="mx-auto w-full max-w-[1320px]">{children}</div>
                     </main>
                 </div>

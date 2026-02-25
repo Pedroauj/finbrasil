@@ -26,7 +26,6 @@ import {
   LogOut,
   Bot,
   Menu,
-  Plus,
 } from "lucide-react";
 
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
@@ -46,11 +45,9 @@ type NavValue = (typeof NAV_ITEMS)[number]["value"];
 function SidebarNav({
   active,
   onNavigate,
-  onAddExpense,
 }: {
   active: NavValue;
   onNavigate: (v: NavValue) => void;
-  onAddExpense: () => void;
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -62,46 +59,42 @@ function SidebarNav({
         </div>
       </div>
 
-      {/* Nav + Primary action */}
+      {/* Nav */}
       <div className="px-3">
-        <div className="space-y-2">
-          {/* Primary button (lateral) */}
-          <Button
-            onClick={onAddExpense}
-            className="h-11 w-full justify-between rounded-2xl px-4 font-semibold shadow-sm"
-          >
-            <span>Novo gasto</span>
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
-              <Plus className="h-4 w-4 text-primary-foreground" />
-            </span>
-          </Button>
+        <div className="space-y-1">
+          {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
+            const isActive = active === value;
 
-          {/* Nav list */}
-          <div className="space-y-1">
-            {NAV_ITEMS.map(({ value, label, icon: Icon }) => {
-              const isActive = active === value;
-              return (
-                <button
-                  key={value}
-                  onClick={() => onNavigate(value)}
+            return (
+              <button
+                key={value}
+                onClick={() => onNavigate(value)}
+                className={[
+                  "relative group flex w-full items-center gap-2 rounded-xl px-3 h-10 text-sm transition",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  "hover:bg-muted/40",
+                  isActive
+                    ? [
+                      "bg-primary/12 text-foreground",
+                      "shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.18),inset_0_14px_24px_-18px_hsl(var(--primary)/0.35)]",
+                      "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-primary",
+                      "after:absolute after:inset-0 after:rounded-xl after:bg-[radial-gradient(80%_120%_at_20%_0%,hsl(var(--primary)/0.12),transparent_55%)] after:opacity-100",
+                    ].join(" ")
+                    : "text-muted-foreground",
+                ].join(" ")}
+              >
+                <Icon
                   className={[
-                    "group flex w-full items-center gap-2 rounded-2xl px-3",
-                    "h-11 text-sm transition",
-                    "hover:bg-muted/50",
-                    isActive ? "bg-primary/10 text-foreground" : "text-muted-foreground",
+                    "relative z-10 h-4 w-4 transition",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground",
                   ].join(" ")}
-                >
-                  <Icon
-                    className={[
-                      "h-4 w-4 transition",
-                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-                    ].join(" ")}
-                  />
-                  <span className="flex-1 text-left">{label}</span>
-                </button>
-              );
-            })}
-          </div>
+                />
+                <span className="relative z-10 flex-1 text-left">{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -131,10 +124,6 @@ export default function Index() {
     const found = NAV_ITEMS.find((i) => i.value === nav);
     return found?.label ?? "FinBrasil";
   }, [nav]);
-
-  const openAddExpense = React.useCallback(() => {
-    window.dispatchEvent(new Event("open-add-expense"));
-  }, []);
 
   const Content = React.useMemo(() => {
     switch (nav) {
@@ -261,7 +250,7 @@ export default function Index() {
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         {/* Sidebar desktop */}
         <aside className="hidden w-72 bg-background/60 backdrop-blur xl:block shadow-[1px_0_0_hsl(var(--border)/0.25)]">
-          <SidebarNav active={nav} onNavigate={setNav} onAddExpense={openAddExpense} />
+          <SidebarNav active={nav} onNavigate={setNav} />
         </aside>
 
         {/* Main */}
@@ -273,12 +262,12 @@ export default function Index() {
               <div className="xl:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl">
+                    <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
                       <Menu className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-80 p-0">
-                    <SidebarNav active={nav} onNavigate={setNav} onAddExpense={openAddExpense} />
+                    <SidebarNav active={nav} onNavigate={setNav} />
                   </SheetContent>
                 </Sheet>
               </div>
@@ -294,7 +283,7 @@ export default function Index() {
 
                 <Button
                   variant="outline"
-                  className="h-11 gap-2 rounded-2xl px-4"
+                  className="gap-2 rounded-xl h-10"
                   onClick={() => setAssistantOpen(true)}
                 >
                   <Bot className="h-4 w-4" />
@@ -303,7 +292,7 @@ export default function Index() {
 
                 <ModeToggle />
 
-                <Button variant="outline" className="h-11 gap-2 rounded-2xl px-4" onClick={signOut}>
+                <Button variant="outline" className="gap-2 rounded-xl h-10" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>
@@ -312,14 +301,11 @@ export default function Index() {
           </header>
 
           {/* Content */}
-          <main className="flex-1 px-4 py-5 sm:px-5">{Content}</main>
+          <main className="flex-1 px-4 sm:px-5 py-5">{Content}</main>
         </div>
       </div>
 
-      {/* FAB só no mobile/tablet (porque no desktop já tem o botão na sidebar) */}
-      <div className="xl:hidden">
-        <FloatingAddButton onClick={openAddExpense} />
-      </div>
+      <FloatingAddButton onClick={() => window.dispatchEvent(new Event("open-add-expense"))} />
     </div>
   );
 }
