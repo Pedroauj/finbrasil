@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Expense, Budget, RecurringExpense, CreditCard, CreditCardInvoice, InvoiceItem, FinancialAccount, AccountTransfer, AccountAdjustment, AdjustmentReason, Salary, ExtraIncome, getMonthKey } from "@/types/expense";
 import { useAuth } from "./useAuth";
+
 import type {
   Expense,
   Budget,
@@ -17,7 +17,7 @@ import type {
   ExtraIncome,
 } from "@/types/expense";
 
-import { getMonthKey } from "@/lib/date";
+import { getMonthKey } from "@/types/expense";
 
 export interface MonthBalance {
   monthKey: string;
@@ -30,6 +30,7 @@ export interface MonthBalance {
 
 export function useExpenseStore() {
   const { user } = useAuth();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [budget, setBudgetState] = useState<Budget>({ total: 0, byCategory: {} });
@@ -39,11 +40,13 @@ export function useExpenseStore() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [allBudgets, setAllBudgets] = useState<{ month: number; year: number; total_limit: number }[]>([]);
   const [financialAccounts, setFinancialAccounts] = useState<FinancialAccount[]>([]);
   const [accountTransfers, setAccountTransfers] = useState<AccountTransfer[]>([]);
   const [accountAdjustments, setAccountAdjustments] = useState<AccountAdjustment[]>([]);
+
   const [salary, setSalary] = useState<Salary | null>(null);
   const [extraIncomes, setExtraIncomes] = useState<ExtraIncome[]>([]);
 
@@ -51,27 +54,30 @@ export function useExpenseStore() {
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
 
-  // Load Credit Cards from localStorage (Mocking Supabase for new feature)
+  /** =========================
+   *  Cartões (localStorage)
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     const savedCards = localStorage.getItem(`cards_${user.id}`);
-    if (savedCards) {
-      setCreditCards(JSON.parse(savedCards));
-    }
+    if (savedCards) setCreditCards(JSON.parse(savedCards));
+
     const savedInvoices = localStorage.getItem(`invoices_${user.id}`);
-    if (savedInvoices) {
-      setInvoices(JSON.parse(savedInvoices));
-    }
+    if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
   }, [user]);
 
-  // Save Credit Cards and Invoices to localStorage
   useEffect(() => {
     if (!user) return;
     localStorage.setItem(`cards_${user.id}`, JSON.stringify(creditCards));
     localStorage.setItem(`invoices_${user.id}`, JSON.stringify(invoices));
   }, [creditCards, invoices, user]);
 
-  // Materialize recurring expenses for a given month
+  /** =========================
+   *  Recorrentes (materialização)
+   *  ========================= */
+
   const materializeRecurring = useCallback(async (userId: string, m: number, y: number) => {
     const { data: recurrings } = await supabase
       .from("recurring_expenses")
@@ -79,19 +85,22 @@ export function useExpenseStore() {
       .eq("user_id", userId)
       .eq("active", true);
 
-    if (!recurrings || recurrings.length === 0) return;
+    if (!recurrings?.length) return;
 
     const { data: instances } = await supabase
       .from("recurring_expense_instances")
       .select("recurring_expense_id")
       .eq("month", m)
       .eq("year", y)
-      .in("recurring_expense_id", recurrings.map(r => r.id));
+      .in(
+        "recurring_expense_id",
+        recurrings.map((r: any) => r.id)
+      );
 
-    const existingIds = new Set((instances || []).map(i => i.recurring_expense_id));
-    const toCreate = recurrings.filter(r => !existingIds.has(r.id));
+    const existingIds = new Set((instances || []).map((i: any) => i.recurring_expense_id));
+    const toCreate = recurrings.filter((r: any) => !existingIds.has(r.id));
 
-    for (const rec of toCreate) {
+    for (const rec of toCreate as any[]) {
       const lastDay = new Date(y, m, 0).getDate();
       const day = Math.min(rec.day_of_month, lastDay);
       const date = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -104,24 +113,26 @@ export function useExpenseStore() {
           amount: rec.amount,
           category: rec.category,
           date,
+          status: "paid",
         })
         .select()
         .single();
 
       if (expense) {
-        await supabase
-          .from("recurring_expense_instances")
-          .insert({
-            recurring_expense_id: rec.id,
-            expense_id: expense.id,
-            month: m,
-            year: y,
-          });
+        await supabase.from("recurring_expense_instances").insert({
+          recurring_expense_id: rec.id,
+          expense_id: expense.id,
+          month: m,
+          year: y,
+        });
       }
     }
   }, []);
 
-  // Load expenses for current month
+  /** =========================
+   *  Despesas do mês atual
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -148,7 +159,7 @@ export function useExpenseStore() {
         .eq("month", month)
         .eq("year", year);
 
-      const recurringExpenseIds = new Set((instances || []).map(i => i.expense_id));
+      const recurringExpenseIds = new Set((instances || []).map((i: any) => i.expense_id));
 
       setExpenses(
         (data || []).map((e: any) => ({
@@ -158,22 +169,29 @@ export function useExpenseStore() {
           category: e.category,
           amount: Number(e.amount),
           isRecurring: recurringExpenseIds.has(e.id),
-          status: e.status || 'paid',
+          status: (e.status as Expense["status"]) || "paid",
           accountId: e.account_id || undefined,
+          cardId: e.card_id || undefined,
         }))
       );
+
       setLoading(false);
     };
 
     load();
   }, [user, month, year, materializeRecurring]);
 
-  // Load previous month expenses
+  /** =========================
+   *  Despesas do mês anterior
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     const prevDate = new Date(year, month - 2);
     const pm = prevDate.getMonth() + 1;
     const py = prevDate.getFullYear();
+
     const startDate = `${py}-${String(pm).padStart(2, "0")}-01`;
     const endDate = `${year}-${String(month).padStart(2, "0")}-01`;
 
@@ -191,15 +209,19 @@ export function useExpenseStore() {
             description: e.description,
             category: e.category,
             amount: Number(e.amount),
-            status: e.status || 'paid',
+            status: (e.status as Expense["status"]) || "paid",
           }))
         );
       });
   }, [user, month, year]);
 
-  // Load budget
+  /** =========================
+   *  Budget
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     supabase
       .from("budgets")
       .select("*")
@@ -210,8 +232,8 @@ export function useExpenseStore() {
       .then(({ data }) => {
         if (data) {
           setBudgetState({
-            total: Number(data.total_limit),
-            byCategory: (data.category_limits as Record<string, number>) || {},
+            total: Number((data as any).total_limit),
+            byCategory: ((data as any).category_limits as Record<string, number>) || {},
           });
         } else {
           setBudgetState({ total: 0, byCategory: {} });
@@ -219,21 +241,29 @@ export function useExpenseStore() {
       });
   }, [user, month, year]);
 
-  // Load custom categories
+  /** =========================
+   *  Categorias customizadas
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     supabase
       .from("custom_categories")
       .select("name")
       .eq("user_id", user.id)
       .then(({ data }) => {
-        setCustomCategories((data || []).map((c) => c.name));
+        setCustomCategories((data || []).map((c: any) => c.name));
       });
   }, [user]);
 
-  // Load recurring expenses
+  /** =========================
+   *  Recorrentes (lista)
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     supabase
       .from("recurring_expenses")
       .select("*")
@@ -241,7 +271,7 @@ export function useExpenseStore() {
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setRecurringExpenses(
-          (data || []).map((r) => ({
+          (data || []).map((r: any) => ({
             id: r.id,
             description: r.description,
             category: r.category,
@@ -253,9 +283,13 @@ export function useExpenseStore() {
       });
   }, [user]);
 
-  // Load financial accounts
+  /** =========================
+   *  Contas financeiras
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     supabase
       .from("financial_accounts" as any)
       .select("*")
@@ -278,9 +312,13 @@ export function useExpenseStore() {
       });
   }, [user]);
 
-  // Load account transfers
+  /** =========================
+   *  Transferências
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     supabase
       .from("account_transfers" as any)
       .select("*")
@@ -300,9 +338,13 @@ export function useExpenseStore() {
       });
   }, [user]);
 
-  // Load account adjustments
+  /** =========================
+   *  Ajustes de conta
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     supabase
       .from("account_adjustments" as any)
       .select("*")
@@ -322,11 +364,14 @@ export function useExpenseStore() {
       });
   }, [user]);
 
-  // Load salary for current month
+  /** =========================
+   *  Salário (mês atual + auto-repeat)
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     const loadSalary = async () => {
-      // Try current month
       const { data } = await supabase
         .from("salaries" as any)
         .select("*")
@@ -337,45 +382,74 @@ export function useExpenseStore() {
 
       if (data) {
         const d = data as any;
-        setSalary({ id: d.id, amount: Number(d.amount), month: d.month, year: d.year, dayOfReceipt: d.day_of_receipt, autoRepeat: d.auto_repeat });
-      } else {
-        // Check if previous month has auto_repeat enabled
-        const prevM = month === 1 ? 12 : month - 1;
-        const prevY = month === 1 ? year - 1 : year;
-        const { data: prevData } = await supabase
-          .from("salaries" as any)
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("month", prevM)
-          .eq("year", prevY)
-          .eq("auto_repeat", true)
-          .maybeSingle();
+        setSalary({
+          id: d.id,
+          amount: Number(d.amount),
+          month: d.month,
+          year: d.year,
+          dayOfReceipt: d.day_of_receipt,
+          autoRepeat: d.auto_repeat,
+        });
+        return;
+      }
 
-        if (prevData) {
-          const p = prevData as any;
-          // Auto-create for current month
-          const { data: newSalary } = await supabase
-            .from("salaries" as any)
-            .insert({ user_id: user.id, amount: p.amount, month, year, day_of_receipt: p.day_of_receipt, auto_repeat: true } as any)
-            .select()
-            .single();
-          if (newSalary) {
-            const n = newSalary as any;
-            setSalary({ id: n.id, amount: Number(n.amount), month: n.month, year: n.year, dayOfReceipt: n.day_of_receipt, autoRepeat: n.auto_repeat });
-          } else {
-            setSalary(null);
-          }
-        } else {
-          setSalary(null);
-        }
+      const prevM = month === 1 ? 12 : month - 1;
+      const prevY = month === 1 ? year - 1 : year;
+
+      const { data: prevData } = await supabase
+        .from("salaries" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("month", prevM)
+        .eq("year", prevY)
+        .eq("auto_repeat", true)
+        .maybeSingle();
+
+      if (!prevData) {
+        setSalary(null);
+        return;
+      }
+
+      const p = prevData as any;
+
+      const { data: newSalary } = await supabase
+        .from("salaries" as any)
+        .insert({
+          user_id: user.id,
+          amount: p.amount,
+          month,
+          year,
+          day_of_receipt: p.day_of_receipt,
+          auto_repeat: true,
+        } as any)
+        .select()
+        .single();
+
+      if (newSalary) {
+        const n = newSalary as any;
+        setSalary({
+          id: n.id,
+          amount: Number(n.amount),
+          month: n.month,
+          year: n.year,
+          dayOfReceipt: n.day_of_receipt,
+          autoRepeat: n.auto_repeat,
+        });
+      } else {
+        setSalary(null);
       }
     };
+
     loadSalary();
   }, [user, month, year]);
 
-  // Load extra incomes for current month
+  /** =========================
+   *  Receitas extras (mês atual)
+   *  ========================= */
+
   useEffect(() => {
     if (!user) return;
+
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
     const endMonth = month === 12 ? 1 : month + 1;
     const endYear = month === 12 ? year + 1 : year;
@@ -389,99 +463,154 @@ export function useExpenseStore() {
       .lt("date", endDate)
       .order("date", { ascending: false })
       .then(({ data }: any) => {
-        setExtraIncomes((data || []).map((e: any) => ({
-          id: e.id, amount: Number(e.amount), description: e.description, category: e.category, date: e.date,
-        })));
+        setExtraIncomes(
+          (data || []).map((e: any) => ({
+            id: e.id,
+            amount: Number(e.amount),
+            description: e.description,
+            category: e.category,
+            date: e.date,
+          }))
+        );
       });
   }, [user, month, year]);
 
-  // Load all expenses, budgets, salaries and extra incomes for cumulative balance
+  /** =========================
+   *  Load ALL (para carry over / saldo acumulado)
+   *  ========================= */
+
   const [allSalaries, setAllSalaries] = useState<{ month: number; year: number; amount: number }[]>([]);
   const [allExtraIncomes, setAllExtraIncomes] = useState<{ date: string; amount: number }[]>([]);
 
   useEffect(() => {
     if (!user) return;
+
     const loadAll = async () => {
       const { data: expData } = await supabase
         .from("expenses")
-        .select("id, date, amount")
+        // ✅ inclui status (você usa depois)
+        .select("id, date, amount, status")
         .eq("user_id", user.id);
-      setAllExpenses((expData || []).map((e: any) => ({ id: e.id, date: e.date, description: "", category: "", amount: Number(e.amount), status: e.status || 'paid' as const })));
+
+      setAllExpenses(
+        (expData || []).map((e: any) => ({
+          id: e.id,
+          date: e.date,
+          description: "",
+          category: "",
+          amount: Number(e.amount),
+          status: (e.status as Expense["status"]) || "paid",
+        }))
+      );
 
       const { data: budData } = await supabase
         .from("budgets")
         .select("month, year, total_limit")
         .eq("user_id", user.id);
-      setAllBudgets((budData || []).map(b => ({ month: b.month, year: b.year, total_limit: Number(b.total_limit) })));
+
+      setAllBudgets((budData || []).map((b: any) => ({ month: b.month, year: b.year, total_limit: Number(b.total_limit) })));
 
       const { data: salData } = await supabase
         .from("salaries" as any)
         .select("month, year, amount")
         .eq("user_id", user.id);
+
       setAllSalaries(((salData as any) || []).map((s: any) => ({ month: s.month, year: s.year, amount: Number(s.amount) })));
 
       const { data: extraData } = await supabase
         .from("extra_incomes" as any)
         .select("date, amount")
         .eq("user_id", user.id);
+
       setAllExtraIncomes(((extraData as any) || []).map((e: any) => ({ date: e.date, amount: Number(e.amount) })));
     };
-    loadAll();
-  }, [user, expenses, budget, salary, extraIncomes]);
 
-  // Calculate cumulative balance
+    loadAll();
+  }, [user]);
+
+  /** =========================
+   *  Month balance (carry over)
+   *  ========================= */
+
   const monthBalance = useMemo((): MonthBalance => {
     const mk = getMonthKey(currentDate);
 
     const allMonthKeys = new Set<string>();
-    allExpenses.forEach(e => {
+
+    allExpenses.forEach((e) => {
       const d = new Date(e.date);
       allMonthKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
     });
-    allBudgets.forEach(b => {
+
+    allBudgets.forEach((b) => {
       allMonthKeys.add(`${b.year}-${String(b.month).padStart(2, "0")}`);
     });
-    allSalaries.forEach(s => {
+
+    allSalaries.forEach((s) => {
       allMonthKeys.add(`${s.year}-${String(s.month).padStart(2, "0")}`);
     });
-    allExtraIncomes.forEach(e => {
+
+    allExtraIncomes.forEach((e) => {
       const d = new Date(e.date);
       allMonthKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
     });
+
     allMonthKeys.add(mk);
 
     const sortedKeys = Array.from(allMonthKeys).sort();
 
     let carryOver = 0;
-    let result: MonthBalance = { monthKey: mk, income: 0, expenses: 0, paidInvoices: 0, carryOver: 0, balance: 0 };
+
+    let result: MonthBalance = {
+      monthKey: mk,
+      income: 0,
+      expenses: 0,
+      paidInvoices: 0,
+      carryOver: 0,
+      balance: 0,
+    };
 
     for (const key of sortedKeys) {
       const [y, m] = key.split("-").map(Number);
 
-      // Income = salary + budget (legacy) + extra incomes
-      const salaryIncome = allSalaries.find(s => s.month === m && s.year === y)?.amount || 0;
-      const budgetIncome = allBudgets.find(b => b.month === m && b.year === y)?.total_limit || 0;
+      // Income = salary + extra incomes (+ budget legado se você estiver usando como "limite/entrada")
+      const salaryIncome = allSalaries.find((s) => s.month === m && s.year === y)?.amount || 0;
+
+      const budgetIncome = allBudgets.find((b) => b.month === m && b.year === y)?.total_limit || 0;
+
       const extraIncome = allExtraIncomes
-        .filter(e => { const d = new Date(e.date); return d.getFullYear() === y && d.getMonth() + 1 === m; })
+        .filter((e) => {
+          const d = new Date(e.date);
+          return d.getFullYear() === y && d.getMonth() + 1 === m;
+        })
         .reduce((s, e) => s + e.amount, 0);
+
       const monthIncome = salaryIncome + extraIncome + budgetIncome;
 
       const monthExpenses = allExpenses
-        .filter(e => {
+        .filter((e) => {
           const d = new Date(e.date);
           return d.getFullYear() === y && d.getMonth() + 1 === m;
         })
         .reduce((s, e) => s + e.amount, 0);
 
       const monthKeyStr = `${y}-${String(m).padStart(2, "0")}`;
+
       const paidInvoiceTotal = invoices
-        .filter(i => i.month === monthKeyStr && i.isPaid)
-        .reduce((s, i) => s + i.items.reduce((si, item) => si + item.amount, 0), 0);
+        .filter((i) => i.month === monthKeyStr && i.isPaid)
+        .reduce((s, i) => s + i.items.reduce((si, item) => si + Number(item.amount || 0), 0), 0);
 
       const balance = carryOver + monthIncome - monthExpenses - paidInvoiceTotal;
 
       if (key === mk) {
-        result = { monthKey: mk, income: monthIncome, expenses: monthExpenses, paidInvoices: paidInvoiceTotal, carryOver, balance };
+        result = {
+          monthKey: mk,
+          income: monthIncome,
+          expenses: monthExpenses,
+          paidInvoices: paidInvoiceTotal,
+          carryOver,
+          balance,
+        };
       }
 
       carryOver = balance;
@@ -492,23 +621,27 @@ export function useExpenseStore() {
     return result;
   }, [allExpenses, allBudgets, allSalaries, allExtraIncomes, invoices, currentDate]);
 
+  /** =========================
+   *  Expenses CRUD
+   *  ========================= */
+
   const addExpense = useCallback(
     async (expense: Omit<Expense, "id">) => {
       if (!user) return;
+
       const insertData: any = {
         user_id: user.id,
         description: expense.description,
         amount: expense.amount,
         category: expense.category,
         date: expense.date,
-        status: expense.status || 'paid',
+        status: expense.status || "paid",
       };
+
       if (expense.accountId) insertData.account_id = expense.accountId;
-      const { data, error } = await supabase
-        .from("expenses")
-        .insert(insertData)
-        .select()
-        .single();
+      if (expense.cardId) insertData.card_id = expense.cardId;
+
+      const { data, error } = await supabase.from("expenses").insert(insertData).select().single();
 
       if (data && !error) {
         setExpenses((prev) => [
@@ -518,8 +651,9 @@ export function useExpenseStore() {
             description: data.description,
             category: data.category,
             amount: Number(data.amount),
-            status: (data as any).status || 'paid',
+            status: ((data as any).status as Expense["status"]) || "paid",
             accountId: (data as any).account_id || undefined,
+            cardId: (data as any).card_id || undefined,
           },
           ...prev,
         ]);
@@ -531,16 +665,11 @@ export function useExpenseStore() {
   const updateExpense = useCallback(
     async (id: string, updates: Partial<Omit<Expense, "id">>) => {
       if (!user) return;
-      const { error } = await supabase
-        .from("expenses")
-        .update(updates)
-        .eq("id", id)
-        .eq("user_id", user.id);
+
+      const { error } = await supabase.from("expenses").update(updates).eq("id", id).eq("user_id", user.id);
 
       if (!error) {
-        setExpenses((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, ...updates } : e))
-        );
+        setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
       }
     },
     [user]
@@ -549,59 +678,61 @@ export function useExpenseStore() {
   const deleteExpense = useCallback(
     async (id: string) => {
       if (!user) return;
-      const { error } = await supabase
-        .from("expenses")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
 
-      if (!error) {
-        setExpenses((prev) => prev.filter((e) => e.id !== id));
-      }
+      const { error } = await supabase.from("expenses").delete().eq("id", id).eq("user_id", user.id);
+
+      if (!error) setExpenses((prev) => prev.filter((e) => e.id !== id));
     },
     [user]
   );
 
+  /** =========================
+   *  Budget CRUD
+   *  ========================= */
+
   const setBudget = useCallback(
     async (newBudget: Budget) => {
       if (!user) return;
-      const { error } = await supabase
-        .from("budgets")
-        .upsert(
-          {
-            user_id: user.id,
-            month,
-            year,
-            total_limit: newBudget.total,
-            category_limits: newBudget.byCategory,
-          },
-          { onConflict: "user_id,month,year" }
-        );
 
-      if (!error) {
-        setBudgetState(newBudget);
-      }
+      const { error } = await supabase.from("budgets").upsert(
+        {
+          user_id: user.id,
+          month,
+          year,
+          total_limit: newBudget.total,
+          category_limits: newBudget.byCategory,
+        },
+        { onConflict: "user_id,month,year" }
+      );
+
+      if (!error) setBudgetState(newBudget);
     },
     [user, month, year]
   );
 
+  /** =========================
+   *  Categorias
+   *  ========================= */
+
   const addCustomCategory = useCallback(
     async (cat: string) => {
       if (!user || customCategories.includes(cat)) return;
-      const { error } = await supabase
-        .from("custom_categories")
-        .insert({ user_id: user.id, name: cat });
 
-      if (!error) {
-        setCustomCategories((prev) => [...prev, cat]);
-      }
+      const { error } = await supabase.from("custom_categories").insert({ user_id: user.id, name: cat });
+
+      if (!error) setCustomCategories((prev) => [...prev, cat]);
     },
     [user, customCategories]
   );
 
+  /** =========================
+   *  Recorrentes CRUD
+   *  ========================= */
+
   const addRecurringExpense = useCallback(
     async (recurring: Omit<RecurringExpense, "id" | "active">) => {
       if (!user) return;
+
       const { data, error } = await supabase
         .from("recurring_expenses")
         .insert({
@@ -617,12 +748,12 @@ export function useExpenseStore() {
       if (data && !error) {
         setRecurringExpenses((prev) => [
           {
-            id: data.id,
-            description: data.description,
-            category: data.category,
-            amount: Number(data.amount),
-            dayOfMonth: data.day_of_month,
-            active: data.active,
+            id: (data as any).id,
+            description: (data as any).description,
+            category: (data as any).category,
+            amount: Number((data as any).amount),
+            dayOfMonth: (data as any).day_of_month,
+            active: (data as any).active,
           },
           ...prev,
         ]);
@@ -639,29 +770,28 @@ export function useExpenseStore() {
             amount: recurring.amount,
             category: recurring.category,
             date,
+            status: "paid",
           })
           .select()
           .single();
 
         if (expense) {
-          await supabase
-            .from("recurring_expense_instances")
-            .insert({
-              recurring_expense_id: data.id,
-              expense_id: expense.id,
-              month,
-              year,
-            });
+          await supabase.from("recurring_expense_instances").insert({
+            recurring_expense_id: (data as any).id,
+            expense_id: (expense as any).id,
+            month,
+            year,
+          });
 
           setExpenses((prev) => [
             {
-              id: expense.id,
-              date: expense.date,
-              description: expense.description,
-              category: expense.category,
-              amount: Number(expense.amount),
+              id: (expense as any).id,
+              date: (expense as any).date,
+              description: (expense as any).description,
+              category: (expense as any).category,
+              amount: Number((expense as any).amount),
               isRecurring: true,
-              status: (expense as any).status || 'paid',
+              status: ((expense as any).status as Expense["status"]) || "paid",
             },
             ...prev,
           ]);
@@ -674,17 +804,10 @@ export function useExpenseStore() {
   const toggleRecurringExpense = useCallback(
     async (id: string, active: boolean) => {
       if (!user) return;
-      const { error } = await supabase
-        .from("recurring_expenses")
-        .update({ active })
-        .eq("id", id)
-        .eq("user_id", user.id);
 
-      if (!error) {
-        setRecurringExpenses((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, active } : r))
-        );
-      }
+      const { error } = await supabase.from("recurring_expenses").update({ active }).eq("id", id).eq("user_id", user.id);
+
+      if (!error) setRecurringExpenses((prev) => prev.map((r) => (r.id === id ? { ...r, active } : r)));
     },
     [user]
   );
@@ -692,85 +815,86 @@ export function useExpenseStore() {
   const deleteRecurringExpense = useCallback(
     async (id: string) => {
       if (!user) return;
-      const { error } = await supabase
-        .from("recurring_expenses")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
 
-      if (!error) {
-        setRecurringExpenses((prev) => prev.filter((r) => r.id !== id));
-      }
+      const { error } = await supabase.from("recurring_expenses").delete().eq("id", id).eq("user_id", user.id);
+
+      if (!error) setRecurringExpenses((prev) => prev.filter((r) => r.id !== id));
     },
     [user]
   );
 
-  // Credit Card Methods
+  /** =========================
+   *  Cartões CRUD (local)
+   *  ========================= */
+
   const addCreditCard = useCallback((card: Omit<CreditCard, "id">) => {
     const newCard = { ...card, id: crypto.randomUUID() };
-    setCreditCards(prev => [...prev, newCard]);
+    setCreditCards((prev) => [...prev, newCard]);
   }, []);
 
   const updateCreditCard = useCallback((id: string, updates: Partial<CreditCard>) => {
-    setCreditCards(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    setCreditCards((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   }, []);
 
   const deleteCreditCard = useCallback((id: string) => {
-    setCreditCards(prev => prev.filter(c => c.id !== id));
-    setInvoices(prev => prev.filter(i => i.cardId !== id));
+    setCreditCards((prev) => prev.filter((c) => c.id !== id));
+    setInvoices((prev) => prev.filter((i) => i.cardId !== id));
   }, []);
 
   const addInvoiceItem = useCallback((cardId: string, month: string, item: Omit<InvoiceItem, "id">) => {
-    setInvoices(prev => {
-      const existingInvoice = prev.find(i => i.cardId === cardId && i.month === month);
-      const newItem = { ...item, id: crypto.randomUUID() };
+    setInvoices((prev) => {
+      const existingInvoice = prev.find((i) => i.cardId === cardId && i.month === month);
+      const newItem: InvoiceItem = { ...item, id: crypto.randomUUID() };
 
       if (existingInvoice) {
-        return prev.map(i => i.id === existingInvoice.id
-          ? { ...i, items: [...i.items, newItem] }
-          : i
-        );
-      } else {
-        return [...prev, { id: crypto.randomUUID(), cardId, month, items: [newItem], isPaid: false }];
+        return prev.map((i) => (i.id === existingInvoice.id ? { ...i, items: [...i.items, newItem] } : i));
       }
+
+      return [...prev, { id: crypto.randomUUID(), cardId, month, items: [newItem], isPaid: false }];
     });
   }, []);
 
   const addInstallments = useCallback((cardId: string, items: { month: string; item: Omit<InvoiceItem, "id"> }[]) => {
-    setInvoices(prev => {
+    setInvoices((prev) => {
       let updated = [...prev];
+
       for (const { month, item } of items) {
         const newItem: InvoiceItem = { ...item, id: crypto.randomUUID() };
-        const existingIdx = updated.findIndex(i => i.cardId === cardId && i.month === month);
+        const existingIdx = updated.findIndex((i) => i.cardId === cardId && i.month === month);
+
         if (existingIdx >= 0) {
           updated[existingIdx] = { ...updated[existingIdx], items: [...updated[existingIdx].items, newItem] };
         } else {
           updated = [...updated, { id: crypto.randomUUID(), cardId, month, items: [newItem], isPaid: false }];
         }
       }
+
       return updated;
     });
   }, []);
 
   const removeInstallmentGroup = useCallback((cardId: string, groupId: string) => {
-    setInvoices(prev =>
-      prev.map(inv => {
-        if (inv.cardId !== cardId) return inv;
-        return { ...inv, items: inv.items.filter(i => i.installmentGroupId !== groupId) };
-      }).filter(inv => inv.items.length > 0 || inv.isPaid)
+    setInvoices((prev) =>
+      prev
+        .map((inv) => {
+          if (inv.cardId !== cardId) return inv;
+          return { ...inv, items: inv.items.filter((i) => i.installmentGroupId !== groupId) };
+        })
+        .filter((inv) => inv.items.length > 0 || inv.isPaid)
     );
   }, []);
 
   const removeInvoiceItem = useCallback((invoiceId: string, itemId: string) => {
-    setInvoices(prev => prev.map(i => i.id === invoiceId
-      ? { ...i, items: i.items.filter(item => item.id !== itemId) }
-      : i
-    ));
+    setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? { ...i, items: i.items.filter((it) => it.id !== itemId) } : i)));
   }, []);
 
   const toggleInvoicePaid = useCallback((invoiceId: string) => {
-    setInvoices(prev => prev.map(i => i.id === invoiceId ? { ...i, isPaid: !i.isPaid } : i));
+    setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? { ...i, isPaid: !i.isPaid } : i)));
   }, []);
+
+  /** =========================
+   *  Navegação de mês
+   *  ========================= */
 
   const navigateMonth = useCallback((offset: number) => {
     setCurrentDate((prev) => {
@@ -784,201 +908,279 @@ export function useExpenseStore() {
     setCurrentDate(new Date(y, m));
   }, []);
 
-  // Financial account CRUD
-  const addFinancialAccount = useCallback(async (account: Omit<FinancialAccount, "id" | "isActive">) => {
-    if (!user) return;
-    const insertData: any = {
-      user_id: user.id,
-      name: account.name,
-      type: account.type,
-      balance: account.balance,
-      color: account.color,
-      icon: account.icon,
-    };
-    if (account.appliedValue) insertData.applied_value = account.appliedValue;
-    if (account.currentValue) insertData.current_value = account.currentValue;
+  /** =========================
+   *  Contas CRUD
+   *  ========================= */
 
-    const { data, error } = await supabase
-      .from("financial_accounts" as any)
-      .insert(insertData as any)
-      .select()
-      .single();
+  const addFinancialAccount = useCallback(
+    async (account: Omit<FinancialAccount, "id" | "isActive">) => {
+      if (!user) return;
 
-    if (data && !error) {
-      const d = data as any;
-      setFinancialAccounts(prev => [...prev, {
-        id: d.id, name: d.name, type: d.type, balance: Number(d.balance),
-        color: d.color, icon: d.icon, isActive: d.is_active,
-        appliedValue: Number(d.applied_value || 0), currentValue: Number(d.current_value || 0),
-      }]);
-    }
-  }, [user]);
-
-  const updateFinancialAccount = useCallback(async (id: string, updates: Partial<FinancialAccount>) => {
-    if (!user) return;
-    const dbUpdates: any = {};
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.type !== undefined) dbUpdates.type = updates.type;
-    if (updates.color !== undefined) dbUpdates.color = updates.color;
-    if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
-    if (updates.appliedValue !== undefined) dbUpdates.applied_value = updates.appliedValue;
-    if (updates.currentValue !== undefined) dbUpdates.current_value = updates.currentValue;
-
-    const { error } = await supabase
-      .from("financial_accounts" as any)
-      .update(dbUpdates)
-      .eq("id", id)
-      .eq("user_id", user.id);
-
-    if (!error) {
-      setFinancialAccounts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
-    }
-  }, [user]);
-
-  const deleteFinancialAccount = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from("financial_accounts" as any)
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
-
-    if (!error) {
-      setFinancialAccounts(prev => prev.filter(a => a.id !== id));
-    }
-  }, [user]);
-
-  const transferBetweenAccounts = useCallback(async (fromId: string, toId: string, amount: number, description?: string) => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("account_transfers" as any)
-      .insert({
+      const insertData: any = {
         user_id: user.id,
-        from_account_id: fromId,
-        to_account_id: toId,
-        amount,
-        description: description || "Transferência",
-      } as any)
-      .select()
-      .single();
+        name: account.name,
+        type: account.type,
+        balance: account.balance,
+        color: account.color,
+        icon: account.icon,
+      };
 
-    if (data && !error) {
-      const t = data as any;
-      setAccountTransfers(prev => [{
-        id: t.id, fromAccountId: t.from_account_id, toAccountId: t.to_account_id,
-        amount: Number(t.amount), description: t.description, date: t.date,
-      }, ...prev]);
-    }
-  }, [user]);
+      if (account.appliedValue !== undefined) insertData.applied_value = account.appliedValue;
+      if (account.currentValue !== undefined) insertData.current_value = account.currentValue;
 
-  // Account adjustment
-  const addAccountAdjustment = useCallback(async (accountId: string, amount: number, reason: AdjustmentReason, description?: string) => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("account_adjustments" as any)
-      .insert({ account_id: accountId, user_id: user.id, amount, reason, description } as any)
-      .select()
-      .single();
+      const { data, error } = await supabase.from("financial_accounts" as any).insert(insertData as any).select().single();
 
-    if (data && !error) {
-      const a = data as any;
-      setAccountAdjustments(prev => [{
-        id: a.id, accountId: a.account_id, amount: Number(a.amount),
-        reason: a.reason, description: a.description, date: a.date,
-      }, ...prev]);
-    }
-  }, [user]);
-
-  const deleteAccountAdjustment = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from("account_adjustments" as any)
-      .delete()
-      .eq("id", id);
-    if (!error) setAccountAdjustments(prev => prev.filter(a => a.id !== id));
-  }, [user]);
-
-  // Archive/unarchive account
-  const toggleAccountArchive = useCallback(async (id: string, isActive: boolean) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from("financial_accounts" as any)
-      .update({ is_active: isActive } as any)
-      .eq("id", id)
-      .eq("user_id", user.id);
-    if (!error) {
-      setFinancialAccounts(prev => prev.map(a => a.id === id ? { ...a, isActive } : a));
-    }
-  }, [user]);
-
-  // Salary CRUD
-  const saveSalary = useCallback(async (amount: number, dayOfReceipt: number, autoRepeat: boolean) => {
-    if (!user) return;
-    const insertData: any = { user_id: user.id, amount, month, year, day_of_receipt: dayOfReceipt, auto_repeat: autoRepeat };
-
-    if (salary) {
-      const { error } = await supabase
-        .from("salaries" as any)
-        .update({ amount, day_of_receipt: dayOfReceipt, auto_repeat: autoRepeat } as any)
-        .eq("id", salary.id);
-      if (!error) setSalary({ ...salary, amount, dayOfReceipt, autoRepeat });
-    } else {
-      const { data, error } = await supabase
-        .from("salaries" as any)
-        .insert(insertData as any)
-        .select()
-        .single();
       if (data && !error) {
         const d = data as any;
-        setSalary({ id: d.id, amount: Number(d.amount), month: d.month, year: d.year, dayOfReceipt: d.day_of_receipt, autoRepeat: d.auto_repeat });
+        setFinancialAccounts((prev) => [
+          ...prev,
+          {
+            id: d.id,
+            name: d.name,
+            type: d.type,
+            balance: Number(d.balance),
+            color: d.color,
+            icon: d.icon,
+            isActive: d.is_active,
+            appliedValue: Number(d.applied_value || 0),
+            currentValue: Number(d.current_value || 0),
+          },
+        ]);
       }
-    }
-  }, [user, month, year, salary]);
+    },
+    [user]
+  );
+
+  const updateFinancialAccount = useCallback(
+    async (id: string, updates: Partial<FinancialAccount>) => {
+      if (!user) return;
+
+      const dbUpdates: any = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.type !== undefined) dbUpdates.type = updates.type;
+      if (updates.color !== undefined) dbUpdates.color = updates.color;
+      if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+      if (updates.appliedValue !== undefined) dbUpdates.applied_value = updates.appliedValue;
+      if (updates.currentValue !== undefined) dbUpdates.current_value = updates.currentValue;
+      if (updates.balance !== undefined) dbUpdates.balance = updates.balance;
+
+      const { error } = await supabase.from("financial_accounts" as any).update(dbUpdates).eq("id", id).eq("user_id", user.id);
+
+      if (!error) {
+        setFinancialAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
+      }
+    },
+    [user]
+  );
+
+  const deleteFinancialAccount = useCallback(
+    async (id: string) => {
+      if (!user) return;
+
+      const { error } = await supabase.from("financial_accounts" as any).delete().eq("id", id).eq("user_id", user.id);
+
+      if (!error) setFinancialAccounts((prev) => prev.filter((a) => a.id !== id));
+    },
+    [user]
+  );
+
+  const transferBetweenAccounts = useCallback(
+    async (fromId: string, toId: string, amount: number, description?: string) => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("account_transfers" as any)
+        .insert({
+          user_id: user.id,
+          from_account_id: fromId,
+          to_account_id: toId,
+          amount,
+          description: description || "Transferência",
+        } as any)
+        .select()
+        .single();
+
+      if (data && !error) {
+        const t = data as any;
+        setAccountTransfers((prev) => [
+          {
+            id: t.id,
+            fromAccountId: t.from_account_id,
+            toAccountId: t.to_account_id,
+            amount: Number(t.amount),
+            description: t.description,
+            date: t.date,
+          },
+          ...prev,
+        ]);
+      }
+    },
+    [user]
+  );
+
+  const addAccountAdjustment = useCallback(
+    async (accountId: string, amount: number, reason: AdjustmentReason, description?: string) => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("account_adjustments" as any)
+        .insert({ account_id: accountId, user_id: user.id, amount, reason, description } as any)
+        .select()
+        .single();
+
+      if (data && !error) {
+        const a = data as any;
+        setAccountAdjustments((prev) => [
+          {
+            id: a.id,
+            accountId: a.account_id,
+            amount: Number(a.amount),
+            reason: a.reason,
+            description: a.description,
+            date: a.date,
+          },
+          ...prev,
+        ]);
+      }
+    },
+    [user]
+  );
+
+  const deleteAccountAdjustment = useCallback(
+    async (id: string) => {
+      if (!user) return;
+
+      const { error } = await supabase.from("account_adjustments" as any).delete().eq("id", id);
+
+      if (!error) setAccountAdjustments((prev) => prev.filter((a) => a.id !== id));
+    },
+    [user]
+  );
+
+  const toggleAccountArchive = useCallback(
+    async (id: string, isActive: boolean) => {
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("financial_accounts" as any)
+        .update({ is_active: isActive } as any)
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (!error) setFinancialAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, isActive } : a)));
+    },
+    [user]
+  );
+
+  /** =========================
+   *  Salário CRUD
+   *  ========================= */
+
+  const saveSalary = useCallback(
+    async (amount: number, dayOfReceipt: number, autoRepeat: boolean) => {
+      if (!user) return;
+
+      const insertData: any = {
+        user_id: user.id,
+        amount,
+        month,
+        year,
+        day_of_receipt: dayOfReceipt,
+        auto_repeat: autoRepeat,
+      };
+
+      if (salary) {
+        const { error } = await supabase
+          .from("salaries" as any)
+          .update({ amount, day_of_receipt: dayOfReceipt, auto_repeat: autoRepeat } as any)
+          .eq("id", salary.id);
+
+        if (!error) setSalary({ ...salary, amount, dayOfReceipt, autoRepeat });
+      } else {
+        const { data, error } = await supabase.from("salaries" as any).insert(insertData as any).select().single();
+
+        if (data && !error) {
+          const d = data as any;
+          setSalary({
+            id: d.id,
+            amount: Number(d.amount),
+            month: d.month,
+            year: d.year,
+            dayOfReceipt: d.day_of_receipt,
+            autoRepeat: d.auto_repeat,
+          });
+        }
+      }
+    },
+    [user, month, year, salary]
+  );
 
   const deleteSalary = useCallback(async () => {
     if (!user || !salary) return;
-    const { error } = await supabase
-      .from("salaries" as any)
-      .delete()
-      .eq("id", salary.id);
+
+    const { error } = await supabase.from("salaries" as any).delete().eq("id", salary.id);
+
     if (!error) setSalary(null);
   }, [user, salary]);
 
-  // Extra Income CRUD
-  const addExtraIncome = useCallback(async (income: Omit<ExtraIncome, "id">) => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("extra_incomes" as any)
-      .insert({ user_id: user.id, amount: income.amount, description: income.description, category: income.category, date: income.date } as any)
-      .select()
-      .single();
-    if (data && !error) {
-      const d = data as any;
-      setExtraIncomes(prev => [{ id: d.id, amount: Number(d.amount), description: d.description, category: d.category, date: d.date }, ...prev]);
-    }
-  }, [user]);
+  /** =========================
+   *  Extra Income CRUD
+   *  ========================= */
 
-  const updateExtraIncome = useCallback(async (id: string, updates: Partial<Omit<ExtraIncome, "id">>) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from("extra_incomes" as any)
-      .update(updates as any)
-      .eq("id", id);
-    if (!error) {
-      setExtraIncomes(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-    }
-  }, [user]);
+  const addExtraIncome = useCallback(
+    async (income: Omit<ExtraIncome, "id">) => {
+      if (!user) return;
 
-  const deleteExtraIncome = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from("extra_incomes" as any)
-      .delete()
-      .eq("id", id);
-    if (!error) {
-      setExtraIncomes(prev => prev.filter(e => e.id !== id));
-    }
-  }, [user]);
+      const { data, error } = await supabase
+        .from("extra_incomes" as any)
+        .insert({
+          user_id: user.id,
+          amount: income.amount,
+          description: income.description,
+          category: income.category,
+          date: income.date,
+        } as any)
+        .select()
+        .single();
+
+      if (data && !error) {
+        const d = data as any;
+        setExtraIncomes((prev) => [
+          {
+            id: d.id,
+            amount: Number(d.amount),
+            description: d.description,
+            category: d.category,
+            date: d.date,
+          },
+          ...prev,
+        ]);
+      }
+    },
+    [user]
+  );
+
+  const updateExtraIncome = useCallback(
+    async (id: string, updates: Partial<Omit<ExtraIncome, "id">>) => {
+      if (!user) return;
+
+      const { error } = await supabase.from("extra_incomes" as any).update(updates as any).eq("id", id);
+
+      if (!error) setExtraIncomes((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+    },
+    [user]
+  );
+
+  const deleteExtraIncome = useCallback(
+    async (id: string) => {
+      if (!user) return;
+
+      const { error } = await supabase.from("extra_incomes" as any).delete().eq("id", id);
+
+      if (!error) setExtraIncomes((prev) => prev.filter((e) => e.id !== id));
+    },
+    [user]
+  );
 
   return {
     currentDate,
@@ -997,6 +1199,7 @@ export function useExpenseStore() {
     accountAdjustments,
     salary,
     extraIncomes,
+
     addExpense,
     updateExpense,
     deleteExpense,
@@ -1005,6 +1208,7 @@ export function useExpenseStore() {
     addRecurringExpense,
     toggleRecurringExpense,
     deleteRecurringExpense,
+
     addCreditCard,
     updateCreditCard,
     deleteCreditCard,
@@ -1013,8 +1217,10 @@ export function useExpenseStore() {
     removeInstallmentGroup,
     removeInvoiceItem,
     toggleInvoicePaid,
+
     navigateMonth,
     goToMonth,
+
     addFinancialAccount,
     updateFinancialAccount,
     deleteFinancialAccount,
@@ -1022,6 +1228,7 @@ export function useExpenseStore() {
     addAccountAdjustment,
     deleteAccountAdjustment,
     toggleAccountArchive,
+
     saveSalary,
     deleteSalary,
     addExtraIncome,

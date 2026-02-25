@@ -8,7 +8,188 @@ import {
   startOfYear,
 } from "date-fns";
 
-import type { Expense, ExtraIncome, Salary, TransactionStatus } from "@/types/expense";
+/** =========================
+ *  Types principais do app
+ *  ========================= */
+
+export type TransactionStatus = "planned" | "paid" | "overdue";
+export type AccountType = "checking" | "savings" | "wallet" | "credit_card" | "investment";
+
+export interface FinancialAccount {
+  id: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  color: string;
+  icon: string;
+  isActive: boolean;
+  appliedValue?: number;
+  currentValue?: number;
+}
+
+export type AdjustmentReason = "manual" | "yield" | "fee" | "correction" | "other";
+
+export const ADJUSTMENT_REASON_LABELS: Record<AdjustmentReason, string> = {
+  manual: "Atualização manual",
+  yield: "Rendimento",
+  fee: "Taxa",
+  correction: "Correção",
+  other: "Outro",
+};
+
+export interface AccountAdjustment {
+  id: string;
+  accountId: string;
+  amount: number;
+  reason: AdjustmentReason;
+  description?: string;
+  date: string;
+}
+
+export interface AccountTransfer {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  description?: string;
+  date: string;
+}
+
+export interface Expense {
+  id: string;
+  date: string; // YYYY-MM-DD
+  description: string;
+  category: string;
+  amount: number;
+  isRecurring?: boolean;
+  cardId?: string;
+  status: TransactionStatus;
+  accountId?: string;
+}
+
+export interface RecurringExpense {
+  id: string;
+  description: string;
+  category: string;
+  amount: number;
+  dayOfMonth: number;
+  active: boolean;
+}
+
+export interface CreditCard {
+  id: string;
+  name: string;
+  limit: number;
+  closingDay: number;
+  dueDay: number;
+  color: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  category: string;
+
+  // Parcelas (installments)
+  installmentGroupId?: string; // UUID compartilhado por todas parcelas da compra
+  installmentCurrent?: number; // ex: 2
+  installmentTotal?: number; // ex: 6
+  totalPurchaseAmount?: number; // valor total da compra
+}
+
+export interface CreditCardInvoice {
+  id: string;
+  cardId: string;
+  month: string; // YYYY-MM
+  items: InvoiceItem[];
+  isPaid: boolean;
+}
+
+export interface Budget {
+  total: number;
+  byCategory: Record<string, number>;
+}
+
+export interface Salary {
+  id: string;
+  amount: number;
+  month: number; // 1..12
+  year: number;
+  dayOfReceipt: number; // 1..31
+  autoRepeat: boolean;
+}
+
+export interface ExtraIncome {
+  id: string;
+  amount: number;
+  description: string;
+  category: string;
+  date: string; // YYYY-MM-DD
+}
+
+export const INCOME_CATEGORIES = [
+  "Freelance",
+  "Venda",
+  "Reembolso",
+  "Bônus",
+  "Investimento",
+  "Outros",
+] as const;
+
+export interface MonthData {
+  expenses: Expense[];
+  budget: Budget;
+}
+
+/** =========================
+ *  Categorias e helpers
+ *  ========================= */
+
+export const DEFAULT_CATEGORIES = [
+  "Alimentação",
+  "Transporte",
+  "Moradia",
+  "Saúde",
+  "Lazer",
+  "Educação",
+  "Outros",
+] as const;
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  Alimentação: "hsl(15, 85%, 50%)",
+  Transporte: "hsl(210, 80%, 45%)",
+  Moradia: "hsl(250, 80%, 55%)",
+  Saúde: "hsl(152, 75%, 35%)",
+  Lazer: "hsl(38, 95%, 45%)",
+  Educação: "hsl(330, 80%, 50%)",
+  Outros: "hsl(220, 15%, 45%)",
+};
+
+export function getCategoryColor(category: string): string {
+  return CATEGORY_COLORS[category] || `hsl(${Math.abs(hashCode(category)) % 360}, 65%, 45%)`;
+}
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+}
+
+export function formatCurrency(value: number): string {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/**
+ * Chave de mês no padrão YYYY-MM (usado no store / faturas / agregações)
+ */
+export function getMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 /** =========================
  *  Utils de data e parsing
@@ -174,8 +355,8 @@ export function incomesSeriesByMonth(
 ): MonthlyPoint[] {
   return months.map((m) => {
     const inMonth = filterIncomesByMonth(extraIncomes, m);
-    const salary = getSalaryForMonth(salaries, m);
-    return { month: format(m, "MMM"), value: salary + sumExtraIncomes(inMonth) };
+    const salaryValue = getSalaryForMonth(salaries, m);
+    return { month: format(m, "MMM"), value: salaryValue + sumExtraIncomes(inMonth) };
   });
 }
 
@@ -183,25 +364,21 @@ export type DailyBalancePoint = { day: string; balance: number };
 
 /**
  * Saldo acumulado no mês (dia a dia)
- * - Receitas: salário (distribuído no dayOfReceipt) + extraIncomes na data
- * - Despesas: por data (você pode filtrar só paid se preferir)
  */
 export function cumulativeBalanceDaily(params: {
   baseDate: Date;
   expenses: Expense[];
   extraIncomes: ExtraIncome[];
   salaries?: Salary[];
-  expensePredicate?: (e: Expense) => boolean; // ex: (e) => e.status === "paid"
+  expensePredicate?: (e: Expense) => boolean;
 }): DailyBalancePoint[] {
   const { baseDate, expenses, extraIncomes, salaries, expensePredicate } = params;
   const { start, end } = monthInterval(baseDate);
 
   const days = eachDayOfInterval({ start, end });
 
-  // Indexa entradas por yyyy-MM-dd
   const incomeByDay = new Map<string, number>();
 
-  // Extra incomes (data direta)
   for (const inc of extraIncomes) {
     const d = toDateSafe(inc.date);
     if (!d || !isInInterval(d, start, end)) continue;
@@ -209,23 +386,21 @@ export function cumulativeBalanceDaily(params: {
     incomeByDay.set(key, (incomeByDay.get(key) || 0) + Number(inc.amount || 0));
   }
 
-  // Salário do mês (lançado no dia de recebimento)
   const salaryValue = getSalaryForMonth(salaries, baseDate);
   if (salaryValue > 0) {
-    // tenta descobrir o dayOfReceipt a partir do Salary do mês
     const month = baseDate.getMonth() + 1;
     const year = baseDate.getFullYear();
     const salaryObj = salaries?.find((s) => s.month === month && s.year === year);
 
     const dayOfReceipt = salaryObj?.dayOfReceipt ?? 1;
     const salaryDate = new Date(year, baseDate.getMonth(), dayOfReceipt);
+
     if (isValid(salaryDate) && isInInterval(salaryDate, start, end)) {
       const key = format(salaryDate, "yyyy-MM-dd");
       incomeByDay.set(key, (incomeByDay.get(key) || 0) + salaryValue);
     }
   }
 
-  // Indexa despesas por dia
   const expenseByDay = new Map<string, number>();
   for (const e of expenses) {
     if (expensePredicate && !expensePredicate(e)) continue;
@@ -237,7 +412,6 @@ export function cumulativeBalanceDaily(params: {
     expenseByDay.set(key, (expenseByDay.get(key) || 0) + Number(e.amount || 0));
   }
 
-  // Acumulado
   let balance = 0;
 
   return days.map((d) => {
@@ -245,7 +419,6 @@ export function cumulativeBalanceDaily(params: {
     const inc = incomeByDay.get(key) || 0;
     const exp = expenseByDay.get(key) || 0;
     balance += inc - exp;
-
     return { day: format(d, "dd"), balance };
   });
 }
@@ -270,22 +443,18 @@ export function monthKPIs(params: {
   const totalPlanned = sumExpenses(expensesMonth, { status: "planned" });
   const totalOverdue = sumExpenses(expensesMonth, { status: "overdue" });
 
-  const salary = getSalaryForMonth(salaries, baseDate);
+  const salaryValue = getSalaryForMonth(salaries, baseDate);
   const extra = sumExtraIncomes(incomesMonth);
-  const totalIncome = salary + extra;
+  const totalIncome = salaryValue + extra;
 
   const net = totalIncome - totalExpenses;
-
-  export function getMonthKey(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-  }
 
   return {
     totalExpenses,
     totalPaid,
     totalPlanned,
     totalOverdue,
-    salary,
+    salary: salaryValue,
     extraIncome: extra,
     totalIncome,
     net,
