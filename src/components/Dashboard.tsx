@@ -63,8 +63,39 @@ const appCard =
   "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md " +
   "h-full flex flex-col";
 
-const chartShell =
-  "rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm";
+// ✅ Premium: sheen + top highlight mais forte + glow suave
+// Use só em cards “tier A” (resumo e hero)
+const premiumCard =
+  appCard +
+  " " +
+  [
+    // top highlight mais presente
+    "after:pointer-events-none after:absolute after:left-6 after:right-6 after:top-0 after:h-px",
+    "after:bg-gradient-to-r after:from-transparent after:via-primary/40 after:to-transparent after:opacity-90",
+    // aura mais macia (fica “vivo” sem neon)
+    "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
+    "before:bg-[radial-gradient(260px_circle_at_20%_18%,hsl(var(--primary)/0.14),transparent_62%)]",
+    "hover:before:opacity-100",
+    // sheen (reflexo) no hover
+    "group",
+    "hover:shadow-[0_18px_48px_-32px_hsl(var(--primary)/0.80)]",
+  ].join(" ");
+
+// sheen overlay helper (span) — não mexe no layout, só visual
+function Sheen() {
+  return (
+    <span
+      aria-hidden="true"
+      className={[
+        "pointer-events-none absolute -left-24 top-[-40%] h-[220%] w-24 rotate-12",
+        "bg-white/10 blur-md opacity-0 transition-opacity duration-300",
+        "group-hover:opacity-100",
+      ].join(" ")}
+    />
+  );
+}
+
+const chartShell = "rounded-2xl border border-border/50 bg-card/50 p-3 shadow-sm";
 
 const chartHeight = 240;
 
@@ -138,17 +169,13 @@ function ChartCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <CardTitle className="text-base text-foreground">{title}</CardTitle>
-            {subtitle ? (
-              <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
-            ) : null}
+            {subtitle ? <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p> : null}
           </div>
           {rightSlot ? <div className="shrink-0">{rightSlot}</div> : null}
         </div>
       </CardHeader>
 
-      <CardContent className="px-5 pb-5 pt-3 flex-1">
-        {children}
-      </CardContent>
+      <CardContent className="px-5 pb-5 pt-3 flex-1">{children}</CardContent>
     </Card>
   );
 }
@@ -186,17 +213,17 @@ export function Dashboard({
     return base.map((d) => ({ ...d, color: getCategoryColor(d.name) }));
   }, [expensesThisMonth]);
 
-  const weeklyData = useMemo(() => {
-    return weeklyTotalsForMonth(expensesThisMonth, currentDate);
-  }, [expensesThisMonth, currentDate]);
+  const weeklyData = useMemo(() => weeklyTotalsForMonth(expensesThisMonth, currentDate), [
+    expensesThisMonth,
+    currentDate,
+  ]);
 
-  const statusData = useMemo(() => {
-    return groupByStatus(expensesThisMonth);
-  }, [expensesThisMonth]);
+  const statusData = useMemo(() => groupByStatus(expensesThisMonth), [expensesThisMonth]);
 
-  const cumulativeData = useMemo(() => {
-    return cumulativeExpensesDaily({ expenses: expensesThisMonth, baseDate: currentDate });
-  }, [expensesThisMonth, currentDate]);
+  const cumulativeData = useMemo(
+    () => cumulativeExpensesDaily({ expenses: expensesThisMonth, baseDate: currentDate }),
+    [expensesThisMonth, currentDate]
+  );
 
   const incomeVsExpenseData = useMemo(() => {
     const income = Number(monthBalance?.income || 0);
@@ -209,9 +236,7 @@ export function Dashboard({
     ];
   }, [monthBalance]);
 
-  const top10Expenses = useMemo(() => {
-    return topExpenses(expensesThisMonth, 10);
-  }, [expensesThisMonth]);
+  const top10Expenses = useMemo(() => topExpenses(expensesThisMonth, 10), [expensesThisMonth]);
 
   const changePct =
     prevTotal > 0 ? Math.abs(((totalSpent - prevTotal) / prevTotal) * 100) : 0;
@@ -276,9 +301,10 @@ export function Dashboard({
 
       {/* Summary */}
       <StaggerContainer className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Total gasto */}
+        {/* Total gasto (premium) */}
         <StaggerItem className="h-full">
-          <Card className={appCard}>
+          <Card className={premiumCard}>
+            <Sheen />
             <CardContent className="p-5 h-full flex flex-col">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -321,9 +347,10 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
-        {/* Orçamento restante */}
+        {/* Orçamento restante (premium) */}
         <StaggerItem className="h-full">
-          <Card className={appCard}>
+          <Card className={premiumCard}>
+            <Sheen />
             <CardContent className="p-5 h-full flex flex-col">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -334,11 +361,7 @@ export function Dashboard({
                 </div>
 
                 <IconBadge variant={overBudget ? "destructive" : nearBudget ? "warning" : "primary"}>
-                  {overBudget ? (
-                    <AlertTriangle className="h-6 w-6" />
-                  ) : (
-                    <Wallet className="h-6 w-6" />
-                  )}
+                  {overBudget ? <AlertTriangle className="h-6 w-6" /> : <Wallet className="h-6 w-6" />}
                 </IconBadge>
               </div>
 
@@ -365,9 +388,10 @@ export function Dashboard({
           </Card>
         </StaggerItem>
 
-        {/* Nº de gastos */}
+        {/* Nº de gastos (premium) */}
         <StaggerItem className="h-full">
-          <Card className={appCard}>
+          <Card className={premiumCard}>
+            <Sheen />
             <CardContent className="p-5 h-full flex flex-col">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -508,10 +532,7 @@ export function Dashboard({
                       tickFormatter={formatAxisCurrency}
                       width={46}
                     />
-                    <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={tooltipStyle}
-                    />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={tooltipStyle} />
                     <Bar dataKey="total" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -543,10 +564,7 @@ export function Dashboard({
                           <Cell key={i} fill={statusPalette[entry.key]} />
                         ))}
                       </Pie>
-                      <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
-                        contentStyle={tooltipStyle}
-                      />
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={tooltipStyle} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -563,9 +581,7 @@ export function Dashboard({
                       <span className="text-muted-foreground">{s.label}</span>
 
                       <div className="ml-auto flex items-baseline gap-2">
-                        <span className="font-semibold text-foreground">
-                          {formatCurrency(s.total)}
-                        </span>
+                        <span className="font-semibold text-foreground">{formatCurrency(s.total)}</span>
                         <span className="text-xs text-muted-foreground">{s.percent.toFixed(0)}%</span>
                       </div>
                     </div>
@@ -605,10 +621,7 @@ export function Dashboard({
                       tickFormatter={formatAxisCurrency}
                       width={46}
                     />
-                    <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={tooltipStyle}
-                    />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={tooltipStyle} />
                     <Area
                       type="monotone"
                       dataKey="total"
@@ -623,66 +636,75 @@ export function Dashboard({
           </ChartCard>
         </StaggerItem>
 
-        {/* Receitas vs Despesas */}
+        {/* Receitas vs Despesas (premium/hero) */}
         <StaggerItem className="h-full">
-          <ChartCard
-            title="Receitas vs Despesas"
-            subtitle="Comparativo do mês"
-            rightSlot={deltaBadge}
-          >
-            {incomeVsExpenseData.every((d) => d.total === 0) ? (
-              <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
-            ) : (
-              <div className="grid gap-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-border/50 bg-card/50 p-3">
-                    <p className="text-xs text-muted-foreground">Receitas</p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      {formatCurrency(monthIncome)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border/50 bg-card/50 p-3">
-                    <p className="text-xs text-muted-foreground">Despesas</p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      {formatCurrency(monthExpense)}
-                    </p>
-                  </div>
+          <Card className={premiumCard}>
+            <Sheen />
+            <CardHeader className="pb-2 pt-5 px-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <CardTitle className="text-base text-foreground">Receitas vs Despesas</CardTitle>
+                  <p className="mt-1 text-xs text-muted-foreground">Comparativo do mês</p>
                 </div>
-
-                <div className={chartShell}>
-                  <ResponsiveContainer width="100%" height={chartHeight - 30}>
-                    <BarChart data={incomeVsExpenseData} barGap={12} margin={{ left: 8, right: 8, top: 6 }}>
-                      <CartesianGrid
-                        strokeDasharray="3 6"
-                        stroke="hsl(var(--border) / 0.55)"
-                        vertical={false}
-                      />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 12 }}
-                        stroke="hsl(var(--muted-foreground))"
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 12 }}
-                        stroke="hsl(var(--muted-foreground))"
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={formatAxisCurrency}
-                        width={46}
-                      />
-                      <Tooltip
-                        formatter={(value: number) => formatCurrency(value as number)}
-                        contentStyle={tooltipStyle}
-                      />
-                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <div className="shrink-0">{deltaBadge}</div>
               </div>
-            )}
-          </ChartCard>
+            </CardHeader>
+
+            <CardContent className="px-5 pb-5 pt-3 flex-1">
+              {incomeVsExpenseData.every((d) => d.total === 0) ? (
+                <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
+              ) : (
+                <div className="grid gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-border/50 bg-card/50 p-3">
+                      <p className="text-xs text-muted-foreground">Receitas</p>
+                      <p className="mt-1 text-lg font-semibold text-foreground">
+                        {formatCurrency(monthIncome)}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/50 bg-card/50 p-3">
+                      <p className="text-xs text-muted-foreground">Despesas</p>
+                      <p className="mt-1 text-lg font-semibold text-foreground">
+                        {formatCurrency(monthExpense)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={chartShell}>
+                    <ResponsiveContainer width="100%" height={chartHeight - 30}>
+                      <BarChart data={incomeVsExpenseData} barGap={12} margin={{ left: 8, right: 8, top: 6 }}>
+                        <CartesianGrid
+                          strokeDasharray="3 6"
+                          stroke="hsl(var(--border) / 0.55)"
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 12 }}
+                          stroke="hsl(var(--muted-foreground))"
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 12 }}
+                          stroke="hsl(var(--muted-foreground))"
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={formatAxisCurrency}
+                          width={46}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => formatCurrency(value as number)}
+                          contentStyle={tooltipStyle}
+                        />
+                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </StaggerItem>
 
         {/* Top 10 gastos do mês */}
@@ -701,11 +723,7 @@ export function Dashboard({
               <p className="py-10 text-center text-muted-foreground">Sem dados para exibir</p>
             ) : (
               <div className={chartShell}>
-                {/* altura proporcional: evita espaço vazio */}
-                <ResponsiveContainer
-                  width="100%"
-                  height={Math.max(200, Math.min(320, top10Expenses.length * 34))}
-                >
+                <ResponsiveContainer width="100%" height={Math.max(200, Math.min(320, top10Expenses.length * 34))}>
                   <BarChart
                     data={top10Expenses.map((x) => ({
                       ...x,
@@ -737,10 +755,7 @@ export function Dashboard({
                       axisLine={false}
                       tickLine={false}
                     />
-                    <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={tooltipStyle}
-                    />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={tooltipStyle} />
                     <Bar dataKey="total" fill="hsl(var(--primary))" radius={[10, 10, 10, 10]} />
                   </BarChart>
                 </ResponsiveContainer>
