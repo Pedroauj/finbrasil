@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { lovable } from "@/integrations/lovable/index";
 
 const Auth = () => {
   const { signIn, signUp } = useAuth();
@@ -14,7 +15,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [oauthLoading, setOauthLoading] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -174,6 +175,39 @@ const Auth = () => {
                     </Button>
                   </motion.div>
                 </form>
+
+                {/* Divider */}
+                <div className="mt-5 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <span className="text-xs text-white/40">ou</span>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
+
+                {/* Apple Sign In */}
+                <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 w-full rounded-xl border-white/10 bg-white text-black font-semibold hover:bg-white/90 hover:text-black"
+                    disabled={oauthLoading || loading}
+                    onClick={async () => {
+                      setOauthLoading(true);
+                      try {
+                        const { error } = await lovable.auth.signInWithOAuth("apple", {
+                          redirect_uri: window.location.origin,
+                        });
+                        if (error) toast.error(error.message);
+                      } finally {
+                        setOauthLoading(false);
+                      }
+                    }}
+                  >
+                    <svg className="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                    </svg>
+                    {oauthLoading ? "Aguarde..." : "Continuar com Apple"}
+                  </Button>
+                </motion.div>
 
                 <div className="mt-4 text-center text-sm text-white/60">
                   {isLogin ? "Não tem conta?" : "Já tem conta?"}{" "}
