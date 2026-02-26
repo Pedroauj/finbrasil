@@ -311,35 +311,46 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* 🔥 Directional SaaS Light Background (SAFE BUILD VERSION) */}
+      {/* ✅ Background com feixe de luz (INLINE CSS = não quebra build) */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        {/* Feixe principal (direcional) */}
+        {/* Feixe principal (esquerda) */}
         <div
-          className="absolute -left-40 top-0 h-[900px] w-[900px]
-          bg-[radial-gradient(circle_at_30%_30%,hsl(var(--primary)/0.20),transparent_65%)]
-          blur-[140px]"
+          className="absolute -left-40 top-0 h-[900px] w-[900px] blur-[140px]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 30% 30%, hsl(var(--primary) / 0.20), transparent 65%)",
+          }}
         />
 
-        {/* Glow secundário sutil */}
+        {/* Glow secundário */}
         <div
-          className="absolute right-[-250px] top-[-150px] h-[700px] w-[700px]
-          bg-[radial-gradient(circle_at_70%_20%,hsl(var(--primary)/0.10),transparent_70%)]
-          blur-[150px]"
+          className="absolute right-[-250px] top-[-150px] h-[700px] w-[700px] blur-[150px]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 70% 20%, hsl(var(--primary) / 0.10), transparent 70%)",
+          }}
         />
 
-        {/* Wash ambiente leve */}
+        {/* Wash ambiente */}
         <div
-          className="absolute inset-0
-          bg-[radial-gradient(circle_at_20%_10%,hsl(var(--primary)/0.06),transparent_60%)]"
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 10%, hsl(var(--primary) / 0.06), transparent 60%)",
+          }}
         />
 
-        {/* Vinheta para profundidade */}
+        {/* Vinheta */}
         <div
-          className="absolute inset-0
-          bg-[radial-gradient(circle_at_center,transparent_55%,hsl(var(--background))_95%)]"
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at center, transparent 55%, hsl(var(--background)) 95%)",
+            opacity: 0.9,
+          }}
         />
 
-        {/* Grain / noise (public/noise.png) */}
+        {/* Grain */}
         <div className="absolute inset-0 opacity-[0.05] mix-blend-soft-light bg-[url('/noise.png')]" />
       </div>
 
@@ -402,8 +413,14 @@ export default function Index() {
 
           {/* Content */}
           <main className="relative flex-1 px-4 py-5 sm:px-5">
-            {/* floor glow local: faz os cards parecerem integrados ao ambiente */}
-            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[32px] bg-[radial-gradient(900px_circle_at_30%_10%,hsl(var(--primary)/0.08),transparent_55%)]" />
+            {/* ✅ Floor glow local (inline para não quebrar build) */}
+            <div
+              className="pointer-events-none absolute inset-0 -z-10 rounded-[32px]"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 30% 10%, hsl(var(--primary) / 0.08), transparent 55%)",
+              }}
+            />
             {Content}
           </main>
         </div>
