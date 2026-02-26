@@ -312,11 +312,20 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ✅ LED SaaS background: blobs + seu radial */}
+      {/* ✅ LED SaaS background (harmonizado com os cards) */}
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -left-24 top-24 h-[420px] w-[420px] rounded-full bg-primary/22 blur-[95px]" />
-        <div className="absolute right-[-140px] top-[-80px] h-[380px] w-[380px] rounded-full bg-emerald-400/10 blur-[95px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
+        {/* blobs maiores e mais suaves */}
+        <div className="absolute -left-28 top-28 h-[520px] w-[520px] rounded-full bg-primary/14 blur-[120px]" />
+        <div className="absolute right-[-180px] top-[-120px] h-[460px] w-[460px] rounded-full bg-emerald-400/8 blur-[130px]" />
+
+        {/* wash ambiente geral */}
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_28%_18%,hsl(var(--primary)/0.10),transparent_62%),radial-gradient(900px_circle_at_82%_18%,hsl(var(--primary)/0.06),transparent_60%)]" />
+
+        {/* vinheta suave para profundidade */}
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_50%_0%,transparent_55%,hsl(var(--background))_92%)] opacity-80" />
+
+        {/* grain / noise (precisa do arquivo public/noise.png) */}
+        <div className="absolute inset-0 opacity-[0.06] mix-blend-soft-light bg-[url('/noise.png')]" />
       </div>
 
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
@@ -355,10 +364,7 @@ export default function Index() {
 
               {/* Right actions */}
               <div className="flex items-center gap-2">
-                <MonthNavigator
-                  currentDate={store.currentDate}
-                  onNavigate={store.navigateMonth}
-                />
+                <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
 
                 <Button
                   variant="outline"
@@ -371,11 +377,7 @@ export default function Index() {
 
                 <ModeToggle />
 
-                <Button
-                  variant="outline"
-                  className="h-10 gap-2 rounded-xl"
-                  onClick={signOut}
-                >
+                <Button variant="outline" className="h-10 gap-2 rounded-xl" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>
@@ -384,7 +386,11 @@ export default function Index() {
           </header>
 
           {/* Content */}
-          <main className="flex-1 px-4 py-5 sm:px-5">{Content}</main>
+          <main className="relative flex-1 px-4 py-5 sm:px-5">
+            {/* floor glow local: faz os cards parecerem integrados ao ambiente */}
+            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[32px] bg-[radial-gradient(900px_circle_at_30%_10%,hsl(var(--primary)/0.08),transparent_55%)]" />
+            {Content}
+          </main>
         </div>
       </div>
 
