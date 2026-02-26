@@ -1,490 +1,362 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo } from "react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  Search,
-  X,
-  RefreshCw,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  DollarSign,
-  ListChecks,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  CreditCard as CreditCardIcon,
+  PieChart,
 } from "lucide-react";
-
-import type { Expense, FinancialAccount, TransactionStatus } from "@/types/expense";
-import { DEFAULT_CATEGORIES, formatCurrency, getCategoryColor } from "@/types/expense";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+
+import type {
+  Expense,
+  Budget,
+  CreditCard,
+  CreditCardInvoice,
+} from "@/types/expense";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  formatCurrency,
+  sumExpenses,
+  groupExpensesByCategory,
+  getCategoryColor,
+  groupExpensesByStatus,
+} from "@/types/expense";
+import type { MonthBalance } from "@/hooks/useExpenseStore";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-import { ExpenseForm } from "./ExpenseForm";
+import { Progress } from "@/components/ui/progress";
+import { CashBalance } from "./CashBalance";
+import { InvoiceAlerts } from "./InvoiceAlerts";
 import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
   "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
 
-const tableCard =
-  "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm";
-
-const STATUS_CONFIG: Record<
-  TransactionStatus,
-  { label: string; icon: ReactNode; className: string }
-> = {
-  paid: {
-    label: "Pago",
-    icon: <CheckCircle2 className="h-3 w-3" />,
-    className:
-      "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20",
-  },
-  planned: {
-    label: "Previsto",
-    icon: <Clock className="h-3 w-3" />,
-    className: "bg-primary/10 text-primary border-primary/20",
-  },
-  overdue: {
-    label: "Atrasado",
-    icon: <AlertTriangle className="h-3 w-3" />,
-    className: "bg-destructive/10 text-destructive border-destructive/20",
-  },
-};
-
-interface ExpenseTableProps {
+interface DashboardProps {
   expenses: Expense[];
-  customCategories: string[];
+  budget: Budget;
+  prevMonthExpenses: Expense[];
   currentDate: Date;
-  accounts?: FinancialAccount[];
-  onAdd: (expense: Omit<Expense, "id">) => void;
-  onUpdate: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
-  onDelete: (id: string) => void;
-  onAddCategory: (cat: string) => void;
+  cards: CreditCard[];
+  invoices: CreditCardInvoice[];
+  monthBalance: MonthBalance;
 }
 
-export function ExpenseTable({
+export function Dashboard({
   expenses,
-  customCategories,
+  budget,
+  prevMonthExpenses,
   currentDate,
-  accounts = [],
-  onAdd,
-  onUpdate,
-  onDelete,
-  onAddCategory,
-}: ExpenseTableProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  cards,
+  invoices,
+  monthBalance,
+}: DashboardProps) {
+  const totalExpenses = useMemo(() => sumExpenses(expenses), [expenses]);
+  const totalPaid = useMemo(() => sumExpenses(expenses, { status: "paid" }), [expenses]);
+  const totalPlanned = useMemo(() => sumExpenses(expenses, { status: "planned" }), [expenses]);
+  const totalOverdue = useMemo(() => sumExpenses(expenses, { status: "overdue" }), [expenses]);
+  const prevTotal = useMemo(() => sumExpenses(prevMonthExpenses), [prevMonthExpenses]);
 
-  // pré-set de status ao criar
-  const [defaultStatus, setDefaultStatus] = useState<TransactionStatus>("planned");
+  const budgetPercent = budget.total > 0 ? Math.min((totalExpenses / budget.total) * 100, 100) : 0;
+  const budgetExceeded = budget.total > 0 && totalExpenses > budget.total;
 
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const categoryData = useMemo(() => groupExpensesByCategory(expenses), [expenses]);
+  const statusData = useMemo(() => groupExpensesByStatus(expenses), [expenses]);
 
-  const allCategories = useMemo(
-    () => [...DEFAULT_CATEGORIES, ...customCategories],
-    [customCategories]
+  const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
+
+  const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
+
+  // Invoice totals for current month
+  const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+  const currentInvoices = useMemo(
+    () => invoices.filter((i) => i.month === monthKey),
+    [invoices, monthKey]
+  );
+  const totalInvoices = useMemo(
+    () => currentInvoices.reduce((acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0), 0),
+    [currentInvoices]
   );
 
-  const filtered = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return expenses
-      .filter((e) => filterCategory === "all" || e.category === filterCategory)
-      .filter((e) => filterStatus === "all" || e.status === filterStatus)
-      .filter((e) => e.description.toLowerCase().includes(q))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [expenses, filterCategory, filterStatus, searchTerm]);
-
-  const total = filtered.reduce((sum, e) => sum + e.amount, 0);
-  const paidTotal = filtered.filter((e) => e.status === "paid").reduce((s, e) => s + e.amount, 0);
-  const plannedTotal = filtered.filter((e) => e.status === "planned").reduce((s, e) => s + e.amount, 0);
-  const overdueTotal = filtered.filter((e) => e.status === "overdue").reduce((s, e) => s + e.amount, 0);
-  const overdueCount = filtered.filter((e) => e.status === "overdue").length;
-
-  function openNewExpense(status?: TransactionStatus) {
-    setEditingExpense(null);
-    setDefaultStatus(status ?? "planned");
-    setDialogOpen(true);
-  }
-
-  function openEditExpense(expense: Expense) {
-    setEditingExpense(expense);
-    setDialogOpen(true);
-  }
-
-  function closeDialog() {
-    setDialogOpen(false);
-    setEditingExpense(null);
-  }
-
-  useEffect(() => {
-    const handler = () => openNewExpense("planned");
-    window.addEventListener("open-add-expense", handler);
-    return () => window.removeEventListener("open-add-expense", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const STATUS_COLORS: Record<string, string> = {
+    paid: "hsl(var(--success, 152 75% 35%))",
+    planned: "hsl(var(--primary))",
+    overdue: "hsl(var(--destructive))",
+  };
 
   return (
-    <div className="space-y-5">
-      {/* Summary Cards (compact) */}
-      <StaggerContainer className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StaggerItem>
+    <StaggerContainer className="space-y-6">
+      {/* Alerts */}
+      <StaggerItem>
+        <InvoiceAlerts
+          cards={cards}
+          invoices={invoices}
+          currentDate={currentDate}
+        />
+      </StaggerItem>
+
+      {/* KPI Cards */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Total Expenses */}
           <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Total do mês</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(total)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{filtered.length} transação(ões)</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto"
-                    onClick={() => openNewExpense("planned")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div className="rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3">
-                    <DollarSign className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-
-        <StaggerItem>
-          <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Pagos</p>
-                  <p className="mt-1 text-2xl font-bold text-[hsl(var(--success))]">
-                    {formatCurrency(paidTotal)}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Gastos do mês
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {filtered.filter((e) => e.status === "paid").length} gasto(s)
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalExpenses)}
                   </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto pago"
-                    onClick={() => openNewExpense("paid")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div className="rounded-2xl bg-[hsl(var(--success))]/10 ring-1 ring-[hsl(var(--success))]/15 p-3">
-                    <CheckCircle2 className="h-5 w-5 text-[hsl(var(--success))]" />
-                  </div>
+                <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
+                  <ArrowDownCircle className="h-5 w-5 text-destructive" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-
-        <StaggerItem>
-          <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Previstos</p>
-                  <p className="mt-1 text-2xl font-bold text-primary">{formatCurrency(plannedTotal)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {filtered.filter((e) => e.status === "planned").length} gasto(s)
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto previsto"
-                    onClick={() => openNewExpense("planned")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div className="rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3">
-                    <Clock className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-
-        <StaggerItem>
-          <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">Atrasados</p>
-                  <p className={`mt-1 text-2xl font-bold ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"}`}>
-                    {formatCurrency(overdueTotal)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">{overdueCount} gasto(s)</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto atrasado"
-                    onClick={() => openNewExpense("overdue")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div
-                    className={[
-                      "rounded-2xl p-3 ring-1",
-                      overdueCount > 0
-                        ? "bg-destructive/10 ring-destructive/15"
-                        : "bg-muted/50 ring-border/60",
-                    ].join(" ")}
-                  >
-                    <AlertTriangle className={`h-5 w-5 ${overdueCount > 0 ? "text-destructive" : "text-foreground/70"}`} />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-      </StaggerContainer>
-
-      {/* Table Card */}
-      <FadeIn delay={0.12}>
-        <Card className={tableCard}>
-          <CardHeader className="pb-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
-                <ListChecks className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Gastos do mês</CardTitle>
-              </div>
-
-              <Button onClick={() => openNewExpense("planned")} className="gap-2 rounded-xl h-10">
-                <Plus className="h-4 w-4" /> Adicionar gasto
-              </Button>
-            </div>
-
-            <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por descrição…"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 rounded-xl"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Limpar busca"
-                    type="button"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-full sm:w-52 rounded-xl">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas categorias</SelectItem>
-                  {allCategories.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-40 rounded-xl">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
-                  <SelectItem value="planned">Previsto</SelectItem>
-                  <SelectItem value="overdue">Atrasado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-28">Data</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="w-44">Categoria</TableHead>
-                    <TableHead className="w-28">Status</TableHead>
-                    <TableHead className="w-32 text-right">Valor</TableHead>
-                    <TableHead className="w-24 text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {filtered.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <ListChecks className="h-8 w-8 text-muted-foreground/40" />
-                          <p>
-                            {expenses.length === 0
-                              ? "Nenhum gasto registrado ainda."
-                              : "Nenhum resultado encontrado."}
-                          </p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+              {prevTotal > 0 && (
+                <div className="mt-3 flex items-center gap-1.5 text-xs">
+                  {expenseDelta > 0 ? (
+                    <TrendingUp className="h-3.5 w-3.5 text-destructive" />
                   ) : (
-                    filtered.map((expense) => {
-                      const statusCfg = STATUS_CONFIG[expense.status];
-
-                      return (
-                        <TableRow
-                          key={expense.id}
-                          className="group transition-colors duration-150 hover:bg-muted/40"
-                        >
-                          <TableCell className="font-medium text-sm">
-                            {format(new Date(expense.date), "dd/MM/yyyy")}
-                          </TableCell>
-
-                          <TableCell>
-                            <span className="flex items-center gap-1.5">
-                              <span className="text-foreground">{expense.description}</span>
-                              {expense.isRecurring && (
-                                <span title="Recorrente">
-                                  <RefreshCw className="h-3 w-3 text-primary" />
-                                </span>
-                              )}
-                            </span>
-                          </TableCell>
-
-                          <TableCell>
-                            <Badge
-                              variant="secondary"
-                              className="font-normal rounded-lg border border-border/60 bg-card/50"
-                              style={{ borderLeft: `3px solid ${getCategoryColor(expense.category)}` }}
-                            >
-                              {expense.category}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={`gap-1 text-[10px] font-semibold border rounded-lg ${statusCfg.className}`}
-                            >
-                              {statusCfg.icon}
-                              {statusCfg.label}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell className="text-right font-semibold tabular-nums">
-                            {formatCurrency(expense.amount)}
-                          </TableCell>
-
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-lg"
-                                onClick={() => openEditExpense(expense)}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-lg text-destructive hover:text-destructive"
-                                onClick={() => onDelete(expense.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
+                    <TrendingDown className="h-3.5 w-3.5 text-primary" />
                   )}
-                </TableBody>
-              </Table>
-            </div>
+                  <span className={expenseDelta > 0 ? "text-destructive" : "text-primary"}>
+                    {Math.abs(expenseDelta).toFixed(1)}%
+                  </span>
+                  <span className="text-muted-foreground">vs mês anterior</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-            {filtered.length > 0 && (
-              <div className="flex items-center justify-between border-t border-border/60 px-4 py-3 text-sm">
-                <span className="text-muted-foreground">{filtered.length} gasto(s)</span>
-                <span className="font-semibold">Total: {formatCurrency(total)}</span>
+          {/* Income */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Receita
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(monthBalance.income)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
+                  <ArrowUpCircle className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Invoices */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Faturas
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalInvoices)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
+                  <CreditCardIcon className="h-5 w-5 text-foreground/70" />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em {monthLabel}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Balance */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Saldo
+                  </p>
+                  <p className={[
+                    "mt-1 text-2xl font-bold tracking-tight",
+                    monthBalance.balance >= 0 ? "text-foreground" : "text-destructive"
+                  ].join(" ")}>
+                    {formatCurrency(monthBalance.balance)}
+                  </p>
+                </div>
+                <div className={[
+                  "rounded-2xl p-3 ring-1",
+                  monthBalance.balance >= 0
+                    ? "bg-primary/10 ring-primary/15"
+                    : "bg-destructive/10 ring-destructive/15"
+                ].join(" ")}>
+                  <Wallet className={[
+                    "h-5 w-5",
+                    monthBalance.balance >= 0 ? "text-primary" : "text-destructive"
+                  ].join(" ")} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Budget Progress */}
+      {budget.total > 0 && (
+        <StaggerItem>
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
+                <p className="text-sm font-bold tabular-nums text-foreground">
+                  {formatCurrency(totalExpenses)} / {formatCurrency(budget.total)}
+                </p>
+              </div>
+              <Progress
+                value={budgetPercent}
+                className="h-2.5 rounded-full"
+              />
+              {budgetExceeded && (
+                <p className="mt-2 text-xs text-destructive font-medium">
+                  Orçamento excedido em {formatCurrency(totalExpenses - budget.total)}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      )}
+
+      {/* Cash Balance + Charts row */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {/* Cash Balance */}
+          <CashBalance balance={monthBalance} className={appCard} />
+
+          {/* Category Pie Chart */}
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <PieChart className="h-4 w-4 text-muted-foreground" />
+                Gastos por categoria
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {categoryData.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  Nenhum gasto registrado neste mês.
+                </p>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="h-[160px] w-[160px] flex-shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RePieChart>
+                        <Pie
+                          data={categoryData}
+                          dataKey="total"
+                          nameKey="category"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={70}
+                          paddingAngle={2}
+                          strokeWidth={0}
+                        >
+                          {categoryData.map((entry) => (
+                            <Cell
+                              key={entry.category}
+                              fill={getCategoryColor(entry.category)}
+                            />
+                          ))}
+                        </Pie>
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="flex-1 space-y-1.5 overflow-auto max-h-[160px]">
+                    {categoryData.map((cat) => (
+                      <div key={cat.category} className="flex items-center gap-2 text-xs">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: getCategoryColor(cat.category) }}
+                        />
+                        <span className="flex-1 truncate text-foreground/80">{cat.category}</span>
+                        <span className="font-semibold tabular-nums text-foreground">
+                          {formatCurrency(cat.total)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Status breakdown */}
+      <StaggerItem>
+        <Card className={appCard}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Por status</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-5">
+            {statusData.every((s) => s.total === 0) ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Sem dados para exibir.
+              </p>
+            ) : (
+              <div className="h-[180px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statusData} barCategoryGap="30%">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                    <XAxis dataKey="label" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                    <YAxis
+                      tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                      tick={{ fontSize: 11 }}
+                      className="fill-muted-foreground"
+                      width={60}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: "1px solid hsl(var(--border))",
+                        background: "hsl(var(--card))",
+                      }}
+                    />
+                    <Bar dataKey="total" radius={[8, 8, 0, 0]}>
+                      {statusData.map((entry) => (
+                        <Cell
+                          key={entry.status}
+                          fill={STATUS_COLORS[entry.status] ?? "hsl(var(--muted))"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>
         </Card>
-      </FadeIn>
-
-      {/* Modal */}
-      <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{editingExpense ? "Editar gasto" : "Novo gasto"}</DialogTitle>
-          </DialogHeader>
-
-          <ExpenseForm
-            expense={editingExpense}
-            currentDate={currentDate}
-            categories={allCategories}
-            accounts={accounts}
-            defaultStatus={defaultStatus}
-            onSubmit={(data) => {
-              if (editingExpense) onUpdate(editingExpense.id, data);
-              else onAdd(data);
-              closeDialog();
-            }}
-            onCancel={closeDialog}
-            onAddCategory={onAddCategory}
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
+      </StaggerItem>
+    </StaggerContainer>
   );
 }
