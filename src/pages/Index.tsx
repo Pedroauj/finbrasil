@@ -32,6 +32,7 @@ import {
 
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AssistantPanel } from "@/components/AssistantPanel";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -86,32 +87,42 @@ function SidebarNav({
               <button
                 key={value}
                 onClick={() => onNavigate(value)}
-                className={[
+                data-active={isActive ? "true" : "false"}
+                className={cn(
                   "relative group flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm transition",
                   "hover:bg-muted/50",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  // LED aura no hover (consistente com Card)
+                  "overflow-hidden",
+                  "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
+                  "before:bg-[radial-gradient(180px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
+                  "hover:before:opacity-100",
+                  // Estado ativo: ring + glow suave + highlight
                   isActive
-                    ? [
-                      "text-foreground",
-                      "bg-primary/10",
+                    ? cn(
+                      "text-foreground bg-primary/10",
                       "shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]",
-                      "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-primary before:opacity-90",
-                    ].join(" ")
-                    : "text-muted-foreground",
-                ].join(" ")}
+                      "ring-1 ring-primary/20",
+                      "shadow-[0_10px_30px_-24px_hsl(var(--primary)/0.55)]",
+                      // “LED strip” lateral
+                      "after:pointer-events-none after:absolute after:left-0 after:top-2 after:bottom-2 after:w-[2px] after:rounded-full",
+                      "after:bg-gradient-to-b after:from-transparent after:via-primary after:to-transparent after:opacity-90"
+                    )
+                    : "text-muted-foreground"
+                )}
               >
                 <Icon
-                  className={[
+                  className={cn(
                     "h-4 w-4 transition",
                     isActive
                       ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground",
-                  ].join(" ")}
+                      : "text-muted-foreground group-hover:text-foreground"
+                  )}
                 />
                 <span className="flex-1 text-left">{label}</span>
 
-                {/* micro brilho no hover (bem sutil) */}
-                <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_30%_40%,hsl(var(--primary)/0.10),transparent_65%)]" />
+                {/* micro “specular” no hover, bem sutil */}
+                <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_70%_30%,hsl(var(--primary)/0.08),transparent_60%)]" />
               </button>
             );
           })}
@@ -123,6 +134,7 @@ function SidebarNav({
             onClick={onNewExpense}
             className="group relative h-11 w-full rounded-2xl font-semibold shadow-sm"
           >
+            {/* glow no hover */}
             <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <span className="relative flex items-center justify-center gap-2">
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
