@@ -92,19 +92,27 @@ function SidebarNav({
                   "relative group flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm transition",
                   "hover:bg-muted/50",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  // LED aura no hover (consistente com Card)
                   "overflow-hidden",
+
+                  // Aura LED no hover (sutil)
                   "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
-                  "before:bg-[radial-gradient(180px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
+                  "before:bg-[radial-gradient(200px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
                   "hover:before:opacity-100",
-                  // Estado ativo: ring + glow suave + highlight
+
                   isActive
                     ? cn(
                       "text-foreground bg-primary/10",
                       "shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]",
-                      "ring-1 ring-primary/20",
-                      "shadow-[0_10px_30px_-24px_hsl(var(--primary)/0.55)]",
-                      // “LED strip” lateral
+                      "ring-1 ring-primary/18",
+
+                      // ✅ Soft glow “de fundo” (bem SaaS)
+                      "before:opacity-100",
+                      "before:bg-[radial-gradient(260px_circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_68%)]",
+
+                      // brilho extra super discreto (tipo bloom)
+                      "shadow-[0_14px_40px_-28px_hsl(var(--primary)/0.70)]",
+
+                      // “LED strip” lateral com gradient (mais premium que linha reta)
                       "after:pointer-events-none after:absolute after:left-0 after:top-2 after:bottom-2 after:w-[2px] after:rounded-full",
                       "after:bg-gradient-to-b after:from-transparent after:via-primary after:to-transparent after:opacity-90"
                     )
@@ -121,24 +129,35 @@ function SidebarNav({
                 />
                 <span className="flex-1 text-left">{label}</span>
 
-                {/* micro “specular” no hover, bem sutil */}
+                {/* specular bem leve no hover */}
                 <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_70%_30%,hsl(var(--primary)/0.08),transparent_60%)]" />
               </button>
             );
           })}
         </div>
 
-        {/* Botão Novo Gasto abaixo das abas */}
+        {/* ✅ CTA Novo Gasto com gradiente e glow premium */}
         <div className="mt-4 px-1">
           <Button
             onClick={onNewExpense}
-            className="group relative h-11 w-full rounded-2xl font-semibold shadow-sm"
+            className={cn(
+              "group relative h-11 w-full rounded-2xl font-semibold shadow-sm",
+              "overflow-hidden",
+              // gradiente discreto no botão (segue o tema)
+              "bg-gradient-to-r from-primary to-emerald-500 text-primary-foreground",
+              "hover:brightness-[1.03] active:brightness-[0.98]",
+              "transition-all"
+            )}
           >
-            {/* glow no hover */}
-            <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            {/* glow externo no hover */}
+            <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/25 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+            {/* brilho “sheen” passando (bem sutil) */}
+            <span className="pointer-events-none absolute -left-16 top-0 h-full w-24 rotate-12 bg-white/10 blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
             <span className="relative flex items-center justify-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
-                <Plus className="h-4 w-4 text-primary-foreground" />
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-black/10 ring-1 ring-white/15">
+                <Plus className="h-4 w-4 text-white" />
               </span>
               <span>Novo gasto</span>
             </span>
