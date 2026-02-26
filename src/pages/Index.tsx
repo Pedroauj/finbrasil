@@ -19,6 +19,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
   TableProperties,
+  TrendingUp,
   RefreshCw,
   Calendar as CalendarIcon,
   CreditCard as CardIcon,
@@ -35,6 +36,7 @@ import { AssistantPanel } from "@/components/AssistantPanel";
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "expenses", label: "Gastos", icon: TableProperties },
+  { value: "income", label: "Receitas", icon: TrendingUp }, // ✅ NOVA ABA
   { value: "cards", label: "Cartões", icon: CardIcon },
   { value: "recurring", label: "Recorrentes", icon: RefreshCw },
   { value: "calendar", label: "Calendário", icon: CalendarIcon },
@@ -175,6 +177,13 @@ export default function Index() {
               onDelete={store.deleteExpense}
               onAddCategory={store.addCustomCategory}
             />
+          </div>
+        );
+
+      // ✅ NOVA ABA: RECEITAS (movido daqui pra fora de Gastos)
+      case "income":
+        return (
+          <div className="space-y-5">
             <IncomeManager
               salary={store.salary}
               extraIncomes={store.extraIncomes}
