@@ -36,7 +36,7 @@ import { AssistantPanel } from "@/components/AssistantPanel";
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "expenses", label: "Gastos", icon: TableProperties },
-  { value: "income", label: "Receitas", icon: TrendingUp }, // ✅ NOVA ABA
+  { value: "income", label: "Receitas", icon: TrendingUp },
   { value: "cards", label: "Cartões", icon: CardIcon },
   { value: "recurring", label: "Recorrentes", icon: RefreshCw },
   { value: "calendar", label: "Calendário", icon: CalendarIcon },
@@ -44,6 +44,15 @@ const NAV_ITEMS = [
 ] as const;
 
 type NavValue = (typeof NAV_ITEMS)[number]["value"];
+
+// ✅ highlight local (não cria arquivo novo)
+function Highlight({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+      {children}
+    </span>
+  );
+}
 
 function SidebarNav({
   active,
@@ -180,7 +189,6 @@ export default function Index() {
           </div>
         );
 
-      // ✅ NOVA ABA: RECEITAS (movido daqui pra fora de Gastos)
       case "income":
         return (
           <div className="space-y-5">
@@ -273,8 +281,12 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* background premium sutil */}
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
+      {/* ✅ LED SaaS background: blobs + seu radial */}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute -left-24 top-24 h-[420px] w-[420px] rounded-full bg-primary/22 blur-[95px]" />
+        <div className="absolute right-[-140px] top-[-80px] h-[380px] w-[380px] rounded-full bg-emerald-400/10 blur-[95px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
+      </div>
 
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
@@ -303,10 +315,10 @@ export default function Index() {
                 </Sheet>
               </div>
 
-              {/* Título da aba */}
+              {/* ✅ Título com palavra destacada */}
               <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  {pageTitle}
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+                  <Highlight>{pageTitle}</Highlight>
                 </h1>
               </div>
 
