@@ -2,159 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 @layer base {
   :root {
-    /* Fundo quente acinzentado - não branco puro */
-    --background: 220 14% 92%;
-    --foreground: 224 25% 18%;
+    /* (se você usa light, pode deixar algo básico aqui) */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    /* Cards com tom creme suave */
-    --card: 220 14% 96%;
-    --card-foreground: 224 25% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 220 14% 96%;
-    --popover-foreground: 224 25% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    /* Primary: Verde sofisticado fintech */
-    --primary: 160 70% 34%;
+    --primary: 160 84% 45%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary */
-    --secondary: 220 12% 89%;
-    --secondary-foreground: 224 25% 18%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    /* Muted */
-    --muted: 220 12% 89%;
-    --muted-foreground: 220 10% 42%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Accent */
-    --accent: 165 60% 38%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 65% 50%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --warning: 38 85% 48%;
-    --warning-foreground: 0 0% 100%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 160 84% 45%;
 
-    --success: 155 60% 36%;
-    --success-foreground: 0 0% 100%;
-
-    /* Bordas suaves */
-    --border: 220 12% 85%;
-    --input: 220 12% 85%;
-    --ring: 160 70% 34%;
-
-    /* Premium feel */
-    --radius: 1.1rem;
-
-    --sidebar-background: 220 14% 93%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 160 70% 34%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 12% 89%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 12% 85%;
-    --sidebar-ring: 160 70% 34%;
+    --radius: 1.5rem;
   }
 
   .dark {
-    /* Fundo escuro quente, NÃO preto puro */
-    --background: 225 20% 7%;
-    --foreground: 220 15% 90%;
+    /* Fundo bem escuro, com contraste suave */
+    --background: 180 8% 6%;
+    --foreground: 0 0% 98%;
 
-    --card: 225 18% 11%;
-    --card-foreground: 220 15% 90%;
+    /* Cards “glass” */
+    --card: 180 8% 9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 225 18% 11%;
-    --popover-foreground: 220 15% 90%;
+    --popover: 180 8% 9%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Primary verde fintech no dark */
-    --primary: 160 60% 48%;
+    /* Verde “FinBrasil” */
+    --primary: 160 84% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 225 16% 16%;
-    --secondary-foreground: 220 15% 90%;
+    --secondary: 180 7% 12%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 225 14% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 180 6% 14%;
+    --muted-foreground: 180 6% 65%;
 
-    --accent: 165 50% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 180 7% 12%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62% 40%;
+    --destructive: 0 72% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --warning: 38 80% 45%;
-    --warning-foreground: 0 0% 100%;
-
-    --success: 155 55% 42%;
-    --success-foreground: 0 0% 100%;
-
-    --border: 225 14% 18%;
-    --input: 225 14% 18%;
-    --ring: 160 60% 48%;
-
-    --sidebar-background: 225 20% 8%;
-    --sidebar-foreground: 220 15% 90%;
-    --sidebar-primary: 160 60% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 14% 16%;
-    --sidebar-accent-foreground: 220 15% 90%;
-    --sidebar-border: 225 14% 18%;
-    --sidebar-ring: 160 60% 48%;
+    /* Bordas suaves */
+    --border: 180 6% 18%;
+    --input: 180 6% 18%;
+    --ring: 160 84% 45%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
-  html {
-    /* Evita micro-shift quando aparece scrollbar */
-    scrollbar-gutter: stable;
-  }
-
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-
-    /* Fallback para estabilidade total */
-    overflow-y: scroll;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-    @apply font-semibold tracking-tight;
   }
 }
 
 @layer utilities {
 
-  /* Glass premium SEM linhas brancas de separação */
+  /* “Glass card” padrão */
   .glass {
-    @apply bg-background/80 backdrop-blur-xl;
+    @apply border border-border/60 bg-card/70 backdrop-blur;
   }
 
-  .card-hover {
-    @apply transition-all duration-300 ease-out;
+  /* Sombra premium discreta */
+  .shadow-soft {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04),
+      0 8px 30px rgba(0, 0, 0, 0.35);
   }
 
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 40px -18px hsl(var(--primary) / 0.14);
+  /* Glow verde MUITO sutil (igual seu print) */
+  .glow-primary {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.25),
+      0 20px 60px rgba(0, 0, 0, 0.35);
   }
 
-  .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow duration-200;
+  .pill {
+    @apply rounded-full border border-border/60 bg-card/60 backdrop-blur px-3 py-1 text-sm;
   }
 }
