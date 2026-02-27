@@ -580,7 +580,7 @@ export function Dashboard({
       <StaggerItem>
         <Card className={appCard}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Por status</CardTitle>
+            <CardTitle className="text-sm font-semibold">Por status (TESTE 999)</CardTitle>
           </CardHeader>
           <CardContent className="pb-5">
             {totalStatus === 0 ? (
