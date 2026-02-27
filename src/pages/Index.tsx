@@ -15,12 +15,12 @@ import { DEFAULT_CATEGORIES } from "@/types/expense";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
+import { PageShell } from "@/components/layout/PageShell";
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AppShell, NavKey } from "@/components/AppShell";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 
 import {
   Bot,
@@ -48,6 +48,10 @@ const NAV_LABELS: Record<NavKey, string> = {
   settings: "Ajustes",
 };
 
+function Hr() {
+  return <div className="h-px w-full bg-border/60" />;
+}
+
 function SettingsSection({
   title,
   description,
@@ -60,7 +64,7 @@ function SettingsSection({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm">
+    <Card className="rounded-3xl border border-border/60 bg-card/70 text-foreground backdrop-blur shadow-sm">
       <CardHeader className="space-y-1">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 rounded-2xl border border-border/60 bg-background/40 p-2">
@@ -96,7 +100,7 @@ function SettingRow({
         <div className="text-sm font-medium">{label}</div>
         {hint ? <div className="text-xs text-muted-foreground">{hint}</div> : null}
       </div>
-      <div className="sm:max-w-[360px] w-full sm:w-auto">{right}</div>
+      <div className="w-full sm:w-auto sm:max-w-[360px]">{right}</div>
     </div>
   );
 }
@@ -134,129 +138,137 @@ export default function Index() {
     switch (nav) {
       case "dashboard":
         return (
-          <Dashboard
-            expenses={store.expenses}
-            budget={store.budget}
-            prevMonthExpenses={store.prevMonthExpenses}
-            currentDate={store.currentDate}
-            cards={store.creditCards}
-            invoices={store.invoices}
-            monthBalance={store.monthBalance}
-          />
+          <PageShell title="Dashboard" subtitle={subtitleByNav.dashboard}>
+            <Dashboard
+              expenses={store.expenses}
+              budget={store.budget}
+              prevMonthExpenses={store.prevMonthExpenses}
+              currentDate={store.currentDate}
+              cards={store.creditCards}
+              invoices={store.invoices}
+              monthBalance={store.monthBalance}
+            />
+          </PageShell>
         );
 
       case "expenses":
         return (
-          <div className="space-y-5">
-            <ExpenseTable
-              expenses={store.expenses}
-              customCategories={store.customCategories}
-              currentDate={store.currentDate}
-              accounts={store.financialAccounts}
-              onAdd={store.addExpense}
-              onUpdate={store.updateExpense}
-              onDelete={store.deleteExpense}
-              onAddCategory={store.addCustomCategory}
-            />
-          </div>
+          <PageShell title="Gastos" subtitle={subtitleByNav.expenses}>
+            <div className="space-y-5">
+              <ExpenseTable
+                expenses={store.expenses}
+                customCategories={store.customCategories}
+                currentDate={store.currentDate}
+                accounts={store.financialAccounts}
+                onAdd={store.addExpense}
+                onUpdate={store.updateExpense}
+                onDelete={store.deleteExpense}
+                onAddCategory={store.addCustomCategory}
+              />
+            </div>
+          </PageShell>
         );
 
       case "income":
         return (
-          <div className="space-y-5">
-            <IncomeManager
-              salary={store.salary}
-              extraIncomes={store.extraIncomes}
-              budget={store.budget}
-              customCategories={store.customCategories}
-              currentDate={store.currentDate}
-              onSaveSalary={store.saveSalary}
-              onDeleteSalary={store.deleteSalary}
-              onAddExtraIncome={store.addExtraIncome}
-              onUpdateExtraIncome={store.updateExtraIncome}
-              onDeleteExtraIncome={store.deleteExtraIncome}
-              onSaveBudget={store.setBudget}
-            />
-          </div>
+          <PageShell title="Receitas" subtitle={subtitleByNav.income}>
+            <div className="space-y-5">
+              <IncomeManager
+                salary={store.salary}
+                extraIncomes={store.extraIncomes}
+                budget={store.budget}
+                customCategories={store.customCategories}
+                currentDate={store.currentDate}
+                onSaveSalary={store.saveSalary}
+                onDeleteSalary={store.deleteSalary}
+                onAddExtraIncome={store.addExtraIncome}
+                onUpdateExtraIncome={store.updateExtraIncome}
+                onDeleteExtraIncome={store.deleteExtraIncome}
+                onSaveBudget={store.setBudget}
+              />
+            </div>
+          </PageShell>
         );
 
       case "cards":
         return (
-          <div className="space-y-5">
-            <CreditCardManager
-              cards={store.creditCards}
-              invoices={store.invoices}
-              categories={allCategories}
-              currentDate={store.currentDate}
-              onAddCard={store.addCreditCard}
-              onDeleteCard={store.deleteCreditCard}
-              onAddInvoiceItem={store.addInvoiceItem}
-              onAddInstallments={store.addInstallments}
-              onRemoveInvoiceItem={store.removeInvoiceItem}
-              onRemoveInstallmentGroup={store.removeInstallmentGroup}
-              onTogglePaid={store.toggleInvoicePaid}
-            />
-          </div>
+          <PageShell title="Cartões" subtitle={subtitleByNav.cards}>
+            <div className="space-y-5">
+              <CreditCardManager
+                cards={store.creditCards}
+                invoices={store.invoices}
+                categories={allCategories}
+                currentDate={store.currentDate}
+                onAddCard={store.addCreditCard}
+                onDeleteCard={store.deleteCreditCard}
+                onAddInvoiceItem={store.addInvoiceItem}
+                onAddInstallments={store.addInstallments}
+                onRemoveInvoiceItem={store.removeInvoiceItem}
+                onRemoveInstallmentGroup={store.removeInstallmentGroup}
+                onTogglePaid={store.toggleInvoicePaid}
+              />
+            </div>
+          </PageShell>
         );
 
       case "recurring":
         return (
-          <div className="space-y-5">
-            <RecurringExpenses
-              recurringExpenses={store.recurringExpenses}
-              customCategories={store.customCategories}
-              onAdd={store.addRecurringExpense}
-              onToggle={store.toggleRecurringExpense}
-              onDelete={store.deleteRecurringExpense}
-              onAddCategory={store.addCustomCategory}
-            />
-          </div>
+          <PageShell title="Recorrentes" subtitle={subtitleByNav.recurring}>
+            <div className="space-y-5">
+              <RecurringExpenses
+                recurringExpenses={store.recurringExpenses}
+                customCategories={store.customCategories}
+                onAdd={store.addRecurringExpense}
+                onToggle={store.toggleRecurringExpense}
+                onDelete={store.deleteRecurringExpense}
+                onAddCategory={store.addCustomCategory}
+              />
+            </div>
+          </PageShell>
         );
 
       case "calendar":
         return (
-          <div className="space-y-5">
-            <FinancialCalendar
-              expenses={store.expenses}
-              customCategories={store.customCategories}
-              currentDate={store.currentDate}
-              onAdd={store.addExpense}
-              onUpdate={store.updateExpense}
-              onDelete={store.deleteExpense}
-              onAddCategory={store.addCustomCategory}
-            />
-          </div>
+          <PageShell title="Calendário" subtitle={subtitleByNav.calendar}>
+            <div className="space-y-5">
+              <FinancialCalendar
+                expenses={store.expenses}
+                customCategories={store.customCategories}
+                currentDate={store.currentDate}
+                onAdd={store.addExpense}
+                onUpdate={store.updateExpense}
+                onDelete={store.deleteExpense}
+                onAddCategory={store.addCustomCategory}
+              />
+            </div>
+          </PageShell>
         );
 
       case "accounts":
         return (
-          <div className="space-y-5">
-            <AccountManager
-              accounts={store.financialAccounts}
-              transfers={store.accountTransfers}
-              adjustments={store.accountAdjustments}
-              onAdd={store.addFinancialAccount}
-              onUpdate={store.updateFinancialAccount}
-              onDelete={store.deleteFinancialAccount}
-              onTransfer={store.transferBetweenAccounts}
-              onAdjust={store.addAccountAdjustment}
-              onDeleteAdjustment={store.deleteAccountAdjustment}
-              onToggleArchive={store.toggleAccountArchive}
-            />
-          </div>
+          <PageShell title="Contas" subtitle={subtitleByNav.accounts}>
+            <div className="space-y-5">
+              <AccountManager
+                accounts={store.financialAccounts}
+                transfers={store.accountTransfers}
+                adjustments={store.accountAdjustments}
+                onAdd={store.addFinancialAccount}
+                onUpdate={store.updateFinancialAccount}
+                onDelete={store.deleteFinancialAccount}
+                onTransfer={store.transferBetweenAccounts}
+                onAdjust={store.addAccountAdjustment}
+                onDeleteAdjustment={store.deleteAccountAdjustment}
+                onToggleArchive={store.toggleAccountArchive}
+              />
+            </div>
+          </PageShell>
         );
 
-      case "settings": {
-        // UI pronta (plugável): aqui você liga as ações reais depois.
-        const userEmailGuess =
-          // caso você tenha algo no useAuth, substitui aqui depois
-          (store as any)?.user?.email ?? "";
-
+      case "settings":
         return (
           <PageShell title="Ajustes" subtitle={subtitleByNav.settings}>
             <div className="space-y-6">
               <div className="grid gap-4 lg:grid-cols-2">
-                {/* Perfil */}
                 <SettingsSection
                   title="Perfil"
                   description="Informações básicas da sua conta."
@@ -267,7 +279,7 @@ export default function Index() {
                     hint="Como você quer aparecer no FinBrasil."
                     right={<Input placeholder="Seu nome" className="h-10 rounded-xl" />}
                   />
-                  <Separator />
+                  <Hr />
                   <SettingRow
                     label="Email"
                     hint="Email usado para login e notificações."
@@ -276,16 +288,15 @@ export default function Index() {
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         <Input
                           placeholder="seuemail@exemplo.com"
-                          defaultValue={userEmailGuess}
                           className="h-10 rounded-xl"
                         />
                       </div>
                     }
                   />
-                  <Separator />
+                  <Hr />
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-muted-foreground">
-                      Dica: depois a gente pode conectar isso ao seu cadastro real do auth.
+                      (UI pronta) Depois ligamos isso no auth real.
                     </div>
                     <Button variant="outline" className="h-10 rounded-xl">
                       Salvar
@@ -293,7 +304,6 @@ export default function Index() {
                   </div>
                 </SettingsSection>
 
-                {/* Preferências */}
                 <SettingsSection
                   title="Preferências"
                   description="Personalize a experiência do app."
@@ -301,13 +311,13 @@ export default function Index() {
                 >
                   <SettingRow
                     label="Tema"
-                    hint="Você já troca no topo, mas pode ficar aqui também."
+                    hint="Alternar claro/escuro."
                     right={<ModeToggle />}
                   />
-                  <Separator />
+                  <Hr />
                   <SettingRow
                     label="Mês financeiro"
-                    hint="Defina quando seu mês começa (útil para quem recebe dia 5, 10, etc.)."
+                    hint="Defina quando seu mês começa (ex: 5)."
                     right={
                       <Input
                         type="number"
@@ -318,10 +328,10 @@ export default function Index() {
                       />
                     }
                   />
-                  <Separator />
+                  <Hr />
                   <SettingRow
-                    label="Privacidade"
-                    hint="Ocultar valores por padrão (modo discreto)."
+                    label="Modo privacidade"
+                    hint="Ocultar valores por padrão."
                     right={
                       <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
                         Ativar (em breve)
@@ -330,7 +340,6 @@ export default function Index() {
                   />
                 </SettingsSection>
 
-                {/* Segurança */}
                 <SettingsSection
                   title="Segurança"
                   description="Proteja sua conta e seus dados."
@@ -340,43 +349,42 @@ export default function Index() {
                     label="Alterar senha"
                     hint="Recomendado se você compartilha o dispositivo."
                     right={
-                      <Button className="h-10 rounded-xl w-full sm:w-auto gap-2" variant="outline">
+                      <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto gap-2">
                         <KeyRound className="h-4 w-4" />
                         Trocar senha
                       </Button>
                     }
                   />
-                  <Separator />
+                  <Hr />
                   <SettingRow
                     label="2FA"
-                    hint="Autenticação em duas etapas (mais segurança)."
-                    right={
-                      <Button className="h-10 rounded-xl w-full sm:w-auto" variant="outline">
-                        Configurar (em breve)
-                      </Button>
-                    }
-                  />
-                </SettingsSection>
-
-                {/* Notificações */}
-                <SettingsSection
-                  title="Notificações"
-                  description="Alertas de fatura, vencimentos e resumos."
-                  icon={<Bell className="h-5 w-5" />}
-                >
-                  <SettingRow
-                    label="Alertas de vencimento"
-                    hint="Receba aviso antes de contas vencerem."
+                    hint="Autenticação em duas etapas."
                     right={
                       <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
                         Configurar (em breve)
                       </Button>
                     }
                   />
-                  <Separator />
+                </SettingsSection>
+
+                <SettingsSection
+                  title="Notificações"
+                  description="Alertas e resumos."
+                  icon={<Bell className="h-5 w-5" />}
+                >
+                  <SettingRow
+                    label="Alertas de vencimento"
+                    hint="Aviso antes de contas vencerem."
+                    right={
+                      <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
+                        Configurar (em breve)
+                      </Button>
+                    }
+                  />
+                  <Hr />
                   <SettingRow
                     label="Resumo mensal"
-                    hint="Relatório do mês com gráficos e insights."
+                    hint="Relatório do mês com insights."
                     right={
                       <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
                         Ativar (em breve)
@@ -385,41 +393,34 @@ export default function Index() {
                   />
                 </SettingsSection>
 
-                {/* Dados */}
                 <SettingsSection
                   title="Dados"
-                  description="Portabilidade, backup e limpeza."
+                  description="Exportação, backup e limpeza."
                   icon={<Database className="h-5 w-5" />}
                 >
                   <SettingRow
                     label="Exportar dados"
-                    hint="Baixar CSV para Excel/Google Sheets."
+                    hint="CSV para Excel/Sheets."
                     right={
                       <Button
                         variant="outline"
                         className="h-10 rounded-xl w-full sm:w-auto gap-2"
-                        onClick={() => {
-                          // TODO: ligar em uma action real depois
-                          console.log("export: todo");
-                        }}
+                        onClick={() => console.log("export: todo")}
                       >
                         <Download className="h-4 w-4" />
                         Exportar CSV
                       </Button>
                     }
                   />
-                  <Separator />
+                  <Hr />
                   <SettingRow
                     label="Reset financeiro"
-                    hint="Limpar lançamentos (ação irreversível)."
+                    hint="Ação irreversível (confirmar depois)."
                     right={
                       <Button
                         variant="destructive"
                         className="h-10 rounded-xl w-full sm:w-auto gap-2"
-                        onClick={() => {
-                          // TODO: confirmar com modal depois
-                          console.log("reset: todo");
-                        }}
+                        onClick={() => console.log("reset: todo")}
                       >
                         <Trash2 className="h-4 w-4" />
                         Resetar
@@ -428,19 +429,17 @@ export default function Index() {
                   />
                 </SettingsSection>
 
-                {/* Plano */}
                 <SettingsSection
                   title="Plano"
-                  description="Prepare o FinBrasil para monetização (freemium)."
+                  description="Preparar monetização (freemium)."
                   icon={<Crown className="h-5 w-5" />}
                 >
                   <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-semibold">Você está no plano Gratuito</div>
+                        <div className="text-sm font-semibold">Plano Gratuito</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          Em breve: recursos premium como relatórios avançados, metas, alertas
-                          inteligentes e exportação completa.
+                          Em breve: relatórios avançados, metas, alertas inteligentes e automações.
                         </div>
                       </div>
                       <Button className="h-10 rounded-xl">Fazer upgrade</Button>
@@ -451,7 +450,6 @@ export default function Index() {
             </div>
           </PageShell>
         );
-      }
 
       default:
         return null;
@@ -491,13 +489,6 @@ export default function Index() {
         rightActions={rightActions}
         onNewExpense={onNewExpense}
       >
-        <div className="mb-5">
-          <div className="text-2xl font-bold tracking-tight">{pageTitle}</div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            {subtitleByNav[nav]}
-          </div>
-        </div>
-
         {Content}
       </AppShell>
 
