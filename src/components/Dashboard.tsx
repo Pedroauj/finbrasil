@@ -13,6 +13,8 @@ import {
   Activity,
   Flame,
   Percent,
+  CalendarDays,
+  BarChart3,
 } from "lucide-react";
 import {
   PieChart as RePieChart,
@@ -25,7 +27,8 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  LineChart,
+  AreaChart,
+  Area,
   Line,
 } from "recharts";
 
@@ -49,16 +52,6 @@ const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
   "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
 
-interface DashboardProps {
-  expenses: Expense[];
-  budget: Budget;
-  prevMonthExpenses: Expense[];
-  currentDate: Date;
-  cards: CreditCard[];
-  invoices: CreditCardInvoice[];
-  monthBalance: MonthBalance;
-}
-
 function daysInMonth(d: Date) {
   const year = d.getFullYear();
   const month = d.getMonth();
@@ -67,6 +60,35 @@ function daysInMonth(d: Date) {
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
+}
+
+function isSameMonth(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function getWeekKey(d: Date) {
+  // chave simples "YYYY-MM-W{weekOfMonthApprox}" (suficiente para resumo vendável)
+  // week approx: 1..6
+  const week = Math.floor((d.getDate() - 1) / 7) + 1;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-W${week}`;
+}
+
+interface DashboardProps {
+  expenses: Expense[];
+  budget: Budget;
+  prevMonthExpenses: Expense[];
+  currentDate: Date;
+  cards: CreditCard[];
+  invoices: CreditCardInvoice[];
+  monthBalance: MonthBalance;
 }
 
 export function Dashboard({
@@ -84,7 +106,8 @@ export function Dashboard({
   const totalOverdue = useMemo(() => sumExpenses(expenses, { status: "overdue" }), [expenses]);
   const prevTotal = useMemo(() => sumExpenses(prevMonthExpenses), [prevMonthExpenses]);
 
-  const budgetPercent = budget.total > 0 ? Math.min((totalExpenses / budget.total) * 100, 100) : 0;
+  const budgetPercent =
+    budget.total > 0 ? Math.min((totalExpenses / budget.total) * 100, 100) : 0;
   const budgetExceeded = budget.total > 0 && totalExpenses > budget.total;
 
   const categoryData = useMemo(() => groupExpensesByCategory(expenses), [expenses]);
@@ -101,43 +124,76 @@ export function Dashboard({
     [invoices, monthKey]
   );
   const totalInvoices = useMemo(
-    () => currentInvoices.reduce((acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0), 0),
+    () =>
+      currentInvoices.reduce(
+        (acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0),
+        0
+      ),
     [currentInvoices]
   );
 
-  // KPI extras
+  // KPIs base
   const income = monthBalance.income ?? 0;
   const balance = monthBalance.balance ?? 0;
 
-  const today = new Date();
-  const isCurrentMonth =
-    today.getFullYear() === currentDate.getFullYear() && today.getMonth() === currentDate.getMonth();
+  const todayReal = new Date();
+  const isCurrentMonth = isSameMonth(todayReal, currentDate);
 
-  const dayIndex = isCurrentMonth ? today.getDate() : daysInMonth(currentDate);
+  // para mês no passado/futuro, usa o mês “fechado”
+  const dayIndex = isCurrentMonth ? todayReal.getDate() : daysInMonth(currentDate);
+  const dim = daysInMonth(currentDate);
+
   const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
-
   const savingsRate = income > 0 ? (balance / income) * 100 : 0;
+
+  // Projeções vendáveis
+  const projectedMonthSpend = avgDailySpend * dim;
+  const projectedBalance = income - projectedMonthSpend;
 
   // Daily trend (sum by day)
   const dailySeries = useMemo(() => {
     const map = new Map<number, number>(); // day -> total
     for (const e of expenses) {
       const dt = new Date(e.date);
-      if (dt.getFullYear() !== currentDate.getFullYear() || dt.getMonth() !== currentDate.getMonth()) continue;
+      if (!isSameMonth(dt, currentDate)) continue;
       const day = dt.getDate();
       map.set(day, (map.get(day) ?? 0) + (e.amount ?? 0));
     }
 
-    const maxDay = daysInMonth(currentDate);
-    const out = [];
-    for (let d = 1; d <= maxDay; d++) {
-      out.push({
-        day: d,
-        total: map.get(d) ?? 0,
-      });
+    const out: Array<{ day: number; total: number; cumulative: number }> = [];
+    let running = 0;
+    for (let d = 1; d <= dim; d++) {
+      const v = map.get(d) ?? 0;
+      running += v;
+      out.push({ day: d, total: v, cumulative: running });
     }
     return out;
-  }, [expenses, currentDate]);
+  }, [expenses, currentDate, dim]);
+
+  // “Hoje” e “Semana” (resumo rápido)
+  const todayInView = useMemo(() => {
+    if (!isCurrentMonth) return new Date(currentDate.getFullYear(), currentDate.getMonth(), dim);
+    return todayReal;
+  }, [isCurrentMonth, currentDate, dim, todayReal]);
+
+  const todaySpend = useMemo(() => {
+    return expenses.reduce((acc, e) => {
+      const dt = new Date(e.date);
+      if (!isSameMonth(dt, currentDate)) return acc;
+      if (!isSameDay(dt, todayInView)) return acc;
+      return acc + (e.amount ?? 0);
+    }, 0);
+  }, [expenses, currentDate, todayInView]);
+
+  const weekSpend = useMemo(() => {
+    const wk = getWeekKey(todayInView);
+    return expenses.reduce((acc, e) => {
+      const dt = new Date(e.date);
+      if (!isSameMonth(dt, currentDate)) return acc;
+      if (getWeekKey(dt) !== wk) return acc;
+      return acc + (e.amount ?? 0);
+    }, 0);
+  }, [expenses, currentDate, todayInView]);
 
   // Insights
   const topCategory = useMemo(() => {
@@ -156,11 +212,11 @@ export function Dashboard({
   const categoryRanking = useMemo(() => {
     const sorted = [...categoryData].sort((a, b) => b.total - a.total);
     const top = sorted.slice(0, 6);
-    const sum = top.reduce((acc, x) => acc + x.total, 0) || 1;
+    const sumTop = top.reduce((acc, x) => acc + x.total, 0) || 1;
     return top.map((x) => ({
       ...x,
       pct: (x.total / (totalExpenses || 1)) * 100,
-      pctInTop: (x.total / sum) * 100,
+      pctInTop: (x.total / sumTop) * 100,
     }));
   }, [categoryData, totalExpenses]);
 
@@ -169,6 +225,13 @@ export function Dashboard({
     planned: "hsl(var(--primary))",
     overdue: "hsl(var(--destructive))",
   };
+
+  const compareBars = useMemo(() => {
+    return [
+      { name: "Mês atual", total: totalExpenses },
+      { name: "Mês anterior", total: prevTotal },
+    ];
+  }, [totalExpenses, prevTotal]);
 
   return (
     <StaggerContainer className="space-y-6">
@@ -255,7 +318,8 @@ export function Dashboard({
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em {monthLabel}
+                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em{" "}
+                {monthLabel}
               </p>
             </CardContent>
           </Card>
@@ -280,10 +344,17 @@ export function Dashboard({
                 <div
                   className={[
                     "rounded-2xl p-3 ring-1",
-                    balance >= 0 ? "bg-primary/10 ring-primary/15" : "bg-destructive/10 ring-destructive/15",
+                    balance >= 0
+                      ? "bg-primary/10 ring-primary/15"
+                      : "bg-destructive/10 ring-destructive/15",
                   ].join(" ")}
                 >
-                  <Wallet className={["h-5 w-5", balance >= 0 ? "text-primary" : "text-destructive"].join(" ")} />
+                  <Wallet
+                    className={[
+                      "h-5 w-5",
+                      balance >= 0 ? "text-primary" : "text-destructive",
+                    ].join(" ")}
+                  />
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
@@ -331,7 +402,8 @@ export function Dashboard({
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                Base: {dayIndex} {dayIndex === 1 ? "dia" : "dias"} ({isCurrentMonth ? "até hoje" : "mês fechado"})
+                Base: {dayIndex} {dayIndex === 1 ? "dia" : "dias"}{" "}
+                ({isCurrentMonth ? "até hoje" : "mês fechado"})
               </p>
             </CardContent>
           </Card>
@@ -360,61 +432,11 @@ export function Dashboard({
         </StaggerItem>
       )}
 
-      {/* Cash Balance + Category + Insights */}
+      {/* Row 2: Trend (2 cols) + Quick Summary (1 col) */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          {/* Cash Balance */}
-          <div className="xl:col-span-2">
-            <CashBalance balance={monthBalance} className={appCard} />
-          </div>
-
-          {/* Insights */}
-          <Card className={appCard}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Sparkles className="h-4 w-4 text-muted-foreground" />
-                Insights do mês
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-5 space-y-2">
-              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                <div className="text-sm font-semibold">Comparação mensal</div>
-                <div className="text-xs text-muted-foreground">
-                  {prevTotal > 0
-                    ? `Variação de ${expenseDelta > 0 ? "+" : ""}${expenseDelta.toFixed(1)}% em relação ao mês anterior.`
-                    : "Adicione gastos no mês anterior para ver a variação."}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                <div className="text-sm font-semibold">Maior categoria do mês</div>
-                <div className="text-xs text-muted-foreground">
-                  {topCategory
-                    ? `${topCategory.category} • ${((topCategory.total / (totalExpenses || 1)) * 100).toFixed(0)}% (${formatCurrency(topCategory.total)})`
-                    : "Sem categorias registradas ainda."}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                <div className="text-sm font-semibold">Fôlego de saldo (estimativa)</div>
-                <div className="text-xs text-muted-foreground">
-                  {daysRunway === null
-                    ? "Sem gasto médio suficiente para estimar."
-                    : daysRunway === 0
-                      ? "No ritmo atual, seu saldo não cobre mais dias."
-                      : `No ritmo atual, seu saldo cobre ~${daysRunway}+ dias de gastos.`}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </StaggerItem>
-
-      {/* Trend + Category breakdown */}
-      <StaggerItem>
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {/* Daily Trend */}
-          <Card className={appCard}>
+          <Card className={cn(appCard, "xl:col-span-2")}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <Activity className="h-4 w-4 text-muted-foreground" />
@@ -427,9 +449,9 @@ export function Dashboard({
                   Nenhum gasto registrado neste mês.
                 </p>
               ) : (
-                <div className="h-[220px]">
+                <div className="h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={dailySeries} margin={{ left: 8, right: 12, top: 10, bottom: 0 }}>
+                    <AreaChart data={dailySeries} margin={{ left: 8, right: 12, top: 10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
                       <XAxis
                         dataKey="day"
@@ -452,20 +474,92 @@ export function Dashboard({
                           background: "hsl(var(--card))",
                         }}
                       />
-                      <Line
-                        type="monotone"
-                        dataKey="total"
-                        strokeWidth={2.5}
-                        dot={false}
-                      />
-                    </LineChart>
+                      <Area type="monotone" dataKey="total" strokeWidth={2.2} dot={false} fillOpacity={0.15} />
+                      <Line type="monotone" dataKey="cumulative" strokeWidth={1.8} dot={false} />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Category Pie + Ranking */}
+          {/* Quick Summary / Insights */}
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Sparkles className="h-4 w-4 text-muted-foreground" />
+                Resumo rápido
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CalendarDays className="h-4 w-4" />
+                    Hoje
+                  </div>
+                  <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+                    {formatCurrency(todaySpend)}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CalendarDays className="h-4 w-4" />
+                    Semana
+                  </div>
+                  <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+                    {formatCurrency(weekSpend)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Projeção de gastos (mês)</div>
+                <div className="text-xs text-muted-foreground">
+                  No ritmo atual: ~{formatCurrency(projectedMonthSpend)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Saldo projetado (fim do mês)</div>
+                <div className={cn(
+                  "text-xs",
+                  projectedBalance >= 0 ? "text-muted-foreground" : "text-destructive"
+                )}>
+                  {formatCurrency(projectedBalance)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Fôlego de saldo (estimativa)</div>
+                <div className="text-xs text-muted-foreground">
+                  {daysRunway === null
+                    ? "Sem gasto médio suficiente para estimar."
+                    : daysRunway === 0
+                      ? "No ritmo atual, seu saldo não cobre mais dias."
+                      : `No ritmo atual, seu saldo cobre ~${daysRunway}+ dias.`}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Maior categoria do mês</div>
+                <div className="text-xs text-muted-foreground">
+                  {topCategory
+                    ? `${topCategory.category} • ${((topCategory.total / (totalExpenses || 1)) * 100).toFixed(0)}% (${formatCurrency(topCategory.total)})`
+                    : "Sem categorias registradas ainda."}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Row 3: CashBalance + Categories */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <CashBalance balance={monthBalance} className={appCard} />
+
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -506,7 +600,10 @@ export function Dashboard({
 
                   <div className="space-y-2">
                     {categoryRanking.map((cat) => (
-                      <div key={cat.category} className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                      <div
+                        key={cat.category}
+                        className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2"
+                      >
                         <div className="flex items-center gap-2 text-xs">
                           <span
                             className="h-2.5 w-2.5 rounded-full flex-shrink-0"
@@ -517,6 +614,7 @@ export function Dashboard({
                             {cat.pct.toFixed(0)}%
                           </span>
                         </div>
+
                         <div className="mt-2">
                           <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden">
                             <div
@@ -527,6 +625,7 @@ export function Dashboard({
                               }}
                             />
                           </div>
+
                           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                             <span className="tabular-nums">{formatCurrency(cat.total)}</span>
                             <span className="tabular-nums">Top {categoryRanking.length}</span>
@@ -542,72 +641,131 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Status breakdown */}
+      {/* Row 4: Status + Comparison */}
       <StaggerItem>
-        <Card className={appCard}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Por status</CardTitle>
-          </CardHeader>
-          <CardContent className="pb-5">
-            {statusData.every((s) => s.total === 0) ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                Sem dados para exibir.
-              </p>
-            ) : (
-              <>
-                {/* Chips */}
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
-                    <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.paid }} />
-                    <span className="text-muted-foreground">Pago</span>
-                    <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPaid)}</span>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          {/* Status */}
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Por status</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {statusData.every((s) => s.total === 0) ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Sem dados para exibir.</p>
+              ) : (
+                <>
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.paid }} />
+                      <span className="text-muted-foreground">Pago</span>
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(totalPaid)}
+                      </span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.planned }} />
+                      <span className="text-muted-foreground">Planejado</span>
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(totalPlanned)}
+                      </span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.overdue }} />
+                      <span className="text-muted-foreground">Atrasado</span>
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(totalOverdue)}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
-                    <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.planned }} />
-                    <span className="text-muted-foreground">Planejado</span>
-                    <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPlanned)}</span>
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={statusData} barCategoryGap="30%">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                        <XAxis dataKey="label" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                        <YAxis
+                          tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                          tick={{ fontSize: 11 }}
+                          className="fill-muted-foreground"
+                          width={60}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => formatCurrency(value)}
+                          contentStyle={{
+                            borderRadius: "12px",
+                            border: "1px solid hsl(var(--border))",
+                            background: "hsl(var(--card))",
+                          }}
+                        />
+                        <Bar dataKey="total" radius={[8, 8, 0, 0]}>
+                          {statusData.map((entry) => (
+                            <Cell
+                              key={entry.status}
+                              fill={STATUS_COLORS[entry.status] ?? "hsl(var(--muted))"}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
-                    <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.overdue }} />
-                    <span className="text-muted-foreground">Atrasado</span>
-                    <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalOverdue)}</span>
-                  </div>
+          {/* Month vs Month Comparison */}
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                Comparativo mensal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                  {prevTotal > 0 ? "Atual vs anterior" : "Sem mês anterior registrado"}
                 </div>
-
-                {/* Chart */}
-                <div className="h-[190px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statusData} barCategoryGap="30%">
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                      <XAxis dataKey="label" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                      <YAxis
-                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
-                        tick={{ fontSize: 11 }}
-                        className="fill-muted-foreground"
-                        width={60}
-                      />
-                      <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
-                        contentStyle={{
-                          borderRadius: "12px",
-                          border: "1px solid hsl(var(--border))",
-                          background: "hsl(var(--card))",
-                        }}
-                      />
-                      <Bar dataKey="total" radius={[8, 8, 0, 0]}>
-                        {statusData.map((entry) => (
-                          <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? "hsl(var(--muted))"} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="text-xs">
+                  {prevTotal > 0 ? (
+                    <span className={expenseDelta > 0 ? "text-destructive" : "text-primary"}>
+                      {expenseDelta > 0 ? "+" : ""}
+                      {expenseDelta.toFixed(1)}%
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              </div>
+
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={compareBars} barCategoryGap="35%">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                    <YAxis
+                      tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                      tick={{ fontSize: 11 }}
+                      className="fill-muted-foreground"
+                      width={60}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: "1px solid hsl(var(--border))",
+                        background: "hsl(var(--card))",
+                      }}
+                    />
+                    <Bar dataKey="total" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </StaggerItem>
     </StaggerContainer>
   );
