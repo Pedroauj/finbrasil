@@ -225,8 +225,8 @@ export function Dashboard({
               appCard,
               "ring-1 ring-primary/10",
               "before:bg-[radial-gradient(1200px_circle_at_20%_0%,hsl(var(--primary)/0.14),transparent_45%)]",
-              // compactação visual
-              "[&_.p-6]:p-5 [&_.p-5]:p-5 [&_.gap-6]:gap-4",
+              // compactação visual (sem mexer no componente por dentro)
+              "min-h-0",
             ].join(" ")}
           />
         </div>
@@ -346,7 +346,7 @@ export function Dashboard({
       {/* Charts + Insights */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Categoria (mais denso e maior) */}
+          {/* Categoria */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -434,7 +434,7 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Insights (mais premium, menos “caixa dentro de caixa”) */}
+          {/* Insights */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -449,9 +449,7 @@ export function Dashboard({
                     key={i}
                     className="flex items-start gap-3 rounded-2xl border border-border/60 bg-accent/20 p-3 transition-colors hover:bg-accent/30"
                   >
-                    <div className="mt-0.5 rounded-xl bg-background/40 p-2 ring-1 ring-border/60">
-                      {it.icon}
-                    </div>
+                    <div className="mt-0.5 rounded-xl bg-background/40 p-2 ring-1 ring-border/60">{it.icon}</div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{it.title}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{it.desc}</p>
@@ -469,7 +467,7 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Status stacked (mais clean e com % nos chips) */}
+      {/* Status stacked */}
       <StaggerItem>
         <Card className={appCard}>
           <CardHeader className="pb-2">
