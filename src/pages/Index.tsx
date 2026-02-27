@@ -19,23 +19,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AppShell, NavKey } from "@/components/AppShell";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-
-import {
-  Bot,
-  LogOut,
-  User,
-  Sliders,
-  Shield,
-  Bell,
-  Database,
-  Crown,
-  KeyRound,
-  Download,
-  Trash2,
-  Mail,
-} from "lucide-react";
+import { Bot, LogOut } from "lucide-react";
 
 const NAV_LABELS: Record<NavKey, string> = {
   dashboard: "Dashboard",
@@ -47,63 +31,6 @@ const NAV_LABELS: Record<NavKey, string> = {
   accounts: "Contas",
   settings: "Ajustes",
 };
-
-function Hr() {
-  return <div className="h-px w-full bg-border/60" />;
-}
-
-function SettingsSection({
-  title,
-  description,
-  icon,
-  children,
-}: {
-  title: string;
-  description?: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card className="rounded-3xl border border-border/60 bg-card/70 text-foreground backdrop-blur shadow-sm">
-      <CardHeader className="space-y-1">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-2xl border border-border/60 bg-background/40 p-2">
-            {icon}
-          </div>
-
-          <div className="min-w-0">
-            <CardTitle className="text-base">{title}</CardTitle>
-            {description ? (
-              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-            ) : null}
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-3">{children}</CardContent>
-    </Card>
-  );
-}
-
-function SettingRow({
-  label,
-  hint,
-  right,
-}: {
-  label: string;
-  hint?: string;
-  right: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="text-sm font-medium">{label}</div>
-        {hint ? <div className="text-xs text-muted-foreground">{hint}</div> : null}
-      </div>
-      <div className="w-full sm:w-auto sm:max-w-[360px]">{right}</div>
-    </div>
-  );
-}
 
 export default function Index() {
   const { signOut } = useAuth();
@@ -267,185 +194,150 @@ export default function Index() {
       case "settings":
         return (
           <PageShell title="Ajustes" subtitle={subtitleByNav.settings}>
-            <div className="space-y-6">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <SettingsSection
-                  title="Perfil"
-                  description="Informações básicas da sua conta."
-                  icon={<User className="h-5 w-5" />}
-                >
-                  <SettingRow
-                    label="Nome"
-                    hint="Como você quer aparecer no FinBrasil."
-                    right={<Input placeholder="Seu nome" className="h-10 rounded-xl" />}
-                  />
-                  <Hr />
-                  <SettingRow
-                    label="Email"
-                    hint="Email usado para login e notificações."
-                    right={
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="seuemail@exemplo.com"
-                          className="h-10 rounded-xl"
-                        />
+            {/* DEBUG (pode remover depois): garante que estamos no nav certo */}
+            <div className="mb-4 rounded-2xl border border-border/60 bg-card/40 p-3 text-xs text-muted-foreground">
+              Debug: nav atual = <span className="font-semibold text-foreground">{nav}</span>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              {/* Perfil */}
+              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
+                <div className="text-sm font-semibold">Perfil</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Informações básicas da sua conta.
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Nome</div>
+                      <div className="text-xs text-muted-foreground">
+                        Como você aparece no FinBrasil.
                       </div>
-                    }
-                  />
-                  <Hr />
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-xs text-muted-foreground">
-                      (UI pronta) Depois ligamos isso no auth real.
                     </div>
                     <Button variant="outline" className="h-10 rounded-xl">
-                      Salvar
+                      Editar (em breve)
                     </Button>
                   </div>
-                </SettingsSection>
 
-                <SettingsSection
-                  title="Preferências"
-                  description="Personalize a experiência do app."
-                  icon={<Sliders className="h-5 w-5" />}
-                >
-                  <SettingRow
-                    label="Tema"
-                    hint="Alternar claro/escuro."
-                    right={<ModeToggle />}
-                  />
-                  <Hr />
-                  <SettingRow
-                    label="Mês financeiro"
-                    hint="Defina quando seu mês começa (ex: 5)."
-                    right={
-                      <Input
-                        type="number"
-                        min={1}
-                        max={28}
-                        placeholder="Ex: 1"
-                        className="h-10 rounded-xl"
-                      />
-                    }
-                  />
-                  <Hr />
-                  <SettingRow
-                    label="Modo privacidade"
-                    hint="Ocultar valores por padrão."
-                    right={
-                      <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
-                        Ativar (em breve)
-                      </Button>
-                    }
-                  />
-                </SettingsSection>
+                  <div className="h-px bg-border/60" />
 
-                <SettingsSection
-                  title="Segurança"
-                  description="Proteja sua conta e seus dados."
-                  icon={<Shield className="h-5 w-5" />}
-                >
-                  <SettingRow
-                    label="Alterar senha"
-                    hint="Recomendado se você compartilha o dispositivo."
-                    right={
-                      <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto gap-2">
-                        <KeyRound className="h-4 w-4" />
-                        Trocar senha
-                      </Button>
-                    }
-                  />
-                  <Hr />
-                  <SettingRow
-                    label="2FA"
-                    hint="Autenticação em duas etapas."
-                    right={
-                      <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
-                        Configurar (em breve)
-                      </Button>
-                    }
-                  />
-                </SettingsSection>
-
-                <SettingsSection
-                  title="Notificações"
-                  description="Alertas e resumos."
-                  icon={<Bell className="h-5 w-5" />}
-                >
-                  <SettingRow
-                    label="Alertas de vencimento"
-                    hint="Aviso antes de contas vencerem."
-                    right={
-                      <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
-                        Configurar (em breve)
-                      </Button>
-                    }
-                  />
-                  <Hr />
-                  <SettingRow
-                    label="Resumo mensal"
-                    hint="Relatório do mês com insights."
-                    right={
-                      <Button variant="outline" className="h-10 rounded-xl w-full sm:w-auto">
-                        Ativar (em breve)
-                      </Button>
-                    }
-                  />
-                </SettingsSection>
-
-                <SettingsSection
-                  title="Dados"
-                  description="Exportação, backup e limpeza."
-                  icon={<Database className="h-5 w-5" />}
-                >
-                  <SettingRow
-                    label="Exportar dados"
-                    hint="CSV para Excel/Sheets."
-                    right={
-                      <Button
-                        variant="outline"
-                        className="h-10 rounded-xl w-full sm:w-auto gap-2"
-                        onClick={() => console.log("export: todo")}
-                      >
-                        <Download className="h-4 w-4" />
-                        Exportar CSV
-                      </Button>
-                    }
-                  />
-                  <Hr />
-                  <SettingRow
-                    label="Reset financeiro"
-                    hint="Ação irreversível (confirmar depois)."
-                    right={
-                      <Button
-                        variant="destructive"
-                        className="h-10 rounded-xl w-full sm:w-auto gap-2"
-                        onClick={() => console.log("reset: todo")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Resetar
-                      </Button>
-                    }
-                  />
-                </SettingsSection>
-
-                <SettingsSection
-                  title="Plano"
-                  description="Preparar monetização (freemium)."
-                  icon={<Crown className="h-5 w-5" />}
-                >
-                  <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold">Plano Gratuito</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Em breve: relatórios avançados, metas, alertas inteligentes e automações.
-                        </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Email</div>
+                      <div className="text-xs text-muted-foreground">
+                        Usado para login e notificações.
                       </div>
-                      <Button className="h-10 rounded-xl">Fazer upgrade</Button>
                     </div>
+                    <Button variant="outline" className="h-10 rounded-xl">
+                      Alterar (em breve)
+                    </Button>
                   </div>
-                </SettingsSection>
+                </div>
+              </div>
+
+              {/* Preferências */}
+              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
+                <div className="text-sm font-semibold">Preferências</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Personalize a experiência do app.
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Tema</div>
+                      <div className="text-xs text-muted-foreground">Claro / Escuro.</div>
+                    </div>
+                    <ModeToggle />
+                  </div>
+
+                  <div className="h-px bg-border/60" />
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Mês financeiro</div>
+                      <div className="text-xs text-muted-foreground">
+                        Definir início do mês (ex: 5).
+                      </div>
+                    </div>
+                    <Button variant="outline" className="h-10 rounded-xl">
+                      Configurar (em breve)
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Segurança */}
+              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
+                <div className="text-sm font-semibold">Segurança</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Proteja sua conta e seus dados.
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Alterar senha</div>
+                      <div className="text-xs text-muted-foreground">
+                        Recomendado se usa PC compartilhado.
+                      </div>
+                    </div>
+                    <Button variant="outline" className="h-10 rounded-xl">
+                      Trocar (em breve)
+                    </Button>
+                  </div>
+
+                  <div className="h-px bg-border/60" />
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">2FA</div>
+                      <div className="text-xs text-muted-foreground">
+                        Autenticação em duas etapas.
+                      </div>
+                    </div>
+                    <Button variant="outline" className="h-10 rounded-xl">
+                      Configurar (em breve)
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dados & Plano */}
+              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
+                <div className="text-sm font-semibold">Dados & Plano</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Exportação, limpeza e upgrades.
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Exportar dados</div>
+                      <div className="text-xs text-muted-foreground">CSV para Excel/Sheets.</div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="h-10 rounded-xl"
+                      onClick={() => console.log("export: todo")}
+                    >
+                      Exportar (em breve)
+                    </Button>
+                  </div>
+
+                  <div className="h-px bg-border/60" />
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Plano</div>
+                      <div className="text-xs text-muted-foreground">
+                        Preparar monetização (freemium).
+                      </div>
+                    </div>
+                    <Button className="h-10 rounded-xl">Fazer upgrade</Button>
+                  </div>
+                </div>
               </div>
             </div>
           </PageShell>
