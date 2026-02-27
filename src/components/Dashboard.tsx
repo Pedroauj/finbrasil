@@ -47,6 +47,7 @@ import { Progress } from "@/components/ui/progress";
 import { CashBalance } from "./CashBalance";
 import { InvoiceAlerts } from "./InvoiceAlerts";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
+import { cn } from "@/lib/utils";
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
@@ -75,8 +76,6 @@ function isSameDay(a: Date, b: Date) {
 }
 
 function getWeekKey(d: Date) {
-  // chave simples "YYYY-MM-W{weekOfMonthApprox}" (suficiente para resumo vendável)
-  // week approx: 1..6
   const week = Math.floor((d.getDate() - 1) / 7) + 1;
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-W${week}`;
 }
@@ -435,7 +434,6 @@ export function Dashboard({
       {/* Row 2: Trend (2 cols) + Quick Summary (1 col) */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          {/* Daily Trend */}
           <Card className={cn(appCard, "xl:col-span-2")}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -483,7 +481,6 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Quick Summary / Insights */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -523,10 +520,12 @@ export function Dashboard({
 
               <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
                 <div className="text-sm font-semibold">Saldo projetado (fim do mês)</div>
-                <div className={cn(
-                  "text-xs",
-                  projectedBalance >= 0 ? "text-muted-foreground" : "text-destructive"
-                )}>
+                <div
+                  className={cn(
+                    "text-xs",
+                    projectedBalance >= 0 ? "text-muted-foreground" : "text-destructive"
+                  )}
+                >
                   {formatCurrency(projectedBalance)}
                 </div>
               </div>
@@ -644,7 +643,6 @@ export function Dashboard({
       {/* Row 4: Status + Comparison */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {/* Status */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold">Por status</CardTitle>
@@ -715,7 +713,6 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Month vs Month Comparison */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
