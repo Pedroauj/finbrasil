@@ -563,7 +563,7 @@ export function useExpenseStore() {
    *  ========================= */
 
   const [allSalaries, setAllSalaries] = useState<{ month: number; year: number; amount: number }[]>([]);
-  const [allExtraIncomes, setAllExtraIncomes] = useState<{ date: string; amount: number }[]>([]);
+  const [allExtraIncomes, setAllExtraIncomes] = useState<{ id: string; date: string; amount: number }[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -601,17 +601,19 @@ export function useExpenseStore() {
 
       const { data: extraData } = await supabase
         .from("extra_incomes" as any)
-        .select("date, amount")
+        .select("id, date, amount")
         .eq("user_id", user.id);
 
-      setAllExtraIncomes(((extraData as any) || []).map((e: any) => ({ date: e.date, amount: Number(e.amount) })));
+      setAllExtraIncomes(
+        ((extraData as any) || []).map((e: any) => ({ id: e.id, date: e.date, amount: Number(e.amount) }))
+      );
     };
 
     loadAll();
   }, [user]);
 
   /** =========================
-   *  Month balance (carry over) - AGORA POR PERÍODO FINANCEIRO
+   *  Month balance (carry over) - POR PERÍODO FINANCEIRO
    *  ========================= */
 
   const monthBalance = useMemo((): MonthBalance => {
@@ -619,22 +621,18 @@ export function useExpenseStore() {
 
     const allMonthKeys = new Set<string>();
 
-    // despesas
     allExpenses.forEach((e) => {
       allMonthKeys.add(getFinancialKeyForDate(e.date, monthStartDay));
     });
 
-    // budgets (assumindo que month/year já representam o período financeiro)
     allBudgets.forEach((b) => {
       allMonthKeys.add(`${b.year}-${pad2(b.month)}`);
     });
 
-    // salários
     allSalaries.forEach((s) => {
       allMonthKeys.add(`${s.year}-${pad2(s.month)}`);
     });
 
-    // extras
     allExtraIncomes.forEach((e) => {
       allMonthKeys.add(getFinancialKeyForDate(e.date, monthStartDay));
     });
@@ -657,9 +655,7 @@ export function useExpenseStore() {
     for (const key of sortedKeys) {
       const [y, m] = key.split("-").map(Number);
 
-      // Income = salary + extra incomes + (budget legado se você usa como "entrada")
       const salaryIncome = allSalaries.find((s) => s.month === m && s.year === y)?.amount || 0;
-
       const budgetIncome = allBudgets.find((b) => b.month === m && b.year === y)?.total_limit || 0;
 
       const extraIncome = allExtraIncomes
@@ -672,8 +668,6 @@ export function useExpenseStore() {
         .filter((e) => getFinancialKeyForDate(e.date, monthStartDay) === `${y}-${pad2(m)}`)
         .reduce((s, e) => s + e.amount, 0);
 
-      // Invoices: invoice.month vem como "YYYY-MM" (calendário).
-      // Aqui mapeamos esse "mês calendário" para o período financeiro correspondente.
       const paidInvoiceTotal = invoices
         .filter((i) => {
           const invoiceKey = getFinancialKeyForDate(`${i.month}-01`, monthStartDay);
@@ -990,7 +984,6 @@ export function useExpenseStore() {
 
   const goToMonth = useCallback(
     (y: number, m: number) => {
-      // Mantém a semântica: m é 0-based (como Date), então new Date(y, m, startDay)
       setCurrentDate(new Date(y, m, clampInt(monthStartDay, 1, 28)));
     },
     [monthStartDay]
@@ -1161,7 +1154,7 @@ export function useExpenseStore() {
   );
 
   /** =========================
-   *  Salário CRUD
+   *  Salário CRUD (SINCRONIZA allSalaries)
    *  ========================= */
 
   const saveSalary = useCallback(
@@ -1183,7 +1176,18 @@ export function useExpenseStore() {
           .update({ amount, day_of_receipt: dayOfReceipt, auto_repeat: autoRepeat } as any)
           .eq("id", salary.id);
 
-        if (!error) setSalary({ ...salary, amount, dayOfReceipt, autoRepeat });
+        if (!error) {
+          setSalary({ ...salary, amount, dayOfReceipt, autoRepeat });
+          setAllSalaries((prev) => {
+            const idx = prev.findIndex((s) => s.month === month && s.year === year);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = { month, year, amount };
+              return next;
+            }
+            return [...prev, { month, year, amount }];
+          });
+        }
       } else {
         const { data, error } = await supabase.from("salaries" as any).insert(insertData as any).select().single();
 
@@ -1197,6 +1201,17 @@ export function useExpenseStore() {
             dayOfReceipt: d.day_of_receipt,
             autoRepeat: d.auto_repeat,
           });
+
+          setAllSalaries((prev) => {
+            const idx = prev.findIndex((s) => s.month === month && s.year === year);
+            const nextAmount = Number(d.amount);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = { month, year, amount: nextAmount };
+              return next;
+            }
+            return [...prev, { month, year, amount: nextAmount }];
+          });
         }
       }
     },
@@ -1208,11 +1223,14 @@ export function useExpenseStore() {
 
     const { error } = await supabase.from("salaries" as any).delete().eq("id", salary.id);
 
-    if (!error) setSalary(null);
-  }, [user, salary]);
+    if (!error) {
+      setSalary(null);
+      setAllSalaries((prev) => prev.filter((s) => !(s.month === month && s.year === year)));
+    }
+  }, [user, salary, month, year]);
 
   /** =========================
-   *  Extra Income CRUD
+   *  Extra Income CRUD (SINCRONIZA allExtraIncomes)
    *  ========================= */
 
   const addExtraIncome = useCallback(
@@ -1233,6 +1251,7 @@ export function useExpenseStore() {
 
       if (data && !error) {
         const d = data as any;
+
         setExtraIncomes((prev) => [
           {
             id: d.id,
@@ -1242,6 +1261,11 @@ export function useExpenseStore() {
             date: d.date,
           },
           ...prev,
+        ]);
+
+        setAllExtraIncomes((prev) => [
+          ...prev,
+          { id: d.id, date: d.date, amount: Number(d.amount) },
         ]);
       }
     },
@@ -1254,7 +1278,20 @@ export function useExpenseStore() {
 
       const { error } = await supabase.from("extra_incomes" as any).update(updates as any).eq("id", id);
 
-      if (!error) setExtraIncomes((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+      if (!error) {
+        setExtraIncomes((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+
+        setAllExtraIncomes((prev) =>
+          prev.map((e) => {
+            if (e.id !== id) return e;
+            return {
+              ...e,
+              date: (updates as any).date ?? e.date,
+              amount: (updates as any).amount !== undefined ? Number((updates as any).amount) : e.amount,
+            };
+          })
+        );
+      }
     },
     [user]
   );
@@ -1265,7 +1302,10 @@ export function useExpenseStore() {
 
       const { error } = await supabase.from("extra_incomes" as any).delete().eq("id", id);
 
-      if (!error) setExtraIncomes((prev) => prev.filter((e) => e.id !== id));
+      if (!error) {
+        setExtraIncomes((prev) => prev.filter((e) => e.id !== id));
+        setAllExtraIncomes((prev) => prev.filter((e) => e.id !== id));
+      }
     },
     [user]
   );
