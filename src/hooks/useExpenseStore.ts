@@ -28,9 +28,87 @@ export interface MonthBalance {
   balance: number;
 }
 
+const LS_MONTH_START_DAY = "finbrasil.settings.monthStartDay";
+
+function clampInt(n: number, min: number, max: number) {
+  if (Number.isNaN(n)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function toISODate(d: Date) {
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${y}-${pad2(m)}-${pad2(day)}`;
+}
+
+/**
+ * Retorna o início do período financeiro para uma data base.
+ * Regras:
+ * - startDay entre 1 e 28
+ * - Se baseDate.getDate() < startDay => período começou no startDay do mês anterior
+ * - Senão => período começou no startDay do mês atual
+ */
+function getFinancialPeriodStart(baseDate: Date, startDay: number) {
+  const day = clampInt(startDay, 1, 28);
+  const y = baseDate.getFullYear();
+  const m = baseDate.getMonth();
+
+  if (baseDate.getDate() < day) {
+    // mês anterior
+    return new Date(y, m - 1, day);
+  }
+
+  return new Date(y, m, day);
+}
+
+/** Soma meses mantendo o dia (startDay) */
+function addMonthsAtStartDay(periodStart: Date, offset: number, startDay: number) {
+  const day = clampInt(startDay, 1, 28);
+  return new Date(periodStart.getFullYear(), periodStart.getMonth() + offset, day);
+}
+
+/**
+ * Converte uma data (string YYYY-MM-DD) para a chave do período financeiro (YYYY-MM) conforme startDay.
+ * Ex.: startDay=5, data=2026-03-01 => cai no período que começou 2026-02-05 => key "2026-02"
+ */
+function getFinancialKeyForDate(dateStr: string, startDay: number) {
+  const d = new Date(dateStr);
+  const ps = getFinancialPeriodStart(d, startDay);
+  return `${ps.getFullYear()}-${pad2(ps.getMonth() + 1)}`;
+}
+
 export function useExpenseStore() {
   const { user } = useAuth();
 
+  // =========================
+  // Config do mês financeiro
+  // =========================
+  const [monthStartDay, setMonthStartDayState] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem(LS_MONTH_START_DAY);
+      const parsed = raw ? parseInt(raw, 10) : 1;
+      return clampInt(parsed, 1, 28);
+    } catch {
+      return 1;
+    }
+  });
+
+  const setMonthStartDay = useCallback((day: number) => {
+    const v = clampInt(day, 1, 28);
+    setMonthStartDayState(v);
+    try {
+      localStorage.setItem(LS_MONTH_START_DAY, String(v));
+    } catch { }
+  }, []);
+
+  // =========================
+  // Estado base
+  // =========================
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [budget, setBudgetState] = useState<Budget>({ total: 0, byCategory: {} });
@@ -50,9 +128,23 @@ export function useExpenseStore() {
   const [salary, setSalary] = useState<Salary | null>(null);
   const [extraIncomes, setExtraIncomes] = useState<ExtraIncome[]>([]);
 
-  const monthKey = getMonthKey(currentDate);
-  const month = currentDate.getMonth() + 1;
-  const year = currentDate.getFullYear();
+  // =========================
+  // Período financeiro atual
+  // =========================
+  const periodStart = useMemo(
+    () => getFinancialPeriodStart(currentDate, monthStartDay),
+    [currentDate, monthStartDay]
+  );
+
+  const monthKey = useMemo(() => getMonthKey(periodStart), [periodStart]);
+  const month = periodStart.getMonth() + 1;
+  const year = periodStart.getFullYear();
+
+  const startDate = useMemo(() => toISODate(periodStart), [periodStart]);
+  const endDate = useMemo(() => {
+    const nextStart = addMonthsAtStartDay(periodStart, 1, monthStartDay);
+    return toISODate(nextStart);
+  }, [periodStart, monthStartDay]);
 
   /** =========================
    *  Cartões (localStorage)
@@ -78,59 +170,62 @@ export function useExpenseStore() {
    *  Recorrentes (materialização)
    *  ========================= */
 
-  const materializeRecurring = useCallback(async (userId: string, m: number, y: number) => {
-    const { data: recurrings } = await supabase
-      .from("recurring_expenses")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("active", true);
+  const materializeRecurring = useCallback(
+    async (userId: string, m: number, y: number) => {
+      const { data: recurrings } = await supabase
+        .from("recurring_expenses")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("active", true);
 
-    if (!recurrings?.length) return;
+      if (!recurrings?.length) return;
 
-    const { data: instances } = await supabase
-      .from("recurring_expense_instances")
-      .select("recurring_expense_id")
-      .eq("month", m)
-      .eq("year", y)
-      .in(
-        "recurring_expense_id",
-        recurrings.map((r: any) => r.id)
-      );
+      const { data: instances } = await supabase
+        .from("recurring_expense_instances")
+        .select("recurring_expense_id")
+        .eq("month", m)
+        .eq("year", y)
+        .in(
+          "recurring_expense_id",
+          recurrings.map((r: any) => r.id)
+        );
 
-    const existingIds = new Set((instances || []).map((i: any) => i.recurring_expense_id));
-    const toCreate = recurrings.filter((r: any) => !existingIds.has(r.id));
+      const existingIds = new Set((instances || []).map((i: any) => i.recurring_expense_id));
+      const toCreate = recurrings.filter((r: any) => !existingIds.has(r.id));
 
-    for (const rec of toCreate as any[]) {
-      const lastDay = new Date(y, m, 0).getDate();
-      const day = Math.min(rec.day_of_month, lastDay);
-      const date = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      for (const rec of toCreate as any[]) {
+        const lastDay = new Date(y, m, 0).getDate();
+        const day = Math.min(rec.day_of_month, lastDay);
+        const date = `${y}-${pad2(m)}-${pad2(day)}`;
 
-      const { data: expense } = await supabase
-        .from("expenses")
-        .insert({
-          user_id: userId,
-          description: rec.description,
-          amount: rec.amount,
-          category: rec.category,
-          date,
-          status: "paid",
-        })
-        .select()
-        .single();
+        const { data: expense } = await supabase
+          .from("expenses")
+          .insert({
+            user_id: userId,
+            description: rec.description,
+            amount: rec.amount,
+            category: rec.category,
+            date,
+            status: "paid",
+          })
+          .select()
+          .single();
 
-      if (expense) {
-        await supabase.from("recurring_expense_instances").insert({
-          recurring_expense_id: rec.id,
-          expense_id: expense.id,
-          month: m,
-          year: y,
-        });
+        if (expense) {
+          await supabase.from("recurring_expense_instances").insert({
+            recurring_expense_id: rec.id,
+            expense_id: expense.id,
+            month: m,
+            year: y,
+          });
+        }
       }
-    }
-  }, []);
+    },
+    []
+  );
 
   /** =========================
-   *  Despesas do mês atual
+   *  Despesas do período atual
    *  ========================= */
 
   useEffect(() => {
@@ -139,11 +234,6 @@ export function useExpenseStore() {
 
     const load = async () => {
       await materializeRecurring(user.id, month, year);
-
-      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-      const endMonth = month === 12 ? 1 : month + 1;
-      const endYear = month === 12 ? year + 1 : year;
-      const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
 
       const { data } = await supabase
         .from("expenses")
@@ -179,28 +269,25 @@ export function useExpenseStore() {
     };
 
     load();
-  }, [user, month, year, materializeRecurring]);
+  }, [user, month, year, startDate, endDate, materializeRecurring]);
 
   /** =========================
-   *  Despesas do mês anterior
+   *  Despesas do período anterior
    *  ========================= */
 
   useEffect(() => {
     if (!user) return;
 
-    const prevDate = new Date(year, month - 2);
-    const pm = prevDate.getMonth() + 1;
-    const py = prevDate.getFullYear();
-
-    const startDate = `${py}-${String(pm).padStart(2, "0")}-01`;
-    const endDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    const prevStart = addMonthsAtStartDay(periodStart, -1, monthStartDay);
+    const prevStartISO = toISODate(prevStart);
+    const currStartISO = toISODate(periodStart);
 
     supabase
       .from("expenses")
       .select("*")
       .eq("user_id", user.id)
-      .gte("date", startDate)
-      .lt("date", endDate)
+      .gte("date", prevStartISO)
+      .lt("date", currStartISO)
       .then(({ data }) => {
         setPrevMonthExpenses(
           (data || []).map((e: any) => ({
@@ -213,10 +300,10 @@ export function useExpenseStore() {
           }))
         );
       });
-  }, [user, month, year]);
+  }, [user, periodStart, monthStartDay]);
 
   /** =========================
-   *  Budget
+   *  Budget (por período financeiro)
    *  ========================= */
 
   useEffect(() => {
@@ -365,7 +452,7 @@ export function useExpenseStore() {
   }, [user]);
 
   /** =========================
-   *  Salário (mês atual + auto-repeat)
+   *  Salário (período atual + auto-repeat)
    *  ========================= */
 
   useEffect(() => {
@@ -393,8 +480,9 @@ export function useExpenseStore() {
         return;
       }
 
-      const prevM = month === 1 ? 12 : month - 1;
-      const prevY = month === 1 ? year - 1 : year;
+      const prevStart = addMonthsAtStartDay(periodStart, -1, monthStartDay);
+      const prevM = prevStart.getMonth() + 1;
+      const prevY = prevStart.getFullYear();
 
       const { data: prevData } = await supabase
         .from("salaries" as any)
@@ -441,19 +529,14 @@ export function useExpenseStore() {
     };
 
     loadSalary();
-  }, [user, month, year]);
+  }, [user, month, year, periodStart, monthStartDay]);
 
   /** =========================
-   *  Receitas extras (mês atual)
+   *  Receitas extras (período atual)
    *  ========================= */
 
   useEffect(() => {
     if (!user) return;
-
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const endMonth = month === 12 ? 1 : month + 1;
-    const endYear = month === 12 ? year + 1 : year;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
 
     supabase
       .from("extra_incomes" as any)
@@ -473,10 +556,10 @@ export function useExpenseStore() {
           }))
         );
       });
-  }, [user, month, year]);
+  }, [user, startDate, endDate]);
 
   /** =========================
-   *  Load ALL (para carry over / saldo acumulado)
+   *  Load ALL (carry over / saldo acumulado)
    *  ========================= */
 
   const [allSalaries, setAllSalaries] = useState<{ month: number; year: number; amount: number }[]>([]);
@@ -488,7 +571,6 @@ export function useExpenseStore() {
     const loadAll = async () => {
       const { data: expData } = await supabase
         .from("expenses")
-        // ✅ inclui status (você usa depois)
         .select("id, date, amount, status")
         .eq("user_id", user.id);
 
@@ -529,30 +611,32 @@ export function useExpenseStore() {
   }, [user]);
 
   /** =========================
-   *  Month balance (carry over)
+   *  Month balance (carry over) - AGORA POR PERÍODO FINANCEIRO
    *  ========================= */
 
   const monthBalance = useMemo((): MonthBalance => {
-    const mk = getMonthKey(currentDate);
+    const mk = getFinancialKeyForDate(toISODate(periodStart), monthStartDay);
 
     const allMonthKeys = new Set<string>();
 
+    // despesas
     allExpenses.forEach((e) => {
-      const d = new Date(e.date);
-      allMonthKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+      allMonthKeys.add(getFinancialKeyForDate(e.date, monthStartDay));
     });
 
+    // budgets (assumindo que month/year já representam o período financeiro)
     allBudgets.forEach((b) => {
-      allMonthKeys.add(`${b.year}-${String(b.month).padStart(2, "0")}`);
+      allMonthKeys.add(`${b.year}-${pad2(b.month)}`);
     });
 
+    // salários
     allSalaries.forEach((s) => {
-      allMonthKeys.add(`${s.year}-${String(s.month).padStart(2, "0")}`);
+      allMonthKeys.add(`${s.year}-${pad2(s.month)}`);
     });
 
+    // extras
     allExtraIncomes.forEach((e) => {
-      const d = new Date(e.date);
-      allMonthKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+      allMonthKeys.add(getFinancialKeyForDate(e.date, monthStartDay));
     });
 
     allMonthKeys.add(mk);
@@ -573,31 +657,28 @@ export function useExpenseStore() {
     for (const key of sortedKeys) {
       const [y, m] = key.split("-").map(Number);
 
-      // Income = salary + extra incomes (+ budget legado se você estiver usando como "limite/entrada")
+      // Income = salary + extra incomes + (budget legado se você usa como "entrada")
       const salaryIncome = allSalaries.find((s) => s.month === m && s.year === y)?.amount || 0;
 
       const budgetIncome = allBudgets.find((b) => b.month === m && b.year === y)?.total_limit || 0;
 
       const extraIncome = allExtraIncomes
-        .filter((e) => {
-          const d = new Date(e.date);
-          return d.getFullYear() === y && d.getMonth() + 1 === m;
-        })
+        .filter((e) => getFinancialKeyForDate(e.date, monthStartDay) === `${y}-${pad2(m)}`)
         .reduce((s, e) => s + e.amount, 0);
 
       const monthIncome = salaryIncome + extraIncome + budgetIncome;
 
       const monthExpenses = allExpenses
-        .filter((e) => {
-          const d = new Date(e.date);
-          return d.getFullYear() === y && d.getMonth() + 1 === m;
-        })
+        .filter((e) => getFinancialKeyForDate(e.date, monthStartDay) === `${y}-${pad2(m)}`)
         .reduce((s, e) => s + e.amount, 0);
 
-      const monthKeyStr = `${y}-${String(m).padStart(2, "0")}`;
-
+      // Invoices: invoice.month vem como "YYYY-MM" (calendário).
+      // Aqui mapeamos esse "mês calendário" para o período financeiro correspondente.
       const paidInvoiceTotal = invoices
-        .filter((i) => i.month === monthKeyStr && i.isPaid)
+        .filter((i) => {
+          const invoiceKey = getFinancialKeyForDate(`${i.month}-01`, monthStartDay);
+          return invoiceKey === `${y}-${pad2(m)}` && i.isPaid;
+        })
         .reduce((s, i) => s + i.items.reduce((si, item) => si + Number(item.amount || 0), 0), 0);
 
       const balance = carryOver + monthIncome - monthExpenses - paidInvoiceTotal;
@@ -619,7 +700,7 @@ export function useExpenseStore() {
     }
 
     return result;
-  }, [allExpenses, allBudgets, allSalaries, allExtraIncomes, invoices, currentDate]);
+  }, [allExpenses, allBudgets, allSalaries, allExtraIncomes, invoices, periodStart, monthStartDay]);
 
   /** =========================
    *  Expenses CRUD
@@ -760,7 +841,7 @@ export function useExpenseStore() {
 
         const lastDay = new Date(year, month, 0).getDate();
         const day = Math.min(recurring.dayOfMonth, lastDay);
-        const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const date = `${year}-${pad2(month)}-${pad2(day)}`;
 
         const { data: expense } = await supabase
           .from("expenses")
@@ -893,20 +974,27 @@ export function useExpenseStore() {
   }, []);
 
   /** =========================
-   *  Navegação de mês
+   *  Navegação de período financeiro
    *  ========================= */
 
-  const navigateMonth = useCallback((offset: number) => {
-    setCurrentDate((prev) => {
-      const d = new Date(prev);
-      d.setMonth(d.getMonth() + offset);
-      return d;
-    });
-  }, []);
+  const navigateMonth = useCallback(
+    (offset: number) => {
+      setCurrentDate((prev) => {
+        const currentPeriod = getFinancialPeriodStart(prev, monthStartDay);
+        const nextPeriod = addMonthsAtStartDay(currentPeriod, offset, monthStartDay);
+        return nextPeriod;
+      });
+    },
+    [monthStartDay]
+  );
 
-  const goToMonth = useCallback((y: number, m: number) => {
-    setCurrentDate(new Date(y, m));
-  }, []);
+  const goToMonth = useCallback(
+    (y: number, m: number) => {
+      // Mantém a semântica: m é 0-based (como Date), então new Date(y, m, startDay)
+      setCurrentDate(new Date(y, m, clampInt(monthStartDay, 1, 28)));
+    },
+    [monthStartDay]
+  );
 
   /** =========================
    *  Contas CRUD
@@ -1183,8 +1271,13 @@ export function useExpenseStore() {
   );
 
   return {
+    // período / navegação
     currentDate,
     monthKey,
+    monthStartDay,
+    setMonthStartDay,
+
+    // dados
     expenses,
     budget,
     prevMonthExpenses,
@@ -1200,6 +1293,7 @@ export function useExpenseStore() {
     salary,
     extraIncomes,
 
+    // CRUD
     addExpense,
     updateExpense,
     deleteExpense,
