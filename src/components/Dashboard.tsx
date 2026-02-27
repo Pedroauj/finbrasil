@@ -82,7 +82,6 @@ export function Dashboard({
   const categoryData = useMemo(() => groupExpensesByCategory(expenses), [expenses]);
 
   const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
-
   const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
 
   // Invoice totals for current month
@@ -109,10 +108,8 @@ export function Dashboard({
 
   const activeCategory = activeCatIndex >= 0 ? categoryData[activeCatIndex] : undefined;
 
-  // shape leve pra “pop” na fatia
   const renderActiveShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props;
-
     return (
       <g>
         <Pie
@@ -122,7 +119,7 @@ export function Dashboard({
           cx={cx}
           cy={cy}
           innerRadius={innerRadius}
-          outerRadius={outerRadius + 6}
+          outerRadius={outerRadius + 7}
           startAngle={startAngle}
           endAngle={endAngle}
           paddingAngle={0}
@@ -136,17 +133,12 @@ export function Dashboard({
 
   // ===== Status (stacked bar premium) =====
   const statusStack = useMemo(
-    () => [
-      {
-        name: "Status",
-        paid: totalPaid,
-        planned: totalPlanned,
-        overdue: totalOverdue,
-      },
-    ],
+    () => [{ name: "Status", paid: totalPaid, planned: totalPlanned, overdue: totalOverdue }],
     [totalPaid, totalPlanned, totalOverdue]
   );
   const totalStatus = totalPaid + totalPlanned + totalOverdue;
+
+  const pct = (v: number) => (totalStatus > 0 ? (v / totalStatus) * 100 : 0);
 
   // ===== Insights =====
   const topCategory = useMemo(() => {
@@ -154,8 +146,7 @@ export function Dashboard({
     return [...categoryData].sort((a, b) => (b.total ?? 0) - (a.total ?? 0))[0];
   }, [categoryData]);
 
-  const topCategoryPct =
-    topCategory && categoryTotal > 0 ? (topCategory.total / categoryTotal) * 100 : 0;
+  const topCategoryPct = topCategory && categoryTotal > 0 ? (topCategory.total / categoryTotal) * 100 : 0;
 
   const daysInMonth = useMemo(() => {
     const y = currentDate.getFullYear();
@@ -164,8 +155,11 @@ export function Dashboard({
   }, [currentDate]);
 
   const avgDailySpend = totalExpenses > 0 ? totalExpenses / daysInMonth : 0;
-  const runwayDays =
+  const runwayDaysRaw =
     avgDailySpend > 0 && monthBalance.balance > 0 ? Math.floor(monthBalance.balance / avgDailySpend) : null;
+
+  const runwayLabel =
+    runwayDaysRaw === null ? null : runwayDaysRaw >= 90 ? "90+ dias" : `${runwayDaysRaw} dias`;
 
   const insights = useMemo(() => {
     const items: Array<{ icon: React.ReactNode; title: string; desc: string }> = [];
@@ -204,16 +198,16 @@ export function Dashboard({
       });
     }
 
-    if (runwayDays !== null) {
+    if (runwayLabel) {
       items.push({
         icon: <Wallet className="h-4 w-4 text-primary" />,
         title: "Fôlego de saldo (estimativa)",
-        desc: `No ritmo atual, seu saldo cobre ~${runwayDays} dias de gastos.`,
+        desc: `No ritmo atual, seu saldo cobre ~${runwayLabel} de gastos.`,
       });
     }
 
     return items.slice(0, 4);
-  }, [prevTotal, expenseDelta, topCategory, topCategoryPct, categoryTotal, budget.total, totalExpenses, runwayDays]);
+  }, [prevTotal, expenseDelta, topCategory, topCategoryPct, categoryTotal, budget.total, totalExpenses, runwayLabel]);
 
   return (
     <StaggerContainer className="space-y-6">
@@ -222,16 +216,20 @@ export function Dashboard({
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </StaggerItem>
 
-      {/* Caixa Total protagonista */}
+      {/* Caixa Total protagonista (mais compacto) */}
       <StaggerItem>
-        <CashBalance
-          balance={monthBalance}
-          className={[
-            appCard,
-            "ring-1 ring-primary/10",
-            "before:bg-[radial-gradient(1200px_circle_at_20%_0%,hsl(var(--primary)/0.14),transparent_45%)]",
-          ].join(" ")}
-        />
+        <div className="lg:-mt-1">
+          <CashBalance
+            balance={monthBalance}
+            className={[
+              appCard,
+              "ring-1 ring-primary/10",
+              "before:bg-[radial-gradient(1200px_circle_at_20%_0%,hsl(var(--primary)/0.14),transparent_45%)]",
+              // compactação visual
+              "[&_.p-6]:p-5 [&_.p-5]:p-5 [&_.gap-6]:gap-4",
+            ].join(" ")}
+          />
+        </div>
       </StaggerItem>
 
       {/* KPI Cards */}
@@ -348,7 +346,7 @@ export function Dashboard({
       {/* Charts + Insights */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Categoria */}
+          {/* Categoria (mais denso e maior) */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -361,7 +359,7 @@ export function Dashboard({
                 <p className="py-8 text-center text-sm text-muted-foreground">Nenhum gasto registrado neste mês.</p>
               ) : (
                 <div className="flex items-center gap-4">
-                  <div className="relative h-[170px] w-[170px] flex-shrink-0">
+                  <div className="relative h-[190px] w-[190px] flex-shrink-0">
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <p className="text-[11px] font-medium text-muted-foreground">
@@ -386,8 +384,8 @@ export function Dashboard({
                           nameKey="category"
                           cx="50%"
                           cy="50%"
-                          innerRadius={52}
-                          outerRadius={76}
+                          innerRadius={58}
+                          outerRadius={88}
                           paddingAngle={2}
                           strokeWidth={0}
                           activeIndex={activeCatIndex}
@@ -407,10 +405,10 @@ export function Dashboard({
                     </ResponsiveContainer>
                   </div>
 
-                  <div className="max-h-[170px] flex-1 space-y-1.5 overflow-auto">
+                  <div className="max-h-[190px] flex-1 space-y-1.5 overflow-auto pr-1">
                     {categoryData.map((cat, idx) => {
                       const isActive = idx === activeCatIndex;
-                      const pct = categoryTotal > 0 ? (cat.total / categoryTotal) * 100 : 0;
+                      const pctLocal = categoryTotal > 0 ? (cat.total / categoryTotal) * 100 : 0;
 
                       return (
                         <button
@@ -425,7 +423,7 @@ export function Dashboard({
                         >
                           <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: getCategoryColor(cat.category) }} />
                           <span className="flex-1 truncate text-foreground/85">{cat.category}</span>
-                          <span className="text-muted-foreground tabular-nums">{pct.toFixed(0)}%</span>
+                          <span className="text-muted-foreground tabular-nums">{pctLocal.toFixed(0)}%</span>
                           <span className="font-semibold tabular-nums text-foreground">{formatCurrency(cat.total)}</span>
                         </button>
                       );
@@ -436,7 +434,7 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Insights */}
+          {/* Insights (mais premium, menos “caixa dentro de caixa”) */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -449,9 +447,11 @@ export function Dashboard({
                 {insights.map((it, i) => (
                   <div
                     key={i}
-                    className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/40 p-3 transition-colors hover:bg-background/55"
+                    className="flex items-start gap-3 rounded-2xl border border-border/60 bg-accent/20 p-3 transition-colors hover:bg-accent/30"
                   >
-                    <div className="mt-0.5 rounded-xl bg-accent/40 p-2 ring-1 ring-border/60">{it.icon}</div>
+                    <div className="mt-0.5 rounded-xl bg-background/40 p-2 ring-1 ring-border/60">
+                      {it.icon}
+                    </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{it.title}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{it.desc}</p>
@@ -469,7 +469,7 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Status stacked */}
+      {/* Status stacked (mais clean e com % nos chips) */}
       <StaggerItem>
         <Card className={appCard}>
           <CardHeader className="pb-2">
@@ -481,27 +481,30 @@ export function Dashboard({
             ) : (
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/40 px-3 py-1.5">
+                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/35 px-3 py-1.5">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS.paid }} />
                     <span className="text-foreground/80">Pago</span>
+                    <span className="text-muted-foreground tabular-nums">{pct(totalPaid).toFixed(0)}%</span>
                     <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPaid)}</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/40 px-3 py-1.5">
+                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/35 px-3 py-1.5">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS.planned }} />
                     <span className="text-foreground/80">Planejado</span>
+                    <span className="text-muted-foreground tabular-nums">{pct(totalPlanned).toFixed(0)}%</span>
                     <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPlanned)}</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/40 px-3 py-1.5">
+                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/35 px-3 py-1.5">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS.overdue }} />
                     <span className="text-foreground/80">Atrasado</span>
+                    <span className="text-muted-foreground tabular-nums">{pct(totalOverdue).toFixed(0)}%</span>
                     <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalOverdue)}</span>
                   </div>
                 </div>
 
-                <div className="h-[120px]">
+                <div className="h-[110px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statusStack} layout="vertical" barCategoryGap="40%">
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                    <BarChart data={statusStack} layout="vertical" barCategoryGap="45%">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/25" />
                       <XAxis
                         type="number"
                         tickFormatter={(v: number) => formatCurrency(v)}
