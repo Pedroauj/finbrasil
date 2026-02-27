@@ -15,7 +15,6 @@ import { DEFAULT_CATEGORIES } from "@/types/expense";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
-import { PageShell } from "@/components/layout/PageShell";
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AppShell, NavKey } from "@/components/AppShell";
 
@@ -135,130 +134,116 @@ export default function Index() {
     switch (nav) {
       case "dashboard":
         return (
-          <PageShell title="Dashboard" subtitle={subtitleByNav.dashboard}>
-            <Dashboard
-              expenses={store.expenses}
-              budget={store.budget}
-              prevMonthExpenses={store.prevMonthExpenses}
-              currentDate={store.currentDate}
-              cards={store.creditCards}
-              invoices={store.invoices}
-              monthBalance={store.monthBalance}
-            />
-          </PageShell>
+          <Dashboard
+            expenses={store.expenses}
+            budget={store.budget}
+            prevMonthExpenses={store.prevMonthExpenses}
+            currentDate={store.currentDate}
+            cards={store.creditCards}
+            invoices={store.invoices}
+            monthBalance={store.monthBalance}
+          />
         );
 
       case "expenses":
         return (
-          <PageShell title="Gastos" subtitle={subtitleByNav.expenses}>
-            <div className="space-y-5">
-              <ExpenseTable
-                expenses={store.expenses}
-                customCategories={store.customCategories}
-                currentDate={store.currentDate}
-                accounts={store.financialAccounts}
-                onAdd={store.addExpense}
-                onUpdate={store.updateExpense}
-                onDelete={store.deleteExpense}
-                onAddCategory={store.addCustomCategory}
-              />
-            </div>
-          </PageShell>
+          <div className="space-y-5">
+            <ExpenseTable
+              expenses={store.expenses}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              accounts={store.financialAccounts}
+              onAdd={store.addExpense}
+              onUpdate={store.updateExpense}
+              onDelete={store.deleteExpense}
+              onAddCategory={store.addCustomCategory}
+            />
+          </div>
         );
 
       case "income":
         return (
-          <PageShell title="Receitas" subtitle={subtitleByNav.income}>
-            <div className="space-y-5">
-              <IncomeManager
-                salary={store.salary}
-                extraIncomes={store.extraIncomes}
-                budget={store.budget}
-                customCategories={store.customCategories}
-                currentDate={store.currentDate}
-                onSaveSalary={store.saveSalary}
-                onDeleteSalary={store.deleteSalary}
-                onAddExtraIncome={store.addExtraIncome}
-                onUpdateExtraIncome={store.updateExtraIncome}
-                onDeleteExtraIncome={store.deleteExtraIncome}
-                onSaveBudget={store.setBudget}
-              />
-            </div>
-          </PageShell>
+          <div className="space-y-5">
+            <IncomeManager
+              salary={store.salary}
+              extraIncomes={store.extraIncomes}
+              budget={store.budget}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              onSaveSalary={store.saveSalary}
+              onDeleteSalary={store.deleteSalary}
+              onAddExtraIncome={store.addExtraIncome}
+              onUpdateExtraIncome={store.updateExtraIncome}
+              onDeleteExtraIncome={store.deleteExtraIncome}
+              onSaveBudget={store.setBudget}
+            />
+          </div>
         );
 
       case "cards":
         return (
-          <PageShell title="Cartões" subtitle={subtitleByNav.cards}>
-            <div className="space-y-5">
-              <CreditCardManager
-                cards={store.creditCards}
-                invoices={store.invoices}
-                categories={allCategories}
-                currentDate={store.currentDate}
-                onAddCard={store.addCreditCard}
-                onDeleteCard={store.deleteCreditCard}
-                onAddInvoiceItem={store.addInvoiceItem}
-                onAddInstallments={store.addInstallments}
-                onRemoveInvoiceItem={store.removeInvoiceItem}
-                onRemoveInstallmentGroup={store.removeInstallmentGroup}
-                onTogglePaid={store.toggleInvoicePaid}
-              />
-            </div>
-          </PageShell>
+          <div className="space-y-5">
+            <CreditCardManager
+              cards={store.creditCards}
+              invoices={store.invoices}
+              categories={allCategories}
+              currentDate={store.currentDate}
+              onAddCard={store.addCreditCard}
+              onDeleteCard={store.deleteCreditCard}
+              onAddInvoiceItem={store.addInvoiceItem}
+              onAddInstallments={store.addInstallments}
+              onRemoveInvoiceItem={store.removeInvoiceItem}
+              onRemoveInstallmentGroup={store.removeInstallmentGroup}
+              onTogglePaid={store.toggleInvoicePaid}
+            />
+          </div>
         );
 
       case "recurring":
         return (
-          <PageShell title="Recorrentes" subtitle={subtitleByNav.recurring}>
-            <div className="space-y-5">
-              <RecurringExpenses
-                recurringExpenses={store.recurringExpenses}
-                customCategories={store.customCategories}
-                onAdd={store.addRecurringExpense}
-                onToggle={store.toggleRecurringExpense}
-                onDelete={store.deleteRecurringExpense}
-                onAddCategory={store.addCustomCategory}
-              />
-            </div>
-          </PageShell>
+          <div className="space-y-5">
+            <RecurringExpenses
+              recurringExpenses={store.recurringExpenses}
+              customCategories={store.customCategories}
+              onAdd={store.addRecurringExpense}
+              onToggle={store.toggleRecurringExpense}
+              onDelete={store.deleteRecurringExpense}
+              onAddCategory={store.addCustomCategory}
+            />
+          </div>
         );
 
       case "calendar":
         return (
-          <PageShell title="Calendário" subtitle={subtitleByNav.calendar}>
-            <div className="space-y-5">
-              <FinancialCalendar
-                expenses={store.expenses}
-                customCategories={store.customCategories}
-                currentDate={store.currentDate}
-                onAdd={store.addExpense}
-                onUpdate={store.updateExpense}
-                onDelete={store.deleteExpense}
-                onAddCategory={store.addCustomCategory}
-              />
-            </div>
-          </PageShell>
+          <div className="space-y-5">
+            <FinancialCalendar
+              expenses={store.expenses}
+              customCategories={store.customCategories}
+              currentDate={store.currentDate}
+              onAdd={store.addExpense}
+              onUpdate={store.updateExpense}
+              onDelete={store.deleteExpense}
+              onAddCategory={store.addCustomCategory}
+            />
+          </div>
         );
 
       case "accounts":
         return (
-          <PageShell title="Contas" subtitle={subtitleByNav.accounts}>
-            <div className="space-y-5">
-              <AccountManager
-                accounts={store.financialAccounts}
-                transfers={store.accountTransfers}
-                adjustments={store.accountAdjustments}
-                onAdd={store.addFinancialAccount}
-                onUpdate={store.updateFinancialAccount}
-                onDelete={store.deleteFinancialAccount}
-                onTransfer={store.transferBetweenAccounts}
-                onAdjust={store.addAccountAdjustment}
-                onDeleteAdjustment={store.deleteAccountAdjustment}
-                onToggleArchive={store.toggleAccountArchive}
-              />
-            </div>
-          </PageShell>
+          <div className="space-y-5">
+            <AccountManager
+              accounts={store.financialAccounts}
+              transfers={store.accountTransfers}
+              adjustments={store.accountAdjustments}
+              onAdd={store.addFinancialAccount}
+              onUpdate={store.updateFinancialAccount}
+              onDelete={store.deleteFinancialAccount}
+              onTransfer={store.transferBetweenAccounts}
+              onAdjust={store.addAccountAdjustment}
+              onDeleteAdjustment={store.deleteAccountAdjustment}
+              onToggleArchive={store.toggleAccountArchive}
+            />
+          </div>
         );
 
       case "settings": {
@@ -506,6 +491,13 @@ export default function Index() {
         rightActions={rightActions}
         onNewExpense={onNewExpense}
       >
+        <div className="mb-5">
+          <div className="text-2xl font-bold tracking-tight">{pageTitle}</div>
+          <div className="mt-1 text-sm text-muted-foreground">
+            {subtitleByNav[nav]}
+          </div>
+        </div>
+
         {Content}
       </AppShell>
 

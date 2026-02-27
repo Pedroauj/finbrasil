@@ -1,490 +1,769 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo } from "react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  Search,
-  X,
-  RefreshCw,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  DollarSign,
-  ListChecks,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  CreditCard as CreditCardIcon,
+  PieChart,
+  Sparkles,
+  Activity,
+  Flame,
+  Percent,
+  CalendarDays,
+  BarChart3,
 } from "lucide-react";
-
-import type { Expense, FinancialAccount, TransactionStatus } from "@/types/expense";
-import { DEFAULT_CATEGORIES, formatCurrency, getCategoryColor } from "@/types/expense";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  AreaChart,
+  Area,
+  Line,
+} from "recharts";
+
+import type { Expense, Budget, CreditCard, CreditCardInvoice } from "@/types/expense";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  formatCurrency,
+  sumExpenses,
+  groupExpensesByCategory,
+  getCategoryColor,
+  groupExpensesByStatus,
+} from "@/types/expense";
+import type { MonthBalance } from "@/hooks/useExpenseStore";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-import { ExpenseForm } from "./ExpenseForm";
-import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
+import { Progress } from "@/components/ui/progress";
+import { CashBalance } from "./CashBalance";
+import { InvoiceAlerts } from "./InvoiceAlerts";
+import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
+import { cn } from "@/lib/utils";
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
   "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
 
-const tableCard =
-  "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm";
-
-const STATUS_CONFIG: Record<
-  TransactionStatus,
-  { label: string; icon: ReactNode; className: string }
-> = {
-  paid: {
-    label: "Pago",
-    icon: <CheckCircle2 className="h-3 w-3" />,
-    className:
-      "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20",
-  },
-  planned: {
-    label: "Previsto",
-    icon: <Clock className="h-3 w-3" />,
-    className: "bg-primary/10 text-primary border-primary/20",
-  },
-  overdue: {
-    label: "Atrasado",
-    icon: <AlertTriangle className="h-3 w-3" />,
-    className: "bg-destructive/10 text-destructive border-destructive/20",
-  },
-};
-
-interface ExpenseTableProps {
-  expenses: Expense[];
-  customCategories: string[];
-  currentDate: Date;
-  accounts?: FinancialAccount[];
-  onAdd: (expense: Omit<Expense, "id">) => void;
-  onUpdate: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
-  onDelete: (id: string) => void;
-  onAddCategory: (cat: string) => void;
+function daysInMonth(d: Date) {
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  return new Date(year, month + 1, 0).getDate();
 }
 
-export function ExpenseTable({
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function isSameMonth(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function getWeekKey(d: Date) {
+  const week = Math.floor((d.getDate() - 1) / 7) + 1;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-W${week}`;
+}
+
+interface DashboardProps {
+  expenses: Expense[];
+  budget: Budget;
+  prevMonthExpenses: Expense[];
+  currentDate: Date;
+  cards: CreditCard[];
+  invoices: CreditCardInvoice[];
+  monthBalance: MonthBalance;
+}
+
+export function Dashboard({
   expenses,
-  customCategories,
+  budget,
+  prevMonthExpenses,
   currentDate,
-  accounts = [],
-  onAdd,
-  onUpdate,
-  onDelete,
-  onAddCategory,
-}: ExpenseTableProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  cards,
+  invoices,
+  monthBalance,
+}: DashboardProps) {
+  const totalExpenses = useMemo(() => sumExpenses(expenses), [expenses]);
+  const totalPaid = useMemo(() => sumExpenses(expenses, { status: "paid" }), [expenses]);
+  const totalPlanned = useMemo(() => sumExpenses(expenses, { status: "planned" }), [expenses]);
+  const totalOverdue = useMemo(() => sumExpenses(expenses, { status: "overdue" }), [expenses]);
+  const prevTotal = useMemo(() => sumExpenses(prevMonthExpenses), [prevMonthExpenses]);
 
-  // pré-set de status ao criar
-  const [defaultStatus, setDefaultStatus] = useState<TransactionStatus>("planned");
+  const budgetPercent =
+    budget.total > 0 ? Math.min((totalExpenses / budget.total) * 100, 100) : 0;
+  const budgetExceeded = budget.total > 0 && totalExpenses > budget.total;
 
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const categoryData = useMemo(() => groupExpensesByCategory(expenses), [expenses]);
+  const statusData = useMemo(() => groupExpensesByStatus(expenses), [expenses]);
 
-  const allCategories = useMemo(
-    () => [...DEFAULT_CATEGORIES, ...customCategories],
-    [customCategories]
+  const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
+
+  const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
+
+  // Invoice totals for current month
+  const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+  const currentInvoices = useMemo(
+    () => invoices.filter((i) => i.month === monthKey),
+    [invoices, monthKey]
+  );
+  const totalInvoices = useMemo(
+    () =>
+      currentInvoices.reduce(
+        (acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0),
+        0
+      ),
+    [currentInvoices]
   );
 
-  const filtered = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return expenses
-      .filter((e) => filterCategory === "all" || e.category === filterCategory)
-      .filter((e) => filterStatus === "all" || e.status === filterStatus)
-      .filter((e) => e.description.toLowerCase().includes(q))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [expenses, filterCategory, filterStatus, searchTerm]);
+  // KPIs base
+  const income = monthBalance.income ?? 0;
+  const balance = monthBalance.balance ?? 0;
 
-  const total = filtered.reduce((sum, e) => sum + e.amount, 0);
-  const paidTotal = filtered.filter((e) => e.status === "paid").reduce((s, e) => s + e.amount, 0);
-  const plannedTotal = filtered.filter((e) => e.status === "planned").reduce((s, e) => s + e.amount, 0);
-  const overdueTotal = filtered.filter((e) => e.status === "overdue").reduce((s, e) => s + e.amount, 0);
-  const overdueCount = filtered.filter((e) => e.status === "overdue").length;
+  const todayReal = new Date();
+  const isCurrentMonth = isSameMonth(todayReal, currentDate);
 
-  function openNewExpense(status?: TransactionStatus) {
-    setEditingExpense(null);
-    setDefaultStatus(status ?? "planned");
-    setDialogOpen(true);
-  }
+  // para mês no passado/futuro, usa o mês “fechado”
+  const dayIndex = isCurrentMonth ? todayReal.getDate() : daysInMonth(currentDate);
+  const dim = daysInMonth(currentDate);
 
-  function openEditExpense(expense: Expense) {
-    setEditingExpense(expense);
-    setDialogOpen(true);
-  }
+  const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
+  const savingsRate = income > 0 ? (balance / income) * 100 : 0;
 
-  function closeDialog() {
-    setDialogOpen(false);
-    setEditingExpense(null);
-  }
+  // Projeções vendáveis
+  const projectedMonthSpend = avgDailySpend * dim;
+  const projectedBalance = income - projectedMonthSpend;
 
-  useEffect(() => {
-    const handler = () => openNewExpense("planned");
-    window.addEventListener("open-add-expense", handler);
-    return () => window.removeEventListener("open-add-expense", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Daily trend (sum by day)
+  const dailySeries = useMemo(() => {
+    const map = new Map<number, number>(); // day -> total
+    for (const e of expenses) {
+      const dt = new Date(e.date);
+      if (!isSameMonth(dt, currentDate)) continue;
+      const day = dt.getDate();
+      map.set(day, (map.get(day) ?? 0) + (e.amount ?? 0));
+    }
+
+    const out: Array<{ day: number; total: number; cumulative: number }> = [];
+    let running = 0;
+    for (let d = 1; d <= dim; d++) {
+      const v = map.get(d) ?? 0;
+      running += v;
+      out.push({ day: d, total: v, cumulative: running });
+    }
+    return out;
+  }, [expenses, currentDate, dim]);
+
+  // “Hoje” e “Semana” (resumo rápido)
+  const todayInView = useMemo(() => {
+    if (!isCurrentMonth) return new Date(currentDate.getFullYear(), currentDate.getMonth(), dim);
+    return todayReal;
+  }, [isCurrentMonth, currentDate, dim, todayReal]);
+
+  const todaySpend = useMemo(() => {
+    return expenses.reduce((acc, e) => {
+      const dt = new Date(e.date);
+      if (!isSameMonth(dt, currentDate)) return acc;
+      if (!isSameDay(dt, todayInView)) return acc;
+      return acc + (e.amount ?? 0);
+    }, 0);
+  }, [expenses, currentDate, todayInView]);
+
+  const weekSpend = useMemo(() => {
+    const wk = getWeekKey(todayInView);
+    return expenses.reduce((acc, e) => {
+      const dt = new Date(e.date);
+      if (!isSameMonth(dt, currentDate)) return acc;
+      if (getWeekKey(dt) !== wk) return acc;
+      return acc + (e.amount ?? 0);
+    }, 0);
+  }, [expenses, currentDate, todayInView]);
+
+  // Insights
+  const topCategory = useMemo(() => {
+    if (categoryData.length === 0) return null;
+    const sorted = [...categoryData].sort((a, b) => b.total - a.total);
+    return sorted[0];
+  }, [categoryData]);
+
+  const daysRunway = useMemo(() => {
+    if (avgDailySpend <= 0) return null;
+    if (balance <= 0) return 0;
+    return Math.floor(balance / avgDailySpend);
+  }, [avgDailySpend, balance]);
+
+  // Category ranking (top 6)
+  const categoryRanking = useMemo(() => {
+    const sorted = [...categoryData].sort((a, b) => b.total - a.total);
+    const top = sorted.slice(0, 6);
+    const sumTop = top.reduce((acc, x) => acc + x.total, 0) || 1;
+    return top.map((x) => ({
+      ...x,
+      pct: (x.total / (totalExpenses || 1)) * 100,
+      pctInTop: (x.total / sumTop) * 100,
+    }));
+  }, [categoryData, totalExpenses]);
+
+  const STATUS_COLORS: Record<string, string> = {
+    paid: "hsl(var(--success, 152 75% 35%))",
+    planned: "hsl(var(--primary))",
+    overdue: "hsl(var(--destructive))",
+  };
+
+  const compareBars = useMemo(() => {
+    return [
+      { name: "Mês atual", total: totalExpenses },
+      { name: "Mês anterior", total: prevTotal },
+    ];
+  }, [totalExpenses, prevTotal]);
 
   return (
-    <div className="space-y-5">
-      {/* Summary Cards (compact) */}
-      <StaggerContainer className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StaggerItem>
+    <StaggerContainer className="space-y-6">
+      {/* Alerts */}
+      <StaggerItem>
+        <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
+      </StaggerItem>
+
+      {/* KPI Cards */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+          {/* Total Expenses */}
           <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Total do mês</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(total)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{filtered.length} transação(ões)</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Gastos do mês
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalExpenses)}
+                  </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto"
-                    onClick={() => openNewExpense("planned")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div className="rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3">
-                    <DollarSign className="h-5 w-5 text-primary" />
-                  </div>
+                <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
+                  <ArrowDownCircle className="h-5 w-5 text-destructive" />
                 </div>
               </div>
+              {prevTotal > 0 ? (
+                <div className="mt-3 flex items-center gap-1.5 text-xs">
+                  {expenseDelta > 0 ? (
+                    <TrendingUp className="h-3.5 w-3.5 text-destructive" />
+                  ) : (
+                    <TrendingDown className="h-3.5 w-3.5 text-primary" />
+                  )}
+                  <span className={expenseDelta > 0 ? "text-destructive" : "text-primary"}>
+                    {Math.abs(expenseDelta).toFixed(1)}%
+                  </span>
+                  <span className="text-muted-foreground">vs mês anterior</span>
+                </div>
+              ) : (
+                <div className="mt-3 text-xs text-muted-foreground">
+                  Sem comparativo do mês anterior
+                </div>
+              )}
             </CardContent>
           </Card>
-        </StaggerItem>
 
-        <StaggerItem>
+          {/* Income */}
           <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Pagos</p>
-                  <p className="mt-1 text-2xl font-bold text-[hsl(var(--success))]">
-                    {formatCurrency(paidTotal)}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Receita
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {filtered.filter((e) => e.status === "paid").length} gasto(s)
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(income)}
                   </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto pago"
-                    onClick={() => openNewExpense("paid")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div className="rounded-2xl bg-[hsl(var(--success))]/10 ring-1 ring-[hsl(var(--success))]/15 p-3">
-                    <CheckCircle2 className="h-5 w-5 text-[hsl(var(--success))]" />
-                  </div>
+                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
+                  <ArrowUpCircle className="h-5 w-5 text-primary" />
                 </div>
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Base do seu mês (salário + extras)
+              </p>
             </CardContent>
           </Card>
-        </StaggerItem>
 
-        <StaggerItem>
+          {/* Invoices */}
           <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Previstos</p>
-                  <p className="mt-1 text-2xl font-bold text-primary">{formatCurrency(plannedTotal)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {filtered.filter((e) => e.status === "planned").length} gasto(s)
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Faturas
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalInvoices)}
                   </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto previsto"
-                    onClick={() => openNewExpense("planned")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div className="rounded-2xl bg-primary/10 ring-1 ring-primary/15 p-3">
-                    <Clock className="h-5 w-5 text-primary" />
-                  </div>
+                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
+                  <CreditCardIcon className="h-5 w-5 text-foreground/70" />
                 </div>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em{" "}
+                {monthLabel}
+              </p>
             </CardContent>
           </Card>
-        </StaggerItem>
 
-        <StaggerItem>
+          {/* Balance */}
           <Card className={appCard}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">Atrasados</p>
-                  <p className={`mt-1 text-2xl font-bold ${overdueCount > 0 ? "text-destructive" : "text-muted-foreground"}`}>
-                    {formatCurrency(overdueTotal)}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Saldo
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">{overdueCount} gasto(s)</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl"
-                    title="Adicionar gasto atrasado"
-                    onClick={() => openNewExpense("overdue")}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-
-                  <div
+                  <p
                     className={[
-                      "rounded-2xl p-3 ring-1",
-                      overdueCount > 0
-                        ? "bg-destructive/10 ring-destructive/15"
-                        : "bg-muted/50 ring-border/60",
+                      "mt-1 text-2xl font-bold tracking-tight",
+                      balance >= 0 ? "text-foreground" : "text-destructive",
                     ].join(" ")}
                   >
-                    <AlertTriangle className={`h-5 w-5 ${overdueCount > 0 ? "text-destructive" : "text-foreground/70"}`} />
+                    {formatCurrency(balance)}
+                  </p>
+                </div>
+                <div
+                  className={[
+                    "rounded-2xl p-3 ring-1",
+                    balance >= 0
+                      ? "bg-primary/10 ring-primary/15"
+                      : "bg-destructive/10 ring-destructive/15",
+                  ].join(" ")}
+                >
+                  <Wallet
+                    className={[
+                      "h-5 w-5",
+                      balance >= 0 ? "text-primary" : "text-destructive",
+                    ].join(" ")}
+                  />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Resultado do mês (receita - gastos)
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Savings rate */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Taxa de poupança
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                    {income > 0 ? `${clamp(savingsRate, -999, 999).toFixed(1)}%` : "—"}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
+                  <Percent className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Quanto sobrou da receita no mês
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Avg daily spend */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Gasto médio/dia
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(avgDailySpend)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
+                  <Flame className="h-5 w-5 text-foreground/70" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Base: {dayIndex} {dayIndex === 1 ? "dia" : "dias"}{" "}
+                ({isCurrentMonth ? "até hoje" : "mês fechado"})
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Budget Progress */}
+      {budget.total > 0 && (
+        <StaggerItem>
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
+                <p className="text-sm font-bold tabular-nums text-foreground">
+                  {formatCurrency(totalExpenses)} / {formatCurrency(budget.total)}
+                </p>
+              </div>
+              <Progress value={budgetPercent} className="h-2.5 rounded-full" />
+              {budgetExceeded && (
+                <p className="mt-2 text-xs text-destructive font-medium">
+                  Orçamento excedido em {formatCurrency(totalExpenses - budget.total)}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      )}
+
+      {/* Row 2: Trend (2 cols) + Quick Summary (1 col) */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <Card className={cn(appCard, "xl:col-span-2")}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                Tendência diária de gastos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {dailySeries.every((d) => d.total === 0) ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  Nenhum gasto registrado neste mês.
+                </p>
+              ) : (
+                <div className="h-[240px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dailySeries} margin={{ left: 8, right: 12, top: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis
+                        dataKey="day"
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        tickMargin={8}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                        width={56}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        labelFormatter={(label: any) => `Dia ${label}`}
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "1px solid hsl(var(--border))",
+                          background: "hsl(var(--card))",
+                        }}
+                      />
+                      <Area type="monotone" dataKey="total" strokeWidth={2.2} dot={false} fillOpacity={0.15} />
+                      <Line type="monotone" dataKey="cumulative" strokeWidth={1.8} dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Sparkles className="h-4 w-4 text-muted-foreground" />
+                Resumo rápido
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CalendarDays className="h-4 w-4" />
+                    Hoje
                   </div>
+                  <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+                    {formatCurrency(todaySpend)}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CalendarDays className="h-4 w-4" />
+                    Semana
+                  </div>
+                  <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+                    {formatCurrency(weekSpend)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Projeção de gastos (mês)</div>
+                <div className="text-xs text-muted-foreground">
+                  No ritmo atual: ~{formatCurrency(projectedMonthSpend)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Saldo projetado (fim do mês)</div>
+                <div
+                  className={cn(
+                    "text-xs",
+                    projectedBalance >= 0 ? "text-muted-foreground" : "text-destructive"
+                  )}
+                >
+                  {formatCurrency(projectedBalance)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Fôlego de saldo (estimativa)</div>
+                <div className="text-xs text-muted-foreground">
+                  {daysRunway === null
+                    ? "Sem gasto médio suficiente para estimar."
+                    : daysRunway === 0
+                      ? "No ritmo atual, seu saldo não cobre mais dias."
+                      : `No ritmo atual, seu saldo cobre ~${daysRunway}+ dias.`}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Maior categoria do mês</div>
+                <div className="text-xs text-muted-foreground">
+                  {topCategory
+                    ? `${topCategory.category} • ${((topCategory.total / (totalExpenses || 1)) * 100).toFixed(0)}% (${formatCurrency(topCategory.total)})`
+                    : "Sem categorias registradas ainda."}
                 </div>
               </div>
             </CardContent>
           </Card>
-        </StaggerItem>
-      </StaggerContainer>
+        </div>
+      </StaggerItem>
 
-      {/* Table Card */}
-      <FadeIn delay={0.12}>
-        <Card className={tableCard}>
-          <CardHeader className="pb-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
-                <ListChecks className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Gastos do mês</CardTitle>
-              </div>
+      {/* Row 3: CashBalance + Categories */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <CashBalance balance={monthBalance} className={appCard} />
 
-              <Button onClick={() => openNewExpense("planned")} className="gap-2 rounded-xl h-10">
-                <Plus className="h-4 w-4" /> Adicionar gasto
-              </Button>
-            </div>
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <PieChart className="h-4 w-4 text-muted-foreground" />
+                Gastos por categoria
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {categoryData.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  Nenhum gasto registrado neste mês.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex items-center justify-center">
+                    <div className="h-[180px] w-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RePieChart>
+                          <Pie
+                            data={categoryData}
+                            dataKey="total"
+                            nameKey="category"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={52}
+                            outerRadius={82}
+                            paddingAngle={2}
+                            strokeWidth={0}
+                          >
+                            {categoryData.map((entry) => (
+                              <Cell key={entry.category} fill={getCategoryColor(entry.category)} />
+                            ))}
+                          </Pie>
+                        </RePieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
 
-            <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por descrição…"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 rounded-xl"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Limpar busca"
-                    type="button"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-full sm:w-52 rounded-xl">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas categorias</SelectItem>
-                  {allCategories.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-40 rounded-xl">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
-                  <SelectItem value="planned">Previsto</SelectItem>
-                  <SelectItem value="overdue">Atrasado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-28">Data</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="w-44">Categoria</TableHead>
-                    <TableHead className="w-28">Status</TableHead>
-                    <TableHead className="w-32 text-right">Valor</TableHead>
-                    <TableHead className="w-24 text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {filtered.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-28 text-center text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <ListChecks className="h-8 w-8 text-muted-foreground/40" />
-                          <p>
-                            {expenses.length === 0
-                              ? "Nenhum gasto registrado ainda."
-                              : "Nenhum resultado encontrado."}
-                          </p>
+                  <div className="space-y-2">
+                    {categoryRanking.map((cat) => (
+                      <div
+                        key={cat.category}
+                        className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2 text-xs">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: getCategoryColor(cat.category) }}
+                          />
+                          <span className="flex-1 truncate text-foreground/80">{cat.category}</span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {cat.pct.toFixed(0)}%
+                          </span>
                         </div>
-                      </TableCell>
-                    </TableRow>
+
+                        <div className="mt-2">
+                          <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${clamp(cat.pct, 0, 100)}%`,
+                                backgroundColor: getCategoryColor(cat.category),
+                              }}
+                            />
+                          </div>
+
+                          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="tabular-nums">{formatCurrency(cat.total)}</span>
+                            <span className="tabular-nums">Top {categoryRanking.length}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Row 4: Status + Comparison */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Por status</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {statusData.every((s) => s.total === 0) ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Sem dados para exibir.</p>
+              ) : (
+                <>
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.paid }} />
+                      <span className="text-muted-foreground">Pago</span>
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(totalPaid)}
+                      </span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.planned }} />
+                      <span className="text-muted-foreground">Planejado</span>
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(totalPlanned)}
+                      </span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.overdue }} />
+                      <span className="text-muted-foreground">Atrasado</span>
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(totalOverdue)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={statusData} barCategoryGap="30%">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                        <XAxis dataKey="label" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                        <YAxis
+                          tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                          tick={{ fontSize: 11 }}
+                          className="fill-muted-foreground"
+                          width={60}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => formatCurrency(value)}
+                          contentStyle={{
+                            borderRadius: "12px",
+                            border: "1px solid hsl(var(--border))",
+                            background: "hsl(var(--card))",
+                          }}
+                        />
+                        <Bar dataKey="total" radius={[8, 8, 0, 0]}>
+                          {statusData.map((entry) => (
+                            <Cell
+                              key={entry.status}
+                              fill={STATUS_COLORS[entry.status] ?? "hsl(var(--muted))"}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                Comparativo mensal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                  {prevTotal > 0 ? "Atual vs anterior" : "Sem mês anterior registrado"}
+                </div>
+                <div className="text-xs">
+                  {prevTotal > 0 ? (
+                    <span className={expenseDelta > 0 ? "text-destructive" : "text-primary"}>
+                      {expenseDelta > 0 ? "+" : ""}
+                      {expenseDelta.toFixed(1)}%
+                    </span>
                   ) : (
-                    filtered.map((expense) => {
-                      const statusCfg = STATUS_CONFIG[expense.status];
-
-                      return (
-                        <TableRow
-                          key={expense.id}
-                          className="group transition-colors duration-150 hover:bg-muted/40"
-                        >
-                          <TableCell className="font-medium text-sm">
-                            {format(new Date(expense.date), "dd/MM/yyyy")}
-                          </TableCell>
-
-                          <TableCell>
-                            <span className="flex items-center gap-1.5">
-                              <span className="text-foreground">{expense.description}</span>
-                              {expense.isRecurring && (
-                                <span title="Recorrente">
-                                  <RefreshCw className="h-3 w-3 text-primary" />
-                                </span>
-                              )}
-                            </span>
-                          </TableCell>
-
-                          <TableCell>
-                            <Badge
-                              variant="secondary"
-                              className="font-normal rounded-lg border border-border/60 bg-card/50"
-                              style={{ borderLeft: `3px solid ${getCategoryColor(expense.category)}` }}
-                            >
-                              {expense.category}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={`gap-1 text-[10px] font-semibold border rounded-lg ${statusCfg.className}`}
-                            >
-                              {statusCfg.icon}
-                              {statusCfg.label}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell className="text-right font-semibold tabular-nums">
-                            {formatCurrency(expense.amount)}
-                          </TableCell>
-
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-lg"
-                                onClick={() => openEditExpense(expense)}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-lg text-destructive hover:text-destructive"
-                                onClick={() => onDelete(expense.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
+                    <span className="text-muted-foreground">—</span>
                   )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {filtered.length > 0 && (
-              <div className="flex items-center justify-between border-t border-border/60 px-4 py-3 text-sm">
-                <span className="text-muted-foreground">{filtered.length} gasto(s)</span>
-                <span className="font-semibold">Total: {formatCurrency(total)}</span>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </FadeIn>
 
-      {/* Modal */}
-      <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : closeDialog())}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{editingExpense ? "Editar gasto" : "Novo gasto"}</DialogTitle>
-          </DialogHeader>
-
-          <ExpenseForm
-            expense={editingExpense}
-            currentDate={currentDate}
-            categories={allCategories}
-            accounts={accounts}
-            defaultStatus={defaultStatus}
-            onSubmit={(data) => {
-              if (editingExpense) onUpdate(editingExpense.id, data);
-              else onAdd(data);
-              closeDialog();
-            }}
-            onCancel={closeDialog}
-            onAddCategory={onAddCategory}
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={compareBars} barCategoryGap="35%">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                    <YAxis
+                      tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                      tick={{ fontSize: 11 }}
+                      className="fill-muted-foreground"
+                      width={60}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: "1px solid hsl(var(--border))",
+                        background: "hsl(var(--card))",
+                      }}
+                    />
+                    <Bar dataKey="total" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+    </StaggerContainer>
   );
 }
