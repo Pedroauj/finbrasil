@@ -214,7 +214,6 @@ export default function Index() {
         rightActions={rightActions}
         onNewExpense={onNewExpense}
       >
-        {/* Header interno full-width (subtitulo por aba) */}
         <div className="mb-5">
           <div className="text-2xl font-bold tracking-tight">{pageTitle}</div>
           <div className="mt-1 text-sm text-muted-foreground">

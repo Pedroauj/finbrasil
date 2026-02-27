@@ -63,7 +63,7 @@ function SidebarNav({
   const isCollapsed = !!collapsed;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Brand */}
       <div className={cn("p-4", isCollapsed && "px-3")}>
         <div
@@ -72,7 +72,7 @@ function SidebarNav({
             isCollapsed && "justify-center px-2"
           )}
         >
-          <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/15" />
+          <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/15 shrink-0" />
           {!isCollapsed ? (
             <div className="leading-tight">
               <div className="text-sm font-semibold">FinBrasil</div>
@@ -145,7 +145,7 @@ function SidebarNav({
               >
                 <Icon
                   className={cn(
-                    "h-4 w-4 transition",
+                    "h-4 w-4 transition shrink-0",
                     isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
@@ -161,28 +161,23 @@ function SidebarNav({
 
         {/* Botão Novo gasto (opcional) */}
         {onNewExpense ? (
-          <div className={cn("mt-4 px-1", isCollapsed && "px-0")}>
+          <div className={cn("mt-4", isCollapsed ? "flex justify-center" : "px-1")}>
             <Button
               onClick={onNewExpense}
               className={cn(
-                "group relative h-11 w-full rounded-2xl font-semibold shadow-sm",
+                "group relative h-11 rounded-2xl font-semibold shadow-sm",
                 "overflow-hidden",
                 "bg-gradient-to-r from-primary to-emerald-500 text-primary-foreground",
                 "hover:brightness-[1.03] active:brightness-[0.98]",
                 "transition-all",
-                isCollapsed && "w-11 px-0"
+                isCollapsed ? "w-11 p-0" : "w-full"
               )}
               title={isCollapsed ? "Novo gasto" : undefined}
             >
               <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/25 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <span className="pointer-events-none absolute -left-16 top-0 h-full w-24 rotate-12 bg-white/10 blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-              <span
-                className={cn(
-                  "relative flex items-center justify-center gap-2",
-                  isCollapsed && "gap-0"
-                )}
-              >
+              <span className={cn("relative flex items-center justify-center gap-2", isCollapsed && "gap-0")}>
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-black/10 ring-1 ring-white/15">
                   <Plus className="h-4 w-4 text-white" />
                 </span>
