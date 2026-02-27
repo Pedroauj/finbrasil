@@ -15,6 +15,7 @@ import {
   Percent,
   CalendarDays,
   BarChart3,
+  AlertTriangle,
 } from "lucide-react";
 import {
   PieChart as RePieChart,
@@ -113,17 +114,13 @@ export function Dashboard({
   const statusData = useMemo(() => groupExpensesByStatus(expenses), [expenses]);
 
   const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
-
   const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
 
   // =========================
   // ✅ MÊS FINANCEIRO (fonte única)
   // =========================
-  // Antes: monthKey vinha de currentDate (mês civil).
-  // Agora: monthKey vem do store (monthBalance.monthKey), respeitando o período financeiro.
   const monthKey = monthBalance.monthKey;
 
-  // Invoice totals for current (financial) month
   const currentInvoices = useMemo(
     () => invoices.filter((i) => i.month === monthKey),
     [invoices, monthKey]
@@ -146,8 +143,8 @@ export function Dashboard({
   const isCurrentMonth = isSameMonth(todayReal, currentDate);
 
   // Para mês no passado/futuro, usa o mês “fechado”
-  const dayIndex = isCurrentMonth ? todayReal.getDate() : daysInMonth(currentDate);
   const dim = daysInMonth(currentDate);
+  const dayIndex = isCurrentMonth ? todayReal.getDate() : dim;
 
   const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
   const savingsRate = income > 0 ? (balance / income) * 100 : 0;
@@ -155,6 +152,16 @@ export function Dashboard({
   // Projeções
   const projectedMonthSpend = avgDailySpend * dim;
   const projectedBalance = income - projectedMonthSpend;
+
+  // Integridade/consistência (evitar “saldo 0 com gasto > 0” etc.)
+  const computedBalance = income - totalExpenses;
+  const balanceMismatch =
+    Number.isFinite(balance) && Number.isFinite(computedBalance)
+      ? Math.abs(balance - computedBalance) > 0.01
+      : false;
+
+  const showDataWarning =
+    (income === 0 && totalExpenses > 0) || (totalExpenses > 0 && balance === 0) || balanceMismatch;
 
   // Daily trend (sum by day)
   const dailySeries = useMemo(() => {
@@ -246,247 +253,60 @@ export function Dashboard({
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </StaggerItem>
 
-      {/* KPI Cards */}
-      <StaggerItem>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          {/* Total Expenses */}
-          <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Gastos do mês
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                    {formatCurrency(totalExpenses)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
-                  <ArrowDownCircle className="h-5 w-5 text-destructive" />
-                </div>
-              </div>
-              {prevTotal > 0 ? (
-                <div className="mt-3 flex items-center gap-1.5 text-xs">
-                  {expenseDelta > 0 ? (
-                    <TrendingUp className="h-3.5 w-3.5 text-destructive" />
-                  ) : (
-                    <TrendingDown className="h-3.5 w-3.5 text-primary" />
-                  )}
-                  <span className={expenseDelta > 0 ? "text-destructive" : "text-primary"}>
-                    {Math.abs(expenseDelta).toFixed(1)}%
-                  </span>
-                  <span className="text-muted-foreground">vs mês anterior</span>
-                </div>
-              ) : (
-                <div className="mt-3 text-xs text-muted-foreground">
-                  Sem comparativo do mês anterior
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Income */}
-          <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Receita
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                    {formatCurrency(income)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
-                  <ArrowUpCircle className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Base do seu mês (salário + extras)
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Invoices */}
-          <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Faturas
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                    {formatCurrency(totalInvoices)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
-                  <CreditCardIcon className="h-5 w-5 text-foreground/70" />
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em{" "}
-                {monthLabel}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Balance */}
-          <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Saldo
-                  </p>
-                  <p
-                    className={[
-                      "mt-1 text-2xl font-bold tracking-tight",
-                      balance >= 0 ? "text-foreground" : "text-destructive",
-                    ].join(" ")}
-                  >
-                    {formatCurrency(balance)}
-                  </p>
-                </div>
-                <div
-                  className={[
-                    "rounded-2xl p-3 ring-1",
-                    balance >= 0
-                      ? "bg-primary/10 ring-primary/15"
-                      : "bg-destructive/10 ring-destructive/15",
-                  ].join(" ")}
-                >
-                  <Wallet
-                    className={[
-                      "h-5 w-5",
-                      balance >= 0 ? "text-primary" : "text-destructive",
-                    ].join(" ")}
-                  />
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Resultado do mês (receita - gastos)
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Savings rate */}
-          <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Taxa de poupança
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                    {income > 0 ? `${clamp(savingsRate, -999, 999).toFixed(1)}%` : "—"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
-                  <Percent className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Quanto sobrou da receita no mês
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Avg daily spend */}
-          <Card className={appCard}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Gasto médio/dia
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                    {formatCurrency(avgDailySpend)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
-                  <Flame className="h-5 w-5 text-foreground/70" />
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Base: {dayIndex} {dayIndex === 1 ? "dia" : "dias"}{" "}
-                ({isCurrentMonth ? "até hoje" : "mês fechado"})
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </StaggerItem>
-
-      {/* Budget Progress */}
-      {budget.total > 0 && (
+      {/* Integridade dos dados (confiança do usuário) */}
+      {showDataWarning && (
         <StaggerItem>
-          <Card className={appCard}>
+          <Card className={cn(appCard, "border-destructive/30")}>
             <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
-                <p className="text-sm font-bold tabular-nums text-foreground">
-                  {formatCurrency(totalExpenses)} / {formatCurrency(budget.total)}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-foreground">
+                    Atenção: números podem estar incompletos
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    {income === 0 && totalExpenses > 0
+                      ? "Você tem gastos registrados, mas ainda não registrou receita neste período. Isso pode deixar saldo e projeções pouco úteis."
+                      : balanceMismatch
+                        ? "O saldo informado difere do cálculo básico (receita - gastos). Verifique saldo inicial/caixa e receitas do mês."
+                        : "Verifique saldo inicial/caixa e receitas para que saldo e projeções reflitam sua realidade."}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                      <div className="text-xs text-muted-foreground">Receita (mês)</div>
+                      <div className="text-sm font-semibold tabular-nums">{formatCurrency(income)}</div>
+                    </div>
+                    <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                      <div className="text-xs text-muted-foreground">Gastos (mês)</div>
+                      <div className="text-sm font-semibold tabular-nums">{formatCurrency(totalExpenses)}</div>
+                    </div>
+                    <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                      <div className="text-xs text-muted-foreground">Saldo (calculado)</div>
+                      <div
+                        className={cn(
+                          "text-sm font-semibold tabular-nums",
+                          computedBalance >= 0 ? "text-foreground" : "text-destructive"
+                        )}
+                      >
+                        {formatCurrency(computedBalance)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <Progress value={budgetPercent} className="h-2.5 rounded-full" />
-              {budgetExceeded && (
-                <p className="mt-2 text-xs text-destructive font-medium">
-                  Orçamento excedido em {formatCurrency(totalExpenses - budget.total)}
-                </p>
-              )}
             </CardContent>
           </Card>
         </StaggerItem>
       )}
 
-      {/* Row 2: Trend + Summary */}
+      {/* Row 1 (Topo ideal): Caixa como centro + Resumo rápido */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <Card className={cn(appCard, "xl:col-span-2")}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                Tendência diária de gastos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-5">
-              {dailySeries.every((d) => d.total === 0) ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">
-                  Nenhum gasto registrado neste mês.
-                </p>
-              ) : (
-                <div className="h-[240px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={dailySeries} margin={{ left: 8, right: 12, top: 10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                      <XAxis
-                        dataKey="day"
-                        tick={{ fontSize: 11 }}
-                        className="fill-muted-foreground"
-                        tickMargin={8}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11 }}
-                        className="fill-muted-foreground"
-                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
-                        width={56}
-                      />
-                      <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(label: any) => `Dia ${label}`}
-                        contentStyle={{
-                          borderRadius: "12px",
-                          border: "1px solid hsl(var(--border))",
-                          background: "hsl(var(--card))",
-                        }}
-                      />
-                      <Area type="monotone" dataKey="total" strokeWidth={2.2} dot={false} fillOpacity={0.15} />
-                      <Line type="monotone" dataKey="cumulative" strokeWidth={1.8} dot={false} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CashBalance balance={monthBalance} className={cn(appCard, "xl:col-span-2")} />
 
           <Card className={appCard}>
             <CardHeader className="pb-2">
@@ -561,10 +381,275 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Row 3: CashBalance + Categories */}
+      {/* Row 2: KPIs primários (hierarquia correta) */}
       <StaggerItem>
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <CashBalance balance={monthBalance} className={appCard} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Balance (primeiro) */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Saldo atual
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-2xl font-bold tracking-tight",
+                      balance >= 0 ? "text-foreground" : "text-destructive"
+                    )}
+                  >
+                    {formatCurrency(balance)}
+                  </p>
+                </div>
+                <div
+                  className={cn(
+                    "rounded-2xl p-3 ring-1",
+                    balance >= 0
+                      ? "bg-primary/10 ring-primary/15"
+                      : "bg-destructive/10 ring-destructive/15"
+                  )}
+                >
+                  <Wallet className={cn("h-5 w-5", balance >= 0 ? "text-primary" : "text-destructive")} />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Resultado do mês (receita - gastos)
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Income */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Receita (mês)
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(income)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
+                  <ArrowUpCircle className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">Salário + extras</p>
+            </CardContent>
+          </Card>
+
+          {/* Total Expenses */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Despesas (mês)
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalExpenses)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
+                  <ArrowDownCircle className="h-5 w-5 text-destructive" />
+                </div>
+              </div>
+
+              {prevTotal > 0 ? (
+                <div className="mt-3 flex items-center gap-1.5 text-xs">
+                  {expenseDelta > 0 ? (
+                    <TrendingUp className="h-3.5 w-3.5 text-destructive" />
+                  ) : (
+                    <TrendingDown className="h-3.5 w-3.5 text-primary" />
+                  )}
+                  <span className={expenseDelta > 0 ? "text-destructive" : "text-primary"}>
+                    {Math.abs(expenseDelta).toFixed(1)}%
+                  </span>
+                  <span className="text-muted-foreground">vs mês anterior</span>
+                </div>
+              ) : (
+                <div className="mt-3 text-xs text-muted-foreground">Sem comparativo do mês anterior</div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Invoices */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Faturas (mês)
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalInvoices)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
+                  <CreditCardIcon className="h-5 w-5 text-foreground/70" />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em{" "}
+                {monthLabel}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Row 3: KPIs secundários (indicadores) */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {/* Savings rate */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Taxa de poupança
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                    {income > 0 ? `${clamp(savingsRate, -999, 999).toFixed(1)}%` : "—"}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
+                  <Percent className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">Quanto sobrou da receita no mês</p>
+            </CardContent>
+          </Card>
+
+          {/* Avg daily spend */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Gasto médio/dia
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(avgDailySpend)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
+                  <Flame className="h-5 w-5 text-foreground/70" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Base: {dayIndex} {dayIndex === 1 ? "dia" : "dias"} ({isCurrentMonth ? "até hoje" : "mês fechado"})
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Projection */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Projeção (fim do mês)
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-2xl font-bold tracking-tight tabular-nums",
+                      projectedBalance >= 0 ? "text-foreground" : "text-destructive"
+                    )}
+                  >
+                    {formatCurrency(projectedBalance)}
+                  </p>
+                </div>
+                <div
+                  className={cn(
+                    "rounded-2xl p-3 ring-1",
+                    projectedBalance >= 0
+                      ? "bg-primary/10 ring-primary/15"
+                      : "bg-destructive/10 ring-destructive/15"
+                  )}
+                >
+                  <Activity className={cn("h-5 w-5", projectedBalance >= 0 ? "text-primary" : "text-destructive")} />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                No ritmo atual: ~{formatCurrency(projectedMonthSpend)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Budget Progress */}
+      {budget.total > 0 && (
+        <StaggerItem>
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
+                <p className="text-sm font-bold tabular-nums text-foreground">
+                  {formatCurrency(totalExpenses)} / {formatCurrency(budget.total)}
+                </p>
+              </div>
+              <Progress value={budgetPercent} className="h-2.5 rounded-full" />
+              {budgetExceeded && (
+                <p className="mt-2 text-xs text-destructive font-medium">
+                  Orçamento excedido em {formatCurrency(totalExpenses - budget.total)}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      )}
+
+      {/* Row 4: Tendência + Categorias (núcleo analítico) */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <Card className={cn(appCard, "xl:col-span-2")}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                Tendência diária de gastos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {dailySeries.every((d) => d.total === 0) ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  Nenhum gasto registrado neste mês.
+                </p>
+              ) : (
+                <div className="h-[260px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dailySeries} margin={{ left: 8, right: 12, top: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis
+                        dataKey="day"
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        tickMargin={8}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                        width={56}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        labelFormatter={(label: any) => `Dia ${label}`}
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "1px solid hsl(var(--border))",
+                          background: "hsl(var(--card))",
+                        }}
+                      />
+                      <Area type="monotone" dataKey="total" strokeWidth={2.2} dot={false} fillOpacity={0.15} />
+                      <Line type="monotone" dataKey="cumulative" strokeWidth={1.8} dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className={appCard}>
             <CardHeader className="pb-2">
@@ -579,7 +664,7 @@ export function Dashboard({
                   Nenhum gasto registrado neste mês.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-4">
                   <div className="flex items-center justify-center">
                     <div className="h-[180px] w-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -647,7 +732,7 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Row 4: Status + Comparison */}
+      {/* Row 5: Diagnóstico (status + comparativo) */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <Card className={appCard}>
@@ -685,7 +770,7 @@ export function Dashboard({
                     </div>
                   </div>
 
-                  <div className="h-[200px]">
+                  <div className="h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={statusData} barCategoryGap="30%">
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
@@ -744,7 +829,7 @@ export function Dashboard({
                 </div>
               </div>
 
-              <div className="h-[220px]">
+              <div className="h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={compareBars} barCategoryGap="35%">
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
