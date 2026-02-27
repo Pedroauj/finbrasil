@@ -137,45 +137,50 @@ export default function Index() {
   // =========================
   const [profileName, setProfileName] = React.useState("");
   const [profileEmail, setProfileEmail] = React.useState("");
-  const [monthStartDay, setMonthStartDay] = React.useState<number>(1);
   const [privacyMode, setPrivacyMode] = React.useState<boolean>(false);
+
+  // Campo controlado do input (pra não “brigar” com store enquanto digita)
+  const [monthStartDayDraft, setMonthStartDayDraft] = React.useState<number>(1);
 
   React.useEffect(() => {
     const savedName = safeGet(LS.profileName) ?? "";
     const savedEmail = safeGet(LS.profileEmail) ?? "";
     const authEmail = auth?.user?.email ?? auth?.session?.user?.email ?? "";
 
-    const savedMonth = parseInt(safeGet(LS.monthStartDay) ?? "1", 10);
     const savedPrivacy = (safeGet(LS.privacyMode) ?? "0") === "1";
 
     setProfileName(savedName);
     setProfileEmail(authEmail || savedEmail);
-    setMonthStartDay(clampInt(savedMonth, 1, 28));
     setPrivacyMode(savedPrivacy);
-  }, [auth?.user?.email, auth?.session?.user?.email]);
+
+    // Store é a fonte de verdade do mês financeiro
+    const fromStore = clampInt(Number(store?.monthStartDay ?? 1), 1, 28);
+    setMonthStartDayDraft(fromStore);
+  }, [auth?.user?.email, auth?.session?.user?.email, store?.monthStartDay]);
 
   const saveProfile = React.useCallback(() => {
     safeSet(LS.profileName, profileName.trim());
     safeSet(LS.profileEmail, profileEmail.trim());
-    // se no futuro você tiver store/userProfile, liga aqui:
-    // if (typeof store.setUserProfile === "function") store.setUserProfile({ name: profileName, email: profileEmail });
   }, [profileName, profileEmail]);
 
   const savePreferences = React.useCallback(() => {
-    const day = clampInt(monthStartDay, 1, 28);
-    setMonthStartDay(day);
+    const day = clampInt(monthStartDayDraft, 1, 28);
+    setMonthStartDayDraft(day);
+
+    // Mantém compatível com o localStorage
     safeSet(LS.monthStartDay, String(day));
     safeSet(LS.privacyMode, privacyMode ? "1" : "0");
 
-    // Se você tiver métodos no store, já “encaixa” sem quebrar:
+    // Agora liga no STORE de verdade (muda o período na hora)
     if (typeof store.setMonthStartDay === "function") store.setMonthStartDay(day);
+
+    // (Ainda não implementamos privacy no store inteiro; fica salvo pro futuro)
     if (typeof store.setPrivacyMode === "function") store.setPrivacyMode(privacyMode);
-  }, [monthStartDay, privacyMode, store]);
+  }, [monthStartDayDraft, privacyMode, store]);
 
   const exportCSV = React.useCallback(() => {
     const expenses = Array.isArray(store.expenses) ? store.expenses : [];
 
-    // Ajusta chaves conforme seu model real (sem quebrar se faltar campo)
     const rows = expenses.map((e: any) => ({
       date: e.date ?? "",
       description: e.description ?? "",
@@ -198,23 +203,15 @@ export default function Index() {
     );
     if (!ok) return;
 
-    // limpar preferências locais
     safeDel(LS.profileName);
     safeDel(LS.profileEmail);
     safeDel(LS.monthStartDay);
     safeDel(LS.privacyMode);
 
-    // tentar reset no store (sem quebrar se não existir)
     if (typeof store.resetAll === "function") store.resetAll();
     if (typeof store.clearAllData === "function") store.clearAllData();
     if (typeof store.resetFinance === "function") store.resetFinance();
 
-    // fallback “manual”: tentar limpar listas conhecidas
-    try {
-      if (Array.isArray(store.expenses) && typeof store.setExpenses === "function") store.setExpenses([]);
-    } catch { }
-
-    // recarrega a página pra garantir estado limpo
     window.location.reload();
   }, [store]);
 
@@ -422,8 +419,8 @@ export default function Index() {
                         type="number"
                         min={1}
                         max={28}
-                        value={monthStartDay}
-                        onChange={(e) => setMonthStartDay(parseInt(e.target.value || "1", 10))}
+                        value={monthStartDayDraft}
+                        onChange={(e) => setMonthStartDayDraft(parseInt(e.target.value || "1", 10))}
                         className="h-10 rounded-xl"
                       />
                     </div>
@@ -515,6 +512,14 @@ export default function Index() {
                     </div>
                     <Button className="h-10 rounded-xl">Fazer upgrade</Button>
                   </div>
+
+                  {/* Info útil (debug amigável) */}
+                  <div className="pt-2 text-xs text-muted-foreground">
+                    Mês financeiro atual:{" "}
+                    <span className="text-foreground font-medium">
+                      dia {store?.monthStartDay ?? 1}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -531,8 +536,8 @@ export default function Index() {
     subtitleByNav,
     profileName,
     profileEmail,
-    monthStartDay,
     privacyMode,
+    monthStartDayDraft,
     saveProfile,
     savePreferences,
     exportCSV,
