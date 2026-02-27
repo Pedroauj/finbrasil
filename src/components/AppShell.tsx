@@ -63,50 +63,55 @@ function SidebarNav({
   const isCollapsed = !!collapsed;
 
   return (
-    // overflow-hidden aqui é CRÍTICO pra matar a “bola verde” (glow/blur)
     <div className="flex h-full flex-col overflow-hidden">
       {/* Brand */}
       <div className={cn("p-4", isCollapsed && "px-3")}>
         <div
           className={cn(
-            "flex items-center gap-3 rounded-2xl border border-border/50 bg-card/60 px-3 py-3 shadow-sm",
-            isCollapsed && "justify-center px-2"
+            "relative rounded-2xl border border-border/50 bg-card/60 shadow-sm",
+            // quando colapsado, centraliza tudo e remove gaps que “tortam”
+            isCollapsed ? "grid place-items-center px-2 py-3" : "flex items-center gap-3 px-3 py-3"
           )}
         >
-          <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/15 shrink-0" />
-
-          {/* Texto some com opacity/translate (evita “reflow feio”) */}
+          {/* “Logo” — quando colapsado fica neutro pra não virar “bola verde” */}
           <div
             className={cn(
-              "leading-tight transition-all duration-200",
+              "h-9 w-9 rounded-xl ring-1 shrink-0",
               isCollapsed
-                ? "pointer-events-none w-0 opacity-0 -translate-x-1"
-                : "w-auto opacity-100 translate-x-0"
+                ? "bg-muted/30 ring-border/60"
+                : "bg-primary/10 ring-primary/15"
             )}
-          >
-            <div className="text-sm font-semibold whitespace-nowrap">FinBrasil</div>
-            <div className="text-xs text-muted-foreground whitespace-nowrap">
-              Gestão Financeira
-            </div>
-          </div>
+          />
 
-          {showToggle ? (
-            <div className={cn("ml-auto", isCollapsed && "ml-0")}>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onToggleCollapsed}
-                className="h-9 w-9 rounded-xl"
-                title={isCollapsed ? "Expandir menu" : "Minimizar menu"}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-4 w-4" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4" />
-                )}
-              </Button>
+          {/* Texto (só aparece expandido) */}
+          {!isCollapsed ? (
+            <div className="leading-tight">
+              <div className="text-sm font-semibold whitespace-nowrap">FinBrasil</div>
+              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                Gestão Financeira
+              </div>
             </div>
+          ) : null}
+
+          {/* Toggle (desktop) — absoluto pra não empurrar nada */}
+          {showToggle ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapsed}
+              className={cn(
+                "h-9 w-9 rounded-xl",
+                isCollapsed ? "absolute right-2 top-2" : "ml-auto"
+              )}
+              title={isCollapsed ? "Expandir menu" : "Minimizar menu"}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
           ) : null}
         </div>
       </div>
@@ -129,10 +134,10 @@ function SidebarNav({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "overflow-hidden",
 
-                  // aura (segura) — reduz quando colapsado pra não “bolar”
+                  // aura mais contida no modo colapsado
                   "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
                   isCollapsed
-                    ? "before:bg-[radial-gradient(160px_circle_at_40%_35%,hsl(var(--primary)/0.08),transparent_70%)]"
+                    ? "before:bg-[radial-gradient(160px_circle_at_50%_40%,hsl(var(--primary)/0.07),transparent_72%)]"
                     : "before:bg-[radial-gradient(200px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
                   "hover:before:opacity-100",
 
@@ -143,13 +148,14 @@ function SidebarNav({
                         "ring-1 ring-primary/18",
                         "before:opacity-100",
                         isCollapsed
-                          ? "before:bg-[radial-gradient(200px_circle_at_45%_30%,hsl(var(--primary)/0.12),transparent_72%)]"
+                          ? "before:bg-[radial-gradient(200px_circle_at_50%_40%,hsl(var(--primary)/0.10),transparent_75%)]"
                           : "before:bg-[radial-gradient(260px_circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_68%)]",
                         "after:pointer-events-none after:absolute after:left-0 after:top-2 after:bottom-2 after:w-[2px] after:rounded-full",
                         "after:bg-gradient-to-b after:from-transparent after:via-primary after:to-transparent after:opacity-90"
                       )
                     : "text-muted-foreground",
 
+                  // colapsado: garante centro perfeito
                   isCollapsed && "justify-center px-2"
                 )}
               >
@@ -162,19 +168,10 @@ function SidebarNav({
                   )}
                 />
 
-                {/* Texto some suave, sem “empurrar” layout */}
-                <span
-                  className={cn(
-                    "flex-1 text-left transition-all duration-200",
-                    isCollapsed
-                      ? "pointer-events-none w-0 opacity-0 -translate-x-1"
-                      : "w-auto opacity-100 translate-x-0"
-                  )}
-                >
-                  {item.label}
-                </span>
+                {!isCollapsed ? (
+                  <span className="flex-1 text-left">{item.label}</span>
+                ) : null}
 
-                {/* specular bem leve */}
                 {!isCollapsed ? (
                   <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_70%_30%,hsl(var(--primary)/0.08),transparent_60%)]" />
                 ) : null}
@@ -196,7 +193,7 @@ function SidebarNav({
               )}
               title={isCollapsed ? "Novo gasto" : undefined}
             >
-              {/* Quando colapsado, REMOVER o blur gigante que vira “bola” */}
+              {/* glow grande só no modo expandido */}
               {!isCollapsed ? (
                 <>
                   <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/25 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -204,7 +201,7 @@ function SidebarNav({
                 </>
               ) : null}
 
-              <span className={cn("relative flex items-center justify-center gap-2", isCollapsed && "gap-0")}>
+              <span className="relative flex items-center justify-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-black/10 ring-1 ring-white/15">
                   <Plus className="h-4 w-4 text-white" />
                 </span>
