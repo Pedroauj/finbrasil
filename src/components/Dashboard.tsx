@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -10,9 +10,9 @@ import {
   CreditCard as CreditCardIcon,
   PieChart,
   Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
+  Activity,
+  Flame,
+  Percent,
 } from "lucide-react";
 import {
   PieChart as RePieChart,
@@ -25,6 +25,8 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  LineChart,
+  Line,
 } from "recharts";
 
 import type { Expense, Budget, CreditCard, CreditCardInvoice } from "@/types/expense";
@@ -33,6 +35,7 @@ import {
   sumExpenses,
   groupExpensesByCategory,
   getCategoryColor,
+  groupExpensesByStatus,
 } from "@/types/expense";
 import type { MonthBalance } from "@/hooks/useExpenseStore";
 
@@ -44,10 +47,7 @@ import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
-  "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md " +
-  "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300 " +
-  "before:bg-[radial-gradient(1200px_circle_at_10%_0%,hsl(var(--primary)/0.10),transparent_45%)] " +
-  "hover:before:opacity-100";
+  "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
 
 interface DashboardProps {
   expenses: Expense[];
@@ -59,7 +59,15 @@ interface DashboardProps {
   monthBalance: MonthBalance;
 }
 
-type StatusKey = "paid" | "planned" | "overdue";
+function daysInMonth(d: Date) {
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
 
 export function Dashboard({
   expenses,
@@ -80,134 +88,87 @@ export function Dashboard({
   const budgetExceeded = budget.total > 0 && totalExpenses > budget.total;
 
   const categoryData = useMemo(() => groupExpensesByCategory(expenses), [expenses]);
+  const statusData = useMemo(() => groupExpensesByStatus(expenses), [expenses]);
 
   const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
+
   const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
 
   // Invoice totals for current month
   const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
-  const currentInvoices = useMemo(() => invoices.filter((i) => i.month === monthKey), [invoices, monthKey]);
+  const currentInvoices = useMemo(
+    () => invoices.filter((i) => i.month === monthKey),
+    [invoices, monthKey]
+  );
   const totalInvoices = useMemo(
     () => currentInvoices.reduce((acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0), 0),
     [currentInvoices]
   );
 
-  const STATUS_COLORS: Record<StatusKey, string> = {
+  // KPI extras
+  const income = monthBalance.income ?? 0;
+  const balance = monthBalance.balance ?? 0;
+
+  const today = new Date();
+  const isCurrentMonth =
+    today.getFullYear() === currentDate.getFullYear() && today.getMonth() === currentDate.getMonth();
+
+  const dayIndex = isCurrentMonth ? today.getDate() : daysInMonth(currentDate);
+  const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
+
+  const savingsRate = income > 0 ? (balance / income) * 100 : 0;
+
+  // Daily trend (sum by day)
+  const dailySeries = useMemo(() => {
+    const map = new Map<number, number>(); // day -> total
+    for (const e of expenses) {
+      const dt = new Date(e.date);
+      if (dt.getFullYear() !== currentDate.getFullYear() || dt.getMonth() !== currentDate.getMonth()) continue;
+      const day = dt.getDate();
+      map.set(day, (map.get(day) ?? 0) + (e.amount ?? 0));
+    }
+
+    const maxDay = daysInMonth(currentDate);
+    const out = [];
+    for (let d = 1; d <= maxDay; d++) {
+      out.push({
+        day: d,
+        total: map.get(d) ?? 0,
+      });
+    }
+    return out;
+  }, [expenses, currentDate]);
+
+  // Insights
+  const topCategory = useMemo(() => {
+    if (categoryData.length === 0) return null;
+    const sorted = [...categoryData].sort((a, b) => b.total - a.total);
+    return sorted[0];
+  }, [categoryData]);
+
+  const daysRunway = useMemo(() => {
+    if (avgDailySpend <= 0) return null;
+    if (balance <= 0) return 0;
+    return Math.floor(balance / avgDailySpend);
+  }, [avgDailySpend, balance]);
+
+  // Category ranking (top 6)
+  const categoryRanking = useMemo(() => {
+    const sorted = [...categoryData].sort((a, b) => b.total - a.total);
+    const top = sorted.slice(0, 6);
+    const sum = top.reduce((acc, x) => acc + x.total, 0) || 1;
+    return top.map((x) => ({
+      ...x,
+      pct: (x.total / (totalExpenses || 1)) * 100,
+      pctInTop: (x.total / sum) * 100,
+    }));
+  }, [categoryData, totalExpenses]);
+
+  const STATUS_COLORS: Record<string, string> = {
     paid: "hsl(var(--success, 152 75% 35%))",
     planned: "hsl(var(--primary))",
     overdue: "hsl(var(--destructive))",
   };
-
-  // ===== Categoria (hover + centro dinâmico) =====
-  const [activeCatIndex, setActiveCatIndex] = useState<number>(-1);
-
-  const categoryTotal = useMemo(
-    () => categoryData.reduce((acc, c) => acc + (c.total ?? 0), 0),
-    [categoryData]
-  );
-
-  const activeCategory = activeCatIndex >= 0 ? categoryData[activeCatIndex] : undefined;
-
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props;
-    return (
-      <g>
-        <Pie
-          data={[payload]}
-          dataKey="total"
-          nameKey="category"
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 7}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          paddingAngle={0}
-          strokeWidth={0}
-        >
-          <Cell fill={fill} />
-        </Pie>
-      </g>
-    );
-  };
-
-  // ===== Status (stacked bar premium) =====
-  const statusStack = useMemo(
-    () => [{ name: "Status", paid: totalPaid, planned: totalPlanned, overdue: totalOverdue }],
-    [totalPaid, totalPlanned, totalOverdue]
-  );
-  const totalStatus = totalPaid + totalPlanned + totalOverdue;
-
-  const pct = (v: number) => (totalStatus > 0 ? (v / totalStatus) * 100 : 0);
-
-  // ===== Insights =====
-  const topCategory = useMemo(() => {
-    if (!categoryData.length) return null;
-    return [...categoryData].sort((a, b) => (b.total ?? 0) - (a.total ?? 0))[0];
-  }, [categoryData]);
-
-  const topCategoryPct = topCategory && categoryTotal > 0 ? (topCategory.total / categoryTotal) * 100 : 0;
-
-  const daysInMonth = useMemo(() => {
-    const y = currentDate.getFullYear();
-    const m = currentDate.getMonth();
-    return new Date(y, m + 1, 0).getDate();
-  }, [currentDate]);
-
-  const avgDailySpend = totalExpenses > 0 ? totalExpenses / daysInMonth : 0;
-  const runwayDaysRaw =
-    avgDailySpend > 0 && monthBalance.balance > 0 ? Math.floor(monthBalance.balance / avgDailySpend) : null;
-
-  const runwayLabel =
-    runwayDaysRaw === null ? null : runwayDaysRaw >= 90 ? "90+ dias" : `${runwayDaysRaw} dias`;
-
-  const insights = useMemo(() => {
-    const items: Array<{ icon: React.ReactNode; title: string; desc: string }> = [];
-
-    if (prevTotal > 0) {
-      const up = expenseDelta > 0;
-      items.push({
-        icon: up ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-primary" />,
-        title: up ? "Gastos acima do mês anterior" : "Boa: gastos abaixo do mês anterior",
-        desc: `${Math.abs(expenseDelta).toFixed(1)}% vs mês anterior`,
-      });
-    } else {
-      items.push({
-        icon: <Info className="h-4 w-4 text-muted-foreground" />,
-        title: "Comparação mensal disponível",
-        desc: "Adicione gastos no mês anterior para ver a variação.",
-      });
-    }
-
-    if (topCategory && categoryTotal > 0) {
-      items.push({
-        icon: <Sparkles className="h-4 w-4 text-primary" />,
-        title: "Maior categoria do mês",
-        desc: `${topCategory.category} • ${topCategoryPct.toFixed(0)}% (${formatCurrency(topCategory.total)})`,
-      });
-    }
-
-    if (budget.total > 0) {
-      const remaining = budget.total - totalExpenses;
-      items.push({
-        icon: remaining >= 0 ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <AlertTriangle className="h-4 w-4 text-destructive" />,
-        title: remaining >= 0 ? "Orçamento sob controle" : "Orçamento excedido",
-        desc: remaining >= 0
-          ? `Restam ${formatCurrency(remaining)} para o limite mensal.`
-          : `Você passou ${formatCurrency(Math.abs(remaining))} do limite mensal.`,
-      });
-    }
-
-    if (runwayLabel) {
-      items.push({
-        icon: <Wallet className="h-4 w-4 text-primary" />,
-        title: "Fôlego de saldo (estimativa)",
-        desc: `No ritmo atual, seu saldo cobre ~${runwayLabel} de gastos.`,
-      });
-    }
-
-    return items.slice(0, 4);
-  }, [prevTotal, expenseDelta, topCategory, topCategoryPct, categoryTotal, budget.total, totalExpenses, runwayLabel]);
 
   return (
     <StaggerContainer className="space-y-6">
@@ -216,37 +177,26 @@ export function Dashboard({
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </StaggerItem>
 
-      {/* Caixa Total protagonista (mais compacto) */}
-      <StaggerItem>
-        <div className="lg:-mt-1">
-          <CashBalance
-            balance={monthBalance}
-            className={[
-              appCard,
-              "ring-1 ring-primary/10",
-              "before:bg-[radial-gradient(1200px_circle_at_20%_0%,hsl(var(--primary)/0.14),transparent_45%)]",
-              // compactação visual (sem mexer no componente por dentro)
-              "min-h-0",
-            ].join(" ")}
-          />
-        </div>
-      </StaggerItem>
-
       {/* KPI Cards */}
       <StaggerItem>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+          {/* Total Expenses */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gastos do mês</p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{formatCurrency(totalExpenses)}</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Gastos do mês
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalExpenses)}
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
                   <ArrowDownCircle className="h-5 w-5 text-destructive" />
                 </div>
               </div>
-              {prevTotal > 0 && (
+              {prevTotal > 0 ? (
                 <div className="mt-3 flex items-center gap-1.5 text-xs">
                   {expenseDelta > 0 ? (
                     <TrendingUp className="h-3.5 w-3.5 text-destructive" />
@@ -258,30 +208,47 @@ export function Dashboard({
                   </span>
                   <span className="text-muted-foreground">vs mês anterior</span>
                 </div>
+              ) : (
+                <div className="mt-3 text-xs text-muted-foreground">
+                  Sem comparativo do mês anterior
+                </div>
               )}
             </CardContent>
           </Card>
 
+          {/* Income */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Receita</p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{formatCurrency(monthBalance.income)}</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Receita
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(income)}
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
                   <ArrowUpCircle className="h-5 w-5 text-primary" />
                 </div>
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Base do seu mês (salário + extras)
+              </p>
             </CardContent>
           </Card>
 
+          {/* Invoices */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Faturas</p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{formatCurrency(totalInvoices)}</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Faturas
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(totalInvoices)}
+                  </p>
                 </div>
                 <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
                   <CreditCardIcon className="h-5 w-5 text-foreground/70" />
@@ -293,29 +260,79 @@ export function Dashboard({
             </CardContent>
           </Card>
 
+          {/* Balance */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Saldo</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Saldo
+                  </p>
                   <p
                     className={[
                       "mt-1 text-2xl font-bold tracking-tight",
-                      monthBalance.balance >= 0 ? "text-foreground" : "text-destructive",
+                      balance >= 0 ? "text-foreground" : "text-destructive",
                     ].join(" ")}
                   >
-                    {formatCurrency(monthBalance.balance)}
+                    {formatCurrency(balance)}
                   </p>
                 </div>
                 <div
                   className={[
                     "rounded-2xl p-3 ring-1",
-                    monthBalance.balance >= 0 ? "bg-primary/10 ring-primary/15" : "bg-destructive/10 ring-destructive/15",
+                    balance >= 0 ? "bg-primary/10 ring-primary/15" : "bg-destructive/10 ring-destructive/15",
                   ].join(" ")}
                 >
-                  <Wallet className={["h-5 w-5", monthBalance.balance >= 0 ? "text-primary" : "text-destructive"].join(" ")} />
+                  <Wallet className={["h-5 w-5", balance >= 0 ? "text-primary" : "text-destructive"].join(" ")} />
                 </div>
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Resultado do mês (receita - gastos)
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Savings rate */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Taxa de poupança
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                    {income > 0 ? `${clamp(savingsRate, -999, 999).toFixed(1)}%` : "—"}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
+                  <Percent className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Quanto sobrou da receita no mês
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Avg daily spend */}
+          <Card className={appCard}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Gasto médio/dia
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                    {formatCurrency(avgDailySpend)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
+                  <Flame className="h-5 w-5 text-foreground/70" />
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Base: {dayIndex} {dayIndex === 1 ? "dia" : "dias"} ({isCurrentMonth ? "até hoje" : "mês fechado"})
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -326,7 +343,7 @@ export function Dashboard({
         <StaggerItem>
           <Card className={appCard}>
             <CardContent className="p-5">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
                 <p className="text-sm font-bold tabular-nums text-foreground">
                   {formatCurrency(totalExpenses)} / {formatCurrency(budget.total)}
@@ -334,7 +351,7 @@ export function Dashboard({
               </div>
               <Progress value={budgetPercent} className="h-2.5 rounded-full" />
               {budgetExceeded && (
-                <p className="mt-2 text-xs font-medium text-destructive">
+                <p className="mt-2 text-xs text-destructive font-medium">
                   Orçamento excedido em {formatCurrency(totalExpenses - budget.total)}
                 </p>
               )}
@@ -343,96 +360,13 @@ export function Dashboard({
         </StaggerItem>
       )}
 
-      {/* Charts + Insights */}
+      {/* Cash Balance + Category + Insights */}
       <StaggerItem>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Categoria */}
-          <Card className={appCard}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <PieChart className="h-4 w-4 text-muted-foreground" />
-                Gastos por categoria
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-5">
-              {categoryData.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">Nenhum gasto registrado neste mês.</p>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <div className="relative h-[190px] w-[190px] flex-shrink-0">
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-[11px] font-medium text-muted-foreground">
-                          {activeCategory ? activeCategory.category : "Total"}
-                        </p>
-                        <p className="mt-0.5 text-sm font-bold text-foreground">
-                          {activeCategory ? formatCurrency(activeCategory.total) : formatCurrency(categoryTotal)}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {activeCategory && categoryTotal > 0
-                            ? `${((activeCategory.total / categoryTotal) * 100).toFixed(0)}%`
-                            : `${categoryData.length} categorias`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RePieChart>
-                        <Pie
-                          data={categoryData}
-                          dataKey="total"
-                          nameKey="category"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={58}
-                          outerRadius={88}
-                          paddingAngle={2}
-                          strokeWidth={0}
-                          activeIndex={activeCatIndex}
-                          activeShape={renderActiveShape}
-                          onMouseEnter={(_: any, idx: number) => setActiveCatIndex(idx)}
-                          onMouseLeave={() => setActiveCatIndex(-1)}
-                        >
-                          {categoryData.map((entry) => (
-                            <Cell
-                              key={entry.category}
-                              fill={getCategoryColor(entry.category)}
-                              opacity={activeCatIndex === -1 || activeCategory?.category === entry.category ? 1 : 0.35}
-                            />
-                          ))}
-                        </Pie>
-                      </RePieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="max-h-[190px] flex-1 space-y-1.5 overflow-auto pr-1">
-                    {categoryData.map((cat, idx) => {
-                      const isActive = idx === activeCatIndex;
-                      const pctLocal = categoryTotal > 0 ? (cat.total / categoryTotal) * 100 : 0;
-
-                      return (
-                        <button
-                          key={cat.category}
-                          type="button"
-                          onMouseEnter={() => setActiveCatIndex(idx)}
-                          onMouseLeave={() => setActiveCatIndex(-1)}
-                          className={[
-                            "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs transition-colors",
-                            isActive ? "bg-accent/50" : "hover:bg-accent/30",
-                          ].join(" ")}
-                        >
-                          <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: getCategoryColor(cat.category) }} />
-                          <span className="flex-1 truncate text-foreground/85">{cat.category}</span>
-                          <span className="text-muted-foreground tabular-nums">{pctLocal.toFixed(0)}%</span>
-                          <span className="font-semibold tabular-nums text-foreground">{formatCurrency(cat.total)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          {/* Cash Balance */}
+          <div className="xl:col-span-2">
+            <CashBalance balance={monthBalance} className={appCard} />
+          </div>
 
           {/* Insights */}
           <Card className={appCard}>
@@ -442,74 +376,218 @@ export function Dashboard({
                 Insights do mês
               </CardTitle>
             </CardHeader>
-            <CardContent className="pb-5">
-              <div className="space-y-2">
-                {insights.map((it, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-3 rounded-2xl border border-border/60 bg-accent/20 p-3 transition-colors hover:bg-accent/30"
-                  >
-                    <div className="mt-0.5 rounded-xl bg-background/40 p-2 ring-1 ring-border/60">{it.icon}</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{it.title}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{it.desc}</p>
-                    </div>
-                  </div>
-                ))}
-                {insights.length === 0 && (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    Adicione movimentações para gerar insights automáticos.
-                  </p>
-                )}
+            <CardContent className="pb-5 space-y-2">
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Comparação mensal</div>
+                <div className="text-xs text-muted-foreground">
+                  {prevTotal > 0
+                    ? `Variação de ${expenseDelta > 0 ? "+" : ""}${expenseDelta.toFixed(1)}% em relação ao mês anterior.`
+                    : "Adicione gastos no mês anterior para ver a variação."}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Maior categoria do mês</div>
+                <div className="text-xs text-muted-foreground">
+                  {topCategory
+                    ? `${topCategory.category} • ${((topCategory.total / (totalExpenses || 1)) * 100).toFixed(0)}% (${formatCurrency(topCategory.total)})`
+                    : "Sem categorias registradas ainda."}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="text-sm font-semibold">Fôlego de saldo (estimativa)</div>
+                <div className="text-xs text-muted-foreground">
+                  {daysRunway === null
+                    ? "Sem gasto médio suficiente para estimar."
+                    : daysRunway === 0
+                      ? "No ritmo atual, seu saldo não cobre mais dias."
+                      : `No ritmo atual, seu saldo cobre ~${daysRunway}+ dias de gastos.`}
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </StaggerItem>
 
-      {/* Status stacked */}
+      {/* Trend + Category breakdown */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          {/* Daily Trend */}
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                Tendência diária de gastos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {dailySeries.every((d) => d.total === 0) ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  Nenhum gasto registrado neste mês.
+                </p>
+              ) : (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={dailySeries} margin={{ left: 8, right: 12, top: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis
+                        dataKey="day"
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        tickMargin={8}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                        width={56}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        labelFormatter={(label: any) => `Dia ${label}`}
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "1px solid hsl(var(--border))",
+                          background: "hsl(var(--card))",
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total"
+                        strokeWidth={2.5}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Category Pie + Ranking */}
+          <Card className={appCard}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <PieChart className="h-4 w-4 text-muted-foreground" />
+                Gastos por categoria
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              {categoryData.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  Nenhum gasto registrado neste mês.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex items-center justify-center">
+                    <div className="h-[180px] w-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RePieChart>
+                          <Pie
+                            data={categoryData}
+                            dataKey="total"
+                            nameKey="category"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={52}
+                            outerRadius={82}
+                            paddingAngle={2}
+                            strokeWidth={0}
+                          >
+                            {categoryData.map((entry) => (
+                              <Cell key={entry.category} fill={getCategoryColor(entry.category)} />
+                            ))}
+                          </Pie>
+                        </RePieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {categoryRanking.map((cat) => (
+                      <div key={cat.category} className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: getCategoryColor(cat.category) }}
+                          />
+                          <span className="flex-1 truncate text-foreground/80">{cat.category}</span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {cat.pct.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${clamp(cat.pct, 0, 100)}%`,
+                                backgroundColor: getCategoryColor(cat.category),
+                              }}
+                            />
+                          </div>
+                          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="tabular-nums">{formatCurrency(cat.total)}</span>
+                            <span className="tabular-nums">Top {categoryRanking.length}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </StaggerItem>
+
+      {/* Status breakdown */}
       <StaggerItem>
         <Card className={appCard}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Por status</CardTitle>
           </CardHeader>
           <CardContent className="pb-5">
-            {totalStatus === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">Sem dados para exibir.</p>
+            {statusData.every((s) => s.total === 0) ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Sem dados para exibir.
+              </p>
             ) : (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/35 px-3 py-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS.paid }} />
-                    <span className="text-foreground/80">Pago</span>
-                    <span className="text-muted-foreground tabular-nums">{pct(totalPaid).toFixed(0)}%</span>
+              <>
+                {/* Chips */}
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                    <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.paid }} />
+                    <span className="text-muted-foreground">Pago</span>
                     <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPaid)}</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/35 px-3 py-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS.planned }} />
-                    <span className="text-foreground/80">Planejado</span>
-                    <span className="text-muted-foreground tabular-nums">{pct(totalPlanned).toFixed(0)}%</span>
+
+                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                    <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.planned }} />
+                    <span className="text-muted-foreground">Planejado</span>
                     <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPlanned)}</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/35 px-3 py-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS.overdue }} />
-                    <span className="text-foreground/80">Atrasado</span>
-                    <span className="text-muted-foreground tabular-nums">{pct(totalOverdue).toFixed(0)}%</span>
+
+                  <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
+                    <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.overdue }} />
+                    <span className="text-muted-foreground">Atrasado</span>
                     <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalOverdue)}</span>
                   </div>
                 </div>
 
-                <div className="h-[110px]">
+                {/* Chart */}
+                <div className="h-[190px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statusStack} layout="vertical" barCategoryGap="45%">
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/25" />
-                      <XAxis
-                        type="number"
-                        tickFormatter={(v: number) => formatCurrency(v)}
+                    <BarChart data={statusData} barCategoryGap="30%">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="label" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                      <YAxis
+                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
                         tick={{ fontSize: 11 }}
                         className="fill-muted-foreground"
+                        width={60}
                       />
-                      <YAxis type="category" dataKey="name" hide />
                       <Tooltip
                         formatter={(value: number) => formatCurrency(value)}
                         contentStyle={{
@@ -518,13 +596,15 @@ export function Dashboard({
                           background: "hsl(var(--card))",
                         }}
                       />
-                      <Bar dataKey="paid" stackId="a" fill={STATUS_COLORS.paid} radius={[10, 0, 0, 10]} />
-                      <Bar dataKey="planned" stackId="a" fill={STATUS_COLORS.planned} />
-                      <Bar dataKey="overdue" stackId="a" fill={STATUS_COLORS.overdue} radius={[0, 10, 10, 0]} />
+                      <Bar dataKey="total" radius={[8, 8, 0, 0]}>
+                        {statusData.map((entry) => (
+                          <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? "hsl(var(--muted))"} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </>
             )}
           </CardContent>
         </Card>
