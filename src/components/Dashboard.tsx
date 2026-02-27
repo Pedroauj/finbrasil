@@ -116,16 +116,23 @@ export function Dashboard({
 
   const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
 
-  // Invoice totals for current month
-  const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+  // =========================
+  // ✅ MÊS FINANCEIRO (fonte única)
+  // =========================
+  // Antes: monthKey vinha de currentDate (mês civil).
+  // Agora: monthKey vem do store (monthBalance.monthKey), respeitando o período financeiro.
+  const monthKey = monthBalance.monthKey;
+
+  // Invoice totals for current (financial) month
   const currentInvoices = useMemo(
     () => invoices.filter((i) => i.month === monthKey),
     [invoices, monthKey]
   );
+
   const totalInvoices = useMemo(
     () =>
       currentInvoices.reduce(
-        (acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0),
+        (acc, inv) => acc + inv.items.reduce((s, it) => s + Number(it.amount || 0), 0),
         0
       ),
     [currentInvoices]
@@ -138,14 +145,14 @@ export function Dashboard({
   const todayReal = new Date();
   const isCurrentMonth = isSameMonth(todayReal, currentDate);
 
-  // para mês no passado/futuro, usa o mês “fechado”
+  // Para mês no passado/futuro, usa o mês “fechado”
   const dayIndex = isCurrentMonth ? todayReal.getDate() : daysInMonth(currentDate);
   const dim = daysInMonth(currentDate);
 
   const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
   const savingsRate = income > 0 ? (balance / income) * 100 : 0;
 
-  // Projeções vendáveis
+  // Projeções
   const projectedMonthSpend = avgDailySpend * dim;
   const projectedBalance = income - projectedMonthSpend;
 
@@ -431,7 +438,7 @@ export function Dashboard({
         </StaggerItem>
       )}
 
-      {/* Row 2: Trend (2 cols) + Quick Summary (1 col) */}
+      {/* Row 2: Trend + Summary */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <Card className={cn(appCard, "xl:col-span-2")}>
