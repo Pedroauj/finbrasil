@@ -27,12 +27,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import type {
-  Expense,
-  Budget,
-  CreditCard,
-  CreditCardInvoice,
-} from "@/types/expense";
+import type { Expense, Budget, CreditCard, CreditCardInvoice } from "@/types/expense";
 import {
   formatCurrency,
   sumExpenses,
@@ -50,7 +45,6 @@ import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
   "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md " +
-  // glow/sheen premium (bem sutil)
   "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300 " +
   "before:bg-[radial-gradient(1200px_circle_at_10%_0%,hsl(var(--primary)/0.10),transparent_45%)] " +
   "hover:before:opacity-100";
@@ -82,31 +76,20 @@ export function Dashboard({
   const totalOverdue = useMemo(() => sumExpenses(expenses, { status: "overdue" }), [expenses]);
   const prevTotal = useMemo(() => sumExpenses(prevMonthExpenses), [prevMonthExpenses]);
 
-  const budgetPercent =
-    budget.total > 0 ? Math.min((totalExpenses / budget.total) * 100, 100) : 0;
+  const budgetPercent = budget.total > 0 ? Math.min((totalExpenses / budget.total) * 100, 100) : 0;
   const budgetExceeded = budget.total > 0 && totalExpenses > budget.total;
 
   const categoryData = useMemo(() => groupExpensesByCategory(expenses), [expenses]);
 
   const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
 
-  const expenseDelta =
-    prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
+  const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
 
   // Invoice totals for current month
-  const monthKey = `${currentDate.getFullYear()}-${String(
-    currentDate.getMonth() + 1
-  ).padStart(2, "0")}`;
-  const currentInvoices = useMemo(
-    () => invoices.filter((i) => i.month === monthKey),
-    [invoices, monthKey]
-  );
+  const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+  const currentInvoices = useMemo(() => invoices.filter((i) => i.month === monthKey), [invoices, monthKey]);
   const totalInvoices = useMemo(
-    () =>
-      currentInvoices.reduce(
-        (acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0),
-        0
-      ),
+    () => currentInvoices.reduce((acc, inv) => acc + inv.items.reduce((s, it) => s + it.amount, 0), 0),
     [currentInvoices]
   );
 
@@ -124,21 +107,11 @@ export function Dashboard({
     [categoryData]
   );
 
-  const activeCategory =
-    activeCatIndex >= 0 ? categoryData[activeCatIndex] : undefined;
+  const activeCategory = activeCatIndex >= 0 ? categoryData[activeCatIndex] : undefined;
 
   // shape leve pra “pop” na fatia
   const renderActiveShape = (props: any) => {
-    const {
-      cx,
-      cy,
-      innerRadius,
-      outerRadius,
-      startAngle,
-      endAngle,
-      fill,
-      payload,
-    } = props;
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props;
 
     return (
       <g>
@@ -173,7 +146,6 @@ export function Dashboard({
     ],
     [totalPaid, totalPlanned, totalOverdue]
   );
-
   const totalStatus = totalPaid + totalPlanned + totalOverdue;
 
   // ===== Insights =====
@@ -183,9 +155,8 @@ export function Dashboard({
   }, [categoryData]);
 
   const topCategoryPct =
-    topCategory && categoryTotal > 0 ? ((topCategory.total / categoryTotal) * 100) : 0;
+    topCategory && categoryTotal > 0 ? (topCategory.total / categoryTotal) * 100 : 0;
 
-  // runway aproximado: saldo / gasto médio diário do mês (estimativa)
   const daysInMonth = useMemo(() => {
     const y = currentDate.getFullYear();
     const m = currentDate.getMonth();
@@ -194,93 +165,55 @@ export function Dashboard({
 
   const avgDailySpend = totalExpenses > 0 ? totalExpenses / daysInMonth : 0;
   const runwayDays =
-    avgDailySpend > 0 && monthBalance.balance > 0
-      ? Math.floor(monthBalance.balance / avgDailySpend)
-      : null;
+    avgDailySpend > 0 && monthBalance.balance > 0 ? Math.floor(monthBalance.balance / avgDailySpend) : null;
 
   const insights = useMemo(() => {
-    const items: Array<{
-      icon: React.ReactNode;
-      title: string;
-      desc: string;
-      tone?: "ok" | "warn" | "info";
-    }> = [];
+    const items: Array<{ icon: React.ReactNode; title: string; desc: string }> = [];
 
-    // Delta vs mês anterior
     if (prevTotal > 0) {
       const up = expenseDelta > 0;
       items.push({
-        icon: up ? (
-          <AlertTriangle className="h-4 w-4 text-destructive" />
-        ) : (
-          <CheckCircle2 className="h-4 w-4 text-primary" />
-        ),
+        icon: up ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-primary" />,
         title: up ? "Gastos acima do mês anterior" : "Boa: gastos abaixo do mês anterior",
         desc: `${Math.abs(expenseDelta).toFixed(1)}% vs mês anterior`,
-        tone: up ? "warn" : "ok",
       });
     } else {
       items.push({
         icon: <Info className="h-4 w-4 text-muted-foreground" />,
         title: "Comparação mensal disponível",
         desc: "Adicione gastos no mês anterior para ver a variação.",
-        tone: "info",
       });
     }
 
-    // Top categoria
     if (topCategory && categoryTotal > 0) {
       items.push({
         icon: <Sparkles className="h-4 w-4 text-primary" />,
         title: "Maior categoria do mês",
-        desc: `${topCategory.category} • ${topCategoryPct.toFixed(0)}% (${formatCurrency(
-          topCategory.total
-        )})`,
-        tone: "info",
+        desc: `${topCategory.category} • ${topCategoryPct.toFixed(0)}% (${formatCurrency(topCategory.total)})`,
       });
     }
 
-    // Orçamento
     if (budget.total > 0) {
       const remaining = budget.total - totalExpenses;
-      if (remaining >= 0) {
-        items.push({
-          icon: <CheckCircle2 className="h-4 w-4 text-primary" />,
-          title: "Orçamento sob controle",
-          desc: `Restam ${formatCurrency(remaining)} para o limite mensal.`,
-          tone: "ok",
-        });
-      } else {
-        items.push({
-          icon: <AlertTriangle className="h-4 w-4 text-destructive" />,
-          title: "Orçamento excedido",
-          desc: `Você passou ${formatCurrency(Math.abs(remaining))} do limite mensal.`,
-          tone: "warn",
-        });
-      }
+      items.push({
+        icon: remaining >= 0 ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <AlertTriangle className="h-4 w-4 text-destructive" />,
+        title: remaining >= 0 ? "Orçamento sob controle" : "Orçamento excedido",
+        desc: remaining >= 0
+          ? `Restam ${formatCurrency(remaining)} para o limite mensal.`
+          : `Você passou ${formatCurrency(Math.abs(remaining))} do limite mensal.`,
+      });
     }
 
-    // Runway
     if (runwayDays !== null) {
       items.push({
         icon: <Wallet className="h-4 w-4 text-primary" />,
         title: "Fôlego de saldo (estimativa)",
         desc: `No ritmo atual, seu saldo cobre ~${runwayDays} dias de gastos.`,
-        tone: "info",
       });
     }
 
     return items.slice(0, 4);
-  }, [
-    prevTotal,
-    expenseDelta,
-    topCategory,
-    topCategoryPct,
-    categoryTotal,
-    budget.total,
-    totalExpenses,
-    runwayDays,
-  ]);
+  }, [prevTotal, expenseDelta, topCategory, topCategoryPct, categoryTotal, budget.total, totalExpenses, runwayDays]);
 
   return (
     <StaggerContainer className="space-y-6">
@@ -289,7 +222,7 @@ export function Dashboard({
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </StaggerItem>
 
-      {/* Caixa Total protagonista (topo, largura total) */}
+      {/* Caixa Total protagonista */}
       <StaggerItem>
         <CashBalance
           balance={monthBalance}
@@ -304,17 +237,12 @@ export function Dashboard({
       {/* KPI Cards */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {/* Total Expenses */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Gastos do mês
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                    {formatCurrency(totalExpenses)}
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gastos do mês</p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{formatCurrency(totalExpenses)}</p>
                 </div>
                 <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
                   <ArrowDownCircle className="h-5 w-5 text-destructive" />
@@ -336,17 +264,12 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Income */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Receita
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                    {formatCurrency(monthBalance.income)}
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Receita</p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{formatCurrency(monthBalance.income)}</p>
                 </div>
                 <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
                   <ArrowUpCircle className="h-5 w-5 text-primary" />
@@ -355,37 +278,28 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Invoices */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Faturas
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-                    {formatCurrency(totalInvoices)}
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Faturas</p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{formatCurrency(totalInvoices)}</p>
                 </div>
                 <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
                   <CreditCardIcon className="h-5 w-5 text-foreground/70" />
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em{" "}
-                {monthLabel}
+                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em {monthLabel}
               </p>
             </CardContent>
           </Card>
 
-          {/* Balance */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Saldo
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Saldo</p>
                   <p
                     className={[
                       "mt-1 text-2xl font-bold tracking-tight",
@@ -398,17 +312,10 @@ export function Dashboard({
                 <div
                   className={[
                     "rounded-2xl p-3 ring-1",
-                    monthBalance.balance >= 0
-                      ? "bg-primary/10 ring-primary/15"
-                      : "bg-destructive/10 ring-destructive/15",
+                    monthBalance.balance >= 0 ? "bg-primary/10 ring-primary/15" : "bg-destructive/10 ring-destructive/15",
                   ].join(" ")}
                 >
-                  <Wallet
-                    className={[
-                      "h-5 w-5",
-                      monthBalance.balance >= 0 ? "text-primary" : "text-destructive",
-                    ].join(" ")}
-                  />
+                  <Wallet className={["h-5 w-5", monthBalance.balance >= 0 ? "text-primary" : "text-destructive"].join(" ")} />
                 </div>
               </div>
             </CardContent>
@@ -441,7 +348,7 @@ export function Dashboard({
       {/* Charts + Insights */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Category Pie Chart */}
+          {/* Categoria */}
           <Card className={appCard}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -451,13 +358,10 @@ export function Dashboard({
             </CardHeader>
             <CardContent className="pb-5">
               {categoryData.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Nenhum gasto registrado neste mês.
-                </p>
+                <p className="py-8 text-center text-sm text-muted-foreground">Nenhum gasto registrado neste mês.</p>
               ) : (
                 <div className="flex items-center gap-4">
                   <div className="relative h-[170px] w-[170px] flex-shrink-0">
-                    {/* Centro dinâmico */}
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <p className="text-[11px] font-medium text-muted-foreground">
@@ -519,15 +423,10 @@ export function Dashboard({
                             isActive ? "bg-accent/50" : "hover:bg-accent/30",
                           ].join(" ")}
                         >
-                          <span
-                            className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                            style={{ backgroundColor: getCategoryColor(cat.category) }}
-                          />
+                          <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: getCategoryColor(cat.category) }} />
                           <span className="flex-1 truncate text-foreground/85">{cat.category}</span>
                           <span className="text-muted-foreground tabular-nums">{pct.toFixed(0)}%</span>
-                          <span className="font-semibold tabular-nums text-foreground">
-                            {formatCurrency(cat.total)}
-                          </span>
+                          <span className="font-semibold tabular-nums text-foreground">{formatCurrency(cat.total)}</span>
                         </button>
                       );
                     })}
@@ -550,21 +449,15 @@ export function Dashboard({
                 {insights.map((it, i) => (
                   <div
                     key={i}
-                    className={[
-                      "flex items-start gap-3 rounded-2xl border border-border/60 bg-background/40 p-3",
-                      "transition-colors hover:bg-background/55",
-                    ].join(" ")}
+                    className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/40 p-3 transition-colors hover:bg-background/55"
                   >
-                    <div className="mt-0.5 rounded-xl bg-accent/40 p-2 ring-1 ring-border/60">
-                      {it.icon}
-                    </div>
+                    <div className="mt-0.5 rounded-xl bg-accent/40 p-2 ring-1 ring-border/60">{it.icon}</div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{it.title}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{it.desc}</p>
                     </div>
                   </div>
                 ))}
-
                 {insights.length === 0 && (
                   <p className="py-8 text-center text-sm text-muted-foreground">
                     Adicione movimentações para gerar insights automáticos.
@@ -576,18 +469,17 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Status breakdown (stacked premium) */}
+      {/* Status stacked */}
       <StaggerItem>
         <Card className={appCard}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Por status (TESTE 999)</CardTitle>
+            <CardTitle className="text-sm font-semibold">Por status</CardTitle>
           </CardHeader>
           <CardContent className="pb-5">
             {totalStatus === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">Sem dados para exibir.</p>
             ) : (
               <div className="space-y-3">
-                {/* Chips/resumo */}
                 <div className="flex flex-wrap gap-2 text-xs">
                   <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/40 px-3 py-1.5">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS.paid }} />
@@ -606,7 +498,6 @@ export function Dashboard({
                   </div>
                 </div>
 
-                {/* Barra empilhada */}
                 <div className="h-[120px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={statusStack} layout="vertical" barCategoryGap="40%">
