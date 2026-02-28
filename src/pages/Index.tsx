@@ -78,11 +78,11 @@ function downloadTextFile(filename: string, content: string, mime = "text/plain;
 function toCSV(rows: Array<Record<string, any>>) {
   if (!rows.length) return "";
   const headers = Array.from(
-    rows.reduce((set, r) => {
+    rows.reduce<Set<string>>((set, r) => {
       Object.keys(r).forEach((k) => set.add(k));
       return set;
     }, new Set<string>())
-  );
+  ) as string[];
 
   const escape = (v: any) => {
     const s = v === null || v === undefined ? "" : String(v);
