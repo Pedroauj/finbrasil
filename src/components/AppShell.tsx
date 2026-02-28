@@ -77,9 +77,7 @@ function SidebarNav({
           <div
             className={cn(
               "h-9 w-9 rounded-xl ring-1 shrink-0",
-              isCollapsed
-                ? "bg-muted/30 ring-border/60"
-                : "bg-primary/10 ring-primary/15"
+              isCollapsed ? "bg-muted/30 ring-border/60" : "bg-primary/10 ring-primary/15"
             )}
           />
 
@@ -100,17 +98,10 @@ function SidebarNav({
               variant="ghost"
               size="icon"
               onClick={onToggleCollapsed}
-              className={cn(
-                "h-9 w-9 rounded-xl",
-                isCollapsed ? "absolute right-2 top-2" : "ml-auto"
-              )}
+              className={cn("h-9 w-9 rounded-xl", isCollapsed ? "absolute right-2 top-2" : "ml-auto")}
               title={isCollapsed ? "Expandir menu" : "Minimizar menu"}
             >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </Button>
           ) : null}
         </div>
@@ -162,15 +153,11 @@ function SidebarNav({
                 <Icon
                   className={cn(
                     "h-4 w-4 transition shrink-0",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground"
+                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
 
-                {!isCollapsed ? (
-                  <span className="flex-1 text-left">{item.label}</span>
-                ) : null}
+                {!isCollapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
 
                 {!isCollapsed ? (
                   <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_70%_30%,hsl(var(--primary)/0.08),transparent_60%)]" />
@@ -270,12 +257,15 @@ export function AppShell({
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
 
       <div className="flex min-h-screen w-full">
+        {/* Sidebar (Desktop) */}
         <aside
           className={cn(
             "hidden bg-background/60 backdrop-blur xl:block",
             "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
             "transition-[width] duration-300 ease-out",
-            "will-change-[width] overflow-hidden"
+            "will-change-[width] overflow-hidden",
+            // ✅ AQUI: deixa fixa enquanto rola
+            "sticky top-0 h-screen shrink-0 overflow-y-auto"
           )}
           style={{ width: collapsed ? 80 : 288 }}
         >
