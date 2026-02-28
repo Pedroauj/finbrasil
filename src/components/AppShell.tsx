@@ -269,7 +269,6 @@ export function AppShell({
             "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
             "transition-[width] duration-300 ease-out",
             "will-change-[width]",
-            // ✅ fixa na viewport enquanto você rola
             "sticky top-0 h-screen shrink-0 overflow-y-auto"
           )}
           style={{ width: collapsed ? 80 : 288 }}
@@ -309,11 +308,9 @@ export function AppShell({
                 </Sheet>
               </div>
 
+              {/* ✅ Mantém apenas o título (removeu o subtítulo) */}
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{title}</div>
-                <div className="text-xs text-muted-foreground truncate">
-                  Visão geral e controle
-                </div>
               </div>
 
               <div className="flex items-center gap-2">{rightActions}</div>
