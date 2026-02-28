@@ -509,8 +509,6 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Budget Progress */}
-      {budget.total > 0 && (
       {/* Integridade dos dados (confiança do usuário) */}
       {showDataWarning && (
         <StaggerItem>
