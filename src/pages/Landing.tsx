@@ -330,7 +330,40 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Social proof / Trust ── */}
+      {/* ── Metrics / Social Proof ── */}
+      <section className="relative z-10 pb-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <Reveal>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[
+                { value: "12.400+", label: "Usuários ativos", suffix: "" },
+                { value: "R$ 87M", label: "Já organizados", suffix: "" },
+                { value: "4.8", label: "Nota média", suffix: "/ 5" },
+                { value: "30s", label: "Para começar", suffix: "" },
+              ].map((m, i) => (
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 text-center backdrop-blur"
+                >
+                  <div className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                    {m.value}
+                    {m.suffix && <span className="text-base font-medium text-white/30 ml-1">{m.suffix}</span>}
+                  </div>
+                  <div className="mt-1.5 text-xs font-medium uppercase tracking-wider text-white/35">
+                    {m.label}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Trust ── */}
       <section className="relative z-10 pb-28">
         <div className="mx-auto max-w-7xl px-6">
           <Reveal>
