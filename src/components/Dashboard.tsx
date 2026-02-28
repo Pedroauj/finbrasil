@@ -80,6 +80,40 @@ function getWeekKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-W${week}`;
 }
 
+function Tile({
+  label,
+  value,
+  icon,
+  tone = "neutral",
+  sub,
+}: {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+  tone?: "neutral" | "good" | "bad";
+  sub?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div
+        className={cn(
+          "mt-1 text-sm font-semibold tabular-nums",
+          tone === "good" && "text-primary",
+          tone === "bad" && "text-destructive",
+          tone === "neutral" && "text-foreground"
+        )}
+      >
+        {value}
+      </div>
+      {sub ? <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div> : null}
+    </div>
+  );
+}
+
 interface DashboardProps {
   expenses: Expense[];
   budget: Budget;
@@ -113,6 +147,7 @@ export function Dashboard({
   const statusData = useMemo(() => groupExpensesByStatus(expenses), [expenses]);
 
   const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
+  const monthLabelCap = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
   const expenseDelta = prevTotal > 0 ? ((totalExpenses - prevTotal) / prevTotal) * 100 : 0;
 
@@ -139,8 +174,8 @@ export function Dashboard({
   const isCurrentMonth = isSameMonth(todayReal, currentDate);
 
   // para mês no passado/futuro, usa o mês “fechado”
-  const dayIndex = isCurrentMonth ? todayReal.getDate() : daysInMonth(currentDate);
   const dim = daysInMonth(currentDate);
+  const dayIndex = isCurrentMonth ? todayReal.getDate() : dim;
 
   const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
   const savingsRate = income > 0 ? (balance / income) * 100 : 0;
@@ -219,6 +254,19 @@ export function Dashboard({
     }));
   }, [categoryData, totalExpenses]);
 
+  // Pizza limpa: Top 5 + Outros
+  const pieCategoryData = useMemo(() => {
+    if (categoryData.length <= 6) return categoryData;
+    const sorted = [...categoryData].sort((a, b) => b.total - a.total);
+    const top5 = sorted.slice(0, 5);
+    const rest = sorted.slice(5);
+    const othersTotal = rest.reduce((acc, x) => acc + x.total, 0);
+    return [
+      ...top5,
+      { category: "Outros", total: othersTotal },
+    ] as Array<{ category: string; total: number }>;
+  }, [categoryData]);
+
   const STATUS_COLORS: Record<string, string> = {
     paid: "hsl(var(--success, 152 75% 35%))",
     planned: "hsl(var(--primary))",
@@ -234,6 +282,42 @@ export function Dashboard({
 
   return (
     <StaggerContainer className="space-y-6">
+      {/* Header */}
+      <StaggerItem>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Visão geral
+            </p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+              Dashboard • <span className="text-foreground/80">{monthLabelCap}</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-2xl border border-border/60 bg-card/50 px-3 py-2 backdrop-blur">
+              <div className="text-[11px] text-muted-foreground">Receita</div>
+              <div className="text-sm font-semibold tabular-nums">{formatCurrency(income)}</div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card/50 px-3 py-2 backdrop-blur">
+              <div className="text-[11px] text-muted-foreground">Gastos</div>
+              <div className="text-sm font-semibold tabular-nums">{formatCurrency(totalExpenses)}</div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card/50 px-3 py-2 backdrop-blur">
+              <div className="text-[11px] text-muted-foreground">Saldo</div>
+              <div
+                className={cn(
+                  "text-sm font-semibold tabular-nums",
+                  balance >= 0 ? "text-foreground" : "text-destructive"
+                )}
+              >
+                {formatCurrency(balance)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </StaggerItem>
+
       {/* Alerts */}
       <StaggerItem>
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
@@ -250,7 +334,7 @@ export function Dashboard({
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Gastos do mês
                   </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {formatCurrency(totalExpenses)}
                   </p>
                 </div>
@@ -286,7 +370,7 @@ export function Dashboard({
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Receita
                   </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {formatCurrency(income)}
                   </p>
                 </div>
@@ -308,7 +392,7 @@ export function Dashboard({
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Faturas
                   </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {formatCurrency(totalInvoices)}
                   </p>
                 </div>
@@ -318,7 +402,7 @@ export function Dashboard({
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em{" "}
-                {monthLabel}
+                {monthLabelCap}
               </p>
             </CardContent>
           </Card>
@@ -333,7 +417,7 @@ export function Dashboard({
                   </p>
                   <p
                     className={[
-                      "mt-1 text-2xl font-bold tracking-tight",
+                      "mt-1 text-2xl font-bold tracking-tight tabular-nums",
                       balance >= 0 ? "text-foreground" : "text-destructive",
                     ].join(" ")}
                   >
@@ -392,7 +476,7 @@ export function Dashboard({
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Gasto médio/dia
                   </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {formatCurrency(avgDailySpend)}
                   </p>
                 </div>
@@ -488,66 +572,85 @@ export function Dashboard({
                 Resumo rápido
               </CardTitle>
             </CardHeader>
-            <CardContent className="pb-5 space-y-2">
+            <CardContent className="pb-5 space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <CalendarDays className="h-4 w-4" />
-                    Hoje
-                  </div>
-                  <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-                    {formatCurrency(todaySpend)}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <CalendarDays className="h-4 w-4" />
-                    Semana
-                  </div>
-                  <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-                    {formatCurrency(weekSpend)}
-                  </div>
-                </div>
+                <Tile
+                  label="Hoje"
+                  value={formatCurrency(todaySpend)}
+                  icon={<CalendarDays className="h-4 w-4" />}
+                />
+                <Tile
+                  label="Semana"
+                  value={formatCurrency(weekSpend)}
+                  icon={<CalendarDays className="h-4 w-4" />}
+                />
               </div>
 
-              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                <div className="text-sm font-semibold">Projeção de gastos (mês)</div>
-                <div className="text-xs text-muted-foreground">
-                  No ritmo atual: ~{formatCurrency(projectedMonthSpend)}
-                </div>
-              </div>
+              <Tile
+                label="Projeção de gastos (mês)"
+                value={`~ ${formatCurrency(projectedMonthSpend)}`}
+                sub="Mantendo o ritmo atual"
+                icon={<Flame className="h-4 w-4" />}
+                tone={budget.total > 0 && projectedMonthSpend > budget.total ? "bad" : "neutral"}
+              />
 
-              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                <div className="text-sm font-semibold">Saldo projetado (fim do mês)</div>
-                <div
-                  className={cn(
-                    "text-xs",
-                    projectedBalance >= 0 ? "text-muted-foreground" : "text-destructive"
-                  )}
-                >
-                  {formatCurrency(projectedBalance)}
-                </div>
-              </div>
+              <Tile
+                label="Saldo projetado (fim do mês)"
+                value={formatCurrency(projectedBalance)}
+                sub="Receita - gasto projetado"
+                icon={<Wallet className="h-4 w-4" />}
+                tone={projectedBalance >= 0 ? "good" : "bad"}
+              />
 
-              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
-                <div className="text-sm font-semibold">Fôlego de saldo (estimativa)</div>
-                <div className="text-xs text-muted-foreground">
-                  {daysRunway === null
-                    ? "Sem gasto médio suficiente para estimar."
+              <Tile
+                label="Fôlego de saldo"
+                value={
+                  daysRunway === null
+                    ? "—"
                     : daysRunway === 0
-                      ? "No ritmo atual, seu saldo não cobre mais dias."
-                      : `No ritmo atual, seu saldo cobre ~${daysRunway}+ dias.`}
-                </div>
-              </div>
+                      ? "0 dias"
+                      : `~ ${daysRunway}+ dias`
+                }
+                sub={
+                  daysRunway === null
+                    ? "Sem gasto médio suficiente para estimar"
+                    : "Com base no gasto médio/dia"
+                }
+                icon={<Activity className="h-4 w-4" />}
+                tone={daysRunway !== null && daysRunway <= 3 ? "bad" : "neutral"}
+              />
 
               <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
                 <div className="text-sm font-semibold">Maior categoria do mês</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="mt-1 text-xs text-muted-foreground">
                   {topCategory
                     ? `${topCategory.category} • ${((topCategory.total / (totalExpenses || 1)) * 100).toFixed(0)}% (${formatCurrency(topCategory.total)})`
                     : "Sem categorias registradas ainda."}
                 </div>
+              </div>
+
+              {/* Saúde financeira (compacto e vendável) */}
+              <div className="rounded-2xl border border-border/60 bg-background/20 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold">Saúde financeira</div>
+                  {budget.total > 0 ? (
+                    <div className={cn("text-xs tabular-nums", budgetExceeded ? "text-destructive" : "text-muted-foreground")}>
+                      {budgetPercent.toFixed(0)}% do orçamento
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">Defina um orçamento</div>
+                  )}
+                </div>
+
+                {budget.total > 0 ? (
+                  <div className="mt-2">
+                    <Progress value={budgetPercent} className="h-2.5 rounded-full" />
+                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="tabular-nums">{formatCurrency(totalExpenses)}</span>
+                      <span className="tabular-nums">{formatCurrency(budget.total)}</span>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>
@@ -578,7 +681,7 @@ export function Dashboard({
                       <ResponsiveContainer width="100%" height="100%">
                         <RePieChart>
                           <Pie
-                            data={categoryData}
+                            data={pieCategoryData}
                             dataKey="total"
                             nameKey="category"
                             cx="50%"
@@ -588,8 +691,15 @@ export function Dashboard({
                             paddingAngle={2}
                             strokeWidth={0}
                           >
-                            {categoryData.map((entry) => (
-                              <Cell key={entry.category} fill={getCategoryColor(entry.category)} />
+                            {pieCategoryData.map((entry) => (
+                              <Cell
+                                key={entry.category}
+                                fill={
+                                  entry.category === "Outros"
+                                    ? "hsl(var(--muted-foreground))"
+                                    : getCategoryColor(entry.category)
+                                }
+                              />
                             ))}
                           </Pie>
                         </RePieChart>
