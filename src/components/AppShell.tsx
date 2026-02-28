@@ -69,11 +69,11 @@ function SidebarNav({
         <div
           className={cn(
             "relative rounded-2xl border border-border/50 bg-card/60 shadow-sm",
-            // quando colapsado, centraliza tudo e remove gaps que “tortam”
-            isCollapsed ? "grid place-items-center px-2 py-3" : "flex items-center gap-3 px-3 py-3"
+            isCollapsed
+              ? "grid place-items-center px-2 py-3"
+              : "flex items-center gap-3 px-3 py-3"
           )}
         >
-          {/* “Logo” — quando colapsado fica neutro pra não virar “bola verde” */}
           <div
             className={cn(
               "h-9 w-9 rounded-xl ring-1 shrink-0",
@@ -81,7 +81,6 @@ function SidebarNav({
             )}
           />
 
-          {/* Texto (só aparece expandido) */}
           {!isCollapsed ? (
             <div className="leading-tight">
               <div className="text-sm font-semibold whitespace-nowrap">FinBrasil</div>
@@ -91,7 +90,6 @@ function SidebarNav({
             </div>
           ) : null}
 
-          {/* Toggle (desktop) — absoluto pra não empurrar nada */}
           {showToggle ? (
             <Button
               type="button"
@@ -124,14 +122,11 @@ function SidebarNav({
                   "hover:bg-muted/50",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "overflow-hidden",
-
-                  // aura mais contida no modo colapsado
                   "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
                   isCollapsed
                     ? "before:bg-[radial-gradient(160px_circle_at_50%_40%,hsl(var(--primary)/0.07),transparent_72%)]"
                     : "before:bg-[radial-gradient(200px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
                   "hover:before:opacity-100",
-
                   isActive
                     ? cn(
                         "text-foreground bg-primary/10",
@@ -145,8 +140,6 @@ function SidebarNav({
                         "after:bg-gradient-to-b after:from-transparent after:via-primary after:to-transparent after:opacity-90"
                       )
                     : "text-muted-foreground",
-
-                  // colapsado: garante centro perfeito
                   isCollapsed && "justify-center px-2"
                 )}
               >
@@ -167,7 +160,6 @@ function SidebarNav({
           })}
         </div>
 
-        {/* Botão Novo gasto */}
         {onNewExpense ? (
           <div className={cn("mt-4", isCollapsed ? "flex justify-center" : "px-1")}>
             <Button
@@ -180,7 +172,6 @@ function SidebarNav({
               )}
               title={isCollapsed ? "Novo gasto" : undefined}
             >
-              {/* glow grande só no modo expandido */}
               {!isCollapsed ? (
                 <>
                   <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/25 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -257,14 +248,13 @@ export function AppShell({
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
 
       <div className="flex min-h-screen w-full">
-        {/* Sidebar (Desktop) */}
         <aside
           className={cn(
             "hidden bg-background/60 backdrop-blur xl:block",
             "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
             "transition-[width] duration-300 ease-out",
-            "will-change-[width] overflow-hidden",
-            // ✅ AQUI: deixa fixa enquanto rola
+            "will-change-[width]",
+            // ✅ fixa durante o scroll
             "sticky top-0 h-screen shrink-0 overflow-y-auto"
           )}
           style={{ width: collapsed ? 80 : 288 }}
