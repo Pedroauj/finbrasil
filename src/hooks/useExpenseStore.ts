@@ -76,8 +76,14 @@ function addMonthsAtStartDay(periodStart: Date, offset: number, startDay: number
  * Converte uma data (string YYYY-MM-DD) para a chave do período financeiro (YYYY-MM) conforme startDay.
  * Ex.: startDay=5, data=2026-03-01 => cai no período que começou 2026-02-05 => key "2026-02"
  */
+function parseDateLocal(dateStr: string): Date {
+  // "YYYY-MM-DD" → parse em timezone local (evita bug de UTC-offset)
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function getFinancialKeyForDate(dateStr: string, startDay: number) {
-  const d = new Date(dateStr);
+  const d = parseDateLocal(dateStr);
   const ps = getFinancialPeriodStart(d, startDay);
   return `${ps.getFullYear()}-${pad2(ps.getMonth() + 1)}`;
 }
@@ -625,10 +631,6 @@ export function useExpenseStore() {
       allMonthKeys.add(getFinancialKeyForDate(e.date, monthStartDay));
     });
 
-    allBudgets.forEach((b) => {
-      allMonthKeys.add(`${b.year}-${pad2(b.month)}`);
-    });
-
     allSalaries.forEach((s) => {
       allMonthKeys.add(`${s.year}-${pad2(s.month)}`);
     });
@@ -656,13 +658,12 @@ export function useExpenseStore() {
       const [y, m] = key.split("-").map(Number);
 
       const salaryIncome = allSalaries.find((s) => s.month === m && s.year === y)?.amount || 0;
-      const budgetIncome = allBudgets.find((b) => b.month === m && b.year === y)?.total_limit || 0;
 
       const extraIncome = allExtraIncomes
         .filter((e) => getFinancialKeyForDate(e.date, monthStartDay) === `${y}-${pad2(m)}`)
         .reduce((s, e) => s + e.amount, 0);
 
-      const monthIncome = salaryIncome + extraIncome + budgetIncome;
+      const monthIncome = salaryIncome + extraIncome;
 
       const monthExpenses = allExpenses
         .filter((e) => getFinancialKeyForDate(e.date, monthStartDay) === `${y}-${pad2(m)}`)
@@ -694,7 +695,7 @@ export function useExpenseStore() {
     }
 
     return result;
-  }, [allExpenses, allBudgets, allSalaries, allExtraIncomes, invoices, periodStart, monthStartDay]);
+  }, [allExpenses, allSalaries, allExtraIncomes, invoices, periodStart, monthStartDay]);
 
   /** =========================
    *  Expenses CRUD
