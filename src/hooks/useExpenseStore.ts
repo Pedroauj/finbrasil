@@ -268,6 +268,10 @@ export function useExpenseStore() {
           status: (e.status as Expense["status"]) || "paid",
           accountId: e.account_id || undefined,
           cardId: e.card_id || undefined,
+          isInstallment: e.is_installment || false,
+          installmentCount: e.installment_count || undefined,
+          currentInstallment: e.current_installment || undefined,
+          parentInstallmentId: e.parent_installment_id || undefined,
         }))
       );
 
@@ -705,6 +709,87 @@ export function useExpenseStore() {
     async (expense: Omit<Expense, "id">) => {
       if (!user) return;
 
+      // ── Parcelamento ──
+      if (expense.isInstallment && expense.installmentCount && expense.installmentCount > 1) {
+        const count = expense.installmentCount;
+        const perInstallment = Math.round((expense.amount / count) * 100) / 100;
+        const baseDesc = expense.description.replace(/\s*\(\d+\/\d+\)\s*$/, "");
+
+        // Criar a primeira parcela (parent)
+        const firstInsert: any = {
+          user_id: user.id,
+          description: `${baseDesc} (1/${count})`,
+          amount: perInstallment,
+          category: expense.category,
+          date: expense.date,
+          status: expense.status || "paid",
+          is_installment: true,
+          installment_count: count,
+          current_installment: 1,
+          parent_installment_id: null,
+        };
+        if (expense.accountId) firstInsert.account_id = expense.accountId;
+
+        const { data: parent, error: parentErr } = await supabase
+          .from("expenses")
+          .insert(firstInsert)
+          .select()
+          .single();
+
+        if (!parent || parentErr) return;
+
+        // Criar parcelas 2..N em meses futuros
+        const [baseY, baseM, baseD] = expense.date.split("-").map(Number);
+
+        for (let i = 2; i <= count; i++) {
+          const futureDate = new Date(baseY, baseM - 1 + (i - 1), baseD);
+          const lastDay = new Date(futureDate.getFullYear(), futureDate.getMonth() + 1, 0).getDate();
+          const day = Math.min(baseD, lastDay);
+          const dateStr = `${futureDate.getFullYear()}-${pad2(futureDate.getMonth() + 1)}-${pad2(day)}`;
+
+          const childInsert: any = {
+            user_id: user.id,
+            description: `${baseDesc} (${i}/${count})`,
+            amount: perInstallment,
+            category: expense.category,
+            date: dateStr,
+            status: "planned",
+            is_installment: true,
+            installment_count: count,
+            current_installment: i,
+            parent_installment_id: parent.id,
+          };
+          if (expense.accountId) childInsert.account_id = expense.accountId;
+
+          await supabase.from("expenses").insert(childInsert);
+        }
+
+        // Adicionar ao state local apenas se a primeira parcela cai no período atual
+        const parentKey = getFinancialKeyForDate(parent.date, monthStartDay);
+        const currentKey = `${year}-${pad2(month)}`;
+        if (parentKey === currentKey) {
+          setExpenses((prev) => [
+            {
+              id: parent.id,
+              date: parent.date,
+              description: parent.description,
+              category: parent.category,
+              amount: Number(parent.amount),
+              status: ((parent as any).status as Expense["status"]) || "paid",
+              accountId: (parent as any).account_id || undefined,
+              isInstallment: true,
+              installmentCount: count,
+              currentInstallment: 1,
+              parentInstallmentId: null,
+            },
+            ...prev,
+          ]);
+        }
+
+        return;
+      }
+
+      // ── Gasto normal (sem parcelamento) ──
       const insertData: any = {
         user_id: user.id,
         description: expense.description,
@@ -735,7 +820,7 @@ export function useExpenseStore() {
         ]);
       }
     },
-    [user]
+    [user, monthStartDay, month, year]
   );
 
   const updateExpense = useCallback(
@@ -752,14 +837,38 @@ export function useExpenseStore() {
   );
 
   const deleteExpense = useCallback(
-    async (id: string) => {
+    async (id: string, deleteAllInstallments?: boolean) => {
       if (!user) return;
 
-      const { error } = await supabase.from("expenses").delete().eq("id", id).eq("user_id", user.id);
+      if (deleteAllInstallments) {
+        // Buscar o expense para saber o parent
+        const exp = expenses.find((e) => e.id === id);
+        if (exp?.isInstallment) {
+          const parentId = exp.parentInstallmentId || exp.id;
+          // Deletar todos os filhos
+          await supabase
+            .from("expenses")
+            .delete()
+            .eq("parent_installment_id", parentId)
+            .eq("user_id", user.id);
+          // Deletar o parent
+          await supabase
+            .from("expenses")
+            .delete()
+            .eq("id", parentId)
+            .eq("user_id", user.id);
 
+          setExpenses((prev) =>
+            prev.filter((e) => e.id !== parentId && e.parentInstallmentId !== parentId)
+          );
+          return;
+        }
+      }
+
+      const { error } = await supabase.from("expenses").delete().eq("id", id).eq("user_id", user.id);
       if (!error) setExpenses((prev) => prev.filter((e) => e.id !== id));
     },
-    [user]
+    [user, expenses]
   );
 
   /** =========================
