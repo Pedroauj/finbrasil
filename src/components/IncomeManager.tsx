@@ -13,7 +13,7 @@ import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animation
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 
-interface IncomeManagerProps {
+interface Props {
   salary: Salary | null;
   extraIncomes: ExtraIncome[];
   budget: Budget;
@@ -27,10 +27,10 @@ interface IncomeManagerProps {
   onSaveBudget: (budget: Budget) => void;
 }
 
-export function IncomeManager({
+export function ({
   salary, extraIncomes, budget, customCategories, currentDate,
   onSaveSalary, onDeleteSalary, onAddExtraIncome, onUpdateExtraIncome, onDeleteExtraIncome, onSaveBudget,
-}: IncomeManagerProps) {
+}: Props) {
   // Salary form
   const [salaryAmount, setSalaryAmount] = useState(salary?.amount?.toString() || "");
   const [salaryDay, setSalaryDay] = useState(salary?.dayOfReceipt?.toString() || "5");
