@@ -16,6 +16,7 @@ import {
   CalendarDays,
   BarChart3,
   AlertTriangle,
+  Bug,
 } from "lucide-react";
 import {
   PieChart as RePieChart,
@@ -81,6 +82,11 @@ function getWeekKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-W${week}`;
 }
 
+function safeDate(value: any) {
+  const d = new Date(value);
+  return Number.isFinite(d.getTime()) ? d : null;
+}
+
 interface DashboardProps {
   expenses: Expense[];
   budget: Budget;
@@ -100,6 +106,11 @@ export function Dashboard({
   invoices,
   monthBalance,
 }: DashboardProps) {
+  // Debug flag via URL: ?debug=1
+  const debugMode =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("debug");
+
   const totalExpenses = useMemo(() => sumExpenses(expenses), [expenses]);
   const totalPaid = useMemo(() => sumExpenses(expenses, { status: "paid" }), [expenses]);
   const totalPlanned = useMemo(() => sumExpenses(expenses, { status: "planned" }), [expenses]);
@@ -135,14 +146,13 @@ export function Dashboard({
     [currentInvoices]
   );
 
-  // KPIs base
+  // KPIs base (origem: store)
   const income = monthBalance.income ?? 0;
   const balance = monthBalance.balance ?? 0;
 
   const todayReal = new Date();
   const isCurrentMonth = isSameMonth(todayReal, currentDate);
 
-  // Para mês no passado/futuro, usa o mês “fechado”
   const dim = daysInMonth(currentDate);
   const dayIndex = isCurrentMonth ? todayReal.getDate() : dim;
 
@@ -153,7 +163,7 @@ export function Dashboard({
   const projectedMonthSpend = avgDailySpend * dim;
   const projectedBalance = income - projectedMonthSpend;
 
-  // Integridade/consistência (evitar “saldo 0 com gasto > 0” etc.)
+  // Consistência mínima (evitar “saldo 0 com gasto > 0” etc.)
   const computedBalance = income - totalExpenses;
   const balanceMismatch =
     Number.isFinite(balance) && Number.isFinite(computedBalance)
@@ -161,11 +171,13 @@ export function Dashboard({
       : false;
 
   const showDataWarning =
-    (income === 0 && totalExpenses > 0) || (totalExpenses > 0 && balance === 0) || balanceMismatch;
+    (income === 0 && totalExpenses > 0) ||
+    (totalExpenses > 0 && balance === 0) ||
+    balanceMismatch;
 
-  // Daily trend (sum by day)
+  // Daily trend (sum by day) — mantém mês civil (para gráfico)
   const dailySeries = useMemo(() => {
-    const map = new Map<number, number>(); // day -> total
+    const map = new Map<number, number>();
     for (const e of expenses) {
       const dt = new Date(e.date);
       if (!isSameMonth(dt, currentDate)) continue;
@@ -183,7 +195,7 @@ export function Dashboard({
     return out;
   }, [expenses, currentDate, dim]);
 
-  // “Hoje” e “Semana” (resumo rápido)
+  // Hoje/Semana
   const todayInView = useMemo(() => {
     if (!isCurrentMonth) return new Date(currentDate.getFullYear(), currentDate.getMonth(), dim);
     return todayReal;
@@ -221,7 +233,6 @@ export function Dashboard({
     return Math.floor(balance / avgDailySpend);
   }, [avgDailySpend, balance]);
 
-  // Category ranking (top 6)
   const categoryRanking = useMemo(() => {
     const sorted = [...categoryData].sort((a, b) => b.total - a.total);
     const top = sorted.slice(0, 6);
@@ -246,12 +257,94 @@ export function Dashboard({
     ];
   }, [totalExpenses, prevTotal]);
 
+  // Debug helpers: datas das despesas no mês civil
+  const expenseDatesInMonth = useMemo(() => {
+    const dates = expenses
+      .map((e) => safeDate(e.date))
+      .filter(Boolean) as Date[];
+
+    const inMonth = dates.filter((d) => isSameMonth(d, currentDate));
+    if (inMonth.length === 0) return null;
+
+    inMonth.sort((a, b) => a.getTime() - b.getTime());
+    return {
+      count: inMonth.length,
+      min: inMonth[0],
+      max: inMonth[inMonth.length - 1],
+    };
+  }, [expenses, currentDate]);
+
   return (
     <StaggerContainer className="space-y-6">
       {/* Alerts */}
       <StaggerItem>
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </StaggerItem>
+
+      {/* Debug auditoria */}
+      {debugMode && (
+        <StaggerItem>
+          <Card className={cn(appCard, "border-border/80")}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Bug className="h-4 w-4 text-muted-foreground" />
+                Auditoria (debug)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">monthKey (financeiro)</div>
+                  <div className="text-sm font-semibold tabular-nums text-foreground">{monthKey}</div>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">income (store)</div>
+                  <div className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(income)}</div>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">balance (store)</div>
+                  <div className={cn("text-sm font-semibold tabular-nums", balance >= 0 ? "text-foreground" : "text-destructive")}>
+                    {formatCurrency(balance)}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">income - expenses</div>
+                  <div className={cn("text-sm font-semibold tabular-nums", computedBalance >= 0 ? "text-foreground" : "text-destructive")}>
+                    {formatCurrency(computedBalance)}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">expenses (mês)</div>
+                  <div className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(totalExpenses)}</div>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">faturas (mês)</div>
+                  <div className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(totalInvoices)}</div>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">divergência?</div>
+                  <div className={cn("text-sm font-semibold", balanceMismatch ? "text-destructive" : "text-muted-foreground")}>
+                    {balanceMismatch ? "SIM" : "não"}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
+                  <div className="text-xs text-muted-foreground">despesas no mês (datas)</div>
+                  <div className="text-xs text-muted-foreground">
+                    {expenseDatesInMonth
+                      ? `${expenseDatesInMonth.count} • ${format(expenseDatesInMonth.min, "dd/MM")} → ${format(expenseDatesInMonth.max, "dd/MM")}`
+                      : "nenhuma"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 text-xs text-muted-foreground">
+                Dica: feche o debug removendo <span className="font-mono">?debug=1</span> da URL.
+              </div>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      )}
 
       {/* Integridade dos dados (confiança do usuário) */}
       {showDataWarning && (
@@ -303,7 +396,7 @@ export function Dashboard({
         </StaggerItem>
       )}
 
-      {/* Row 1 (Topo ideal): Caixa como centro + Resumo rápido */}
+      {/* Row 1: Caixa como centro + Resumo rápido */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <CashBalance balance={monthBalance} className={cn(appCard, "xl:col-span-2")} />
@@ -381,10 +474,9 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Row 2: KPIs primários (hierarquia correta) */}
+      {/* Row 2: KPIs primários */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {/* Balance (primeiro) */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -418,7 +510,6 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Income */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -438,7 +529,6 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Total Expenses */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -473,7 +563,6 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Invoices */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -498,10 +587,9 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Row 3: KPIs secundários (indicadores) */}
+      {/* Row 3: indicadores */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {/* Savings rate */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -521,7 +609,6 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Avg daily spend */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -543,7 +630,6 @@ export function Dashboard({
             </CardContent>
           </Card>
 
-          {/* Projection */}
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
@@ -579,7 +665,7 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Budget Progress */}
+      {/* Budget */}
       {budget.total > 0 && (
         <StaggerItem>
           <Card className={appCard}>
@@ -601,7 +687,7 @@ export function Dashboard({
         </StaggerItem>
       )}
 
-      {/* Row 4: Tendência + Categorias (núcleo analítico) */}
+      {/* Tendência + Categorias */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <Card className={cn(appCard, "xl:col-span-2")}>
@@ -621,12 +707,7 @@ export function Dashboard({
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={dailySeries} margin={{ left: 8, right: 12, top: 10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                      <XAxis
-                        dataKey="day"
-                        tick={{ fontSize: 11 }}
-                        className="fill-muted-foreground"
-                        tickMargin={8}
-                      />
+                      <XAxis dataKey="day" tick={{ fontSize: 11 }} className="fill-muted-foreground" tickMargin={8} />
                       <YAxis
                         tick={{ fontSize: 11 }}
                         className="fill-muted-foreground"
@@ -732,7 +813,7 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Row 5: Diagnóstico (status + comparativo) */}
+      {/* Status + Comparativo */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <Card className={appCard}>
