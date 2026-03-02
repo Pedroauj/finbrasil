@@ -20,6 +20,7 @@ interface ExpenseFormProps {
   currentDate: Date;
   categories: string[];
   accounts?: FinancialAccount[];
+  existingExpenses?: Expense[];
   onSubmit: (data: Omit<Expense, "id">) => void;
   onCancel: () => void;
   onAddCategory: (cat: string) => void;
@@ -31,6 +32,7 @@ export function ExpenseForm({
   currentDate,
   categories,
   accounts = [],
+  existingExpenses = [],
   onSubmit,
   onCancel,
   onAddCategory,
@@ -85,10 +87,30 @@ export function ExpenseForm({
   const parsedCount = parseInt(installmentCount) || 2;
   const perInstallment = isInstallment && parsedCount > 1 ? parsedAmount / parsedCount : 0;
 
+  // Duplicate detection
+  const duplicateWarning = useMemo(() => {
+    if (isEditing || !description.trim() || !amount || !date) return null;
+    const descLower = description.trim().toLowerCase();
+    const found = existingExpenses.find(
+      (e) =>
+        e.date === date &&
+        Math.abs(e.amount - parsedAmount) < 0.01 &&
+        e.description.toLowerCase().includes(descLower)
+    );
+    return found ? found : null;
+  }, [isEditing, description, amount, date, parsedAmount, existingExpenses]);
+
+  const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const desc = description.trim();
     if (!desc || !amount || !category) return;
+
+    if (duplicateWarning && !duplicateConfirmed) {
+      setDuplicateConfirmed(true);
+      return;
+    }
 
     onSubmit({
       date,
@@ -335,6 +357,14 @@ export function ExpenseForm({
           </p>
         </div>
       )}
+      {/* Duplicate warning */}
+      {duplicateWarning && duplicateConfirmed && (
+        <div className="rounded-2xl border border-[hsl(var(--warning))]/25 bg-[hsl(var(--warning))]/8 p-3">
+          <p className="text-xs font-medium text-[hsl(var(--warning))]">
+            ⚠️ Esse gasto parece duplicado ({duplicateWarning.description} — {format(new Date(duplicateWarning.date), "dd/MM")}). Clique novamente para confirmar.
+          </p>
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-2 pt-1">
         <Button
@@ -346,7 +376,13 @@ export function ExpenseForm({
           Voltar
         </Button>
         <Button type="submit" className="rounded-xl">
-          {expense ? "Salvar" : isInstallment && parsedCount > 1 ? `Criar ${parsedCount}x parcelas` : "Adicionar"}
+          {duplicateWarning && !duplicateConfirmed
+            ? "Verificar duplicidade"
+            : expense
+            ? "Salvar"
+            : isInstallment && parsedCount > 1
+            ? `Criar ${parsedCount}x parcelas`
+            : "Adicionar"}
         </Button>
       </div>
     </form>

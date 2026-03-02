@@ -47,6 +47,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CashBalance } from "./CashBalance";
 import { InvoiceAlerts } from "./InvoiceAlerts";
+import { UpcomingAlerts } from "./UpcomingAlerts";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
 import { cn } from "@/lib/utils";
 
@@ -123,6 +124,11 @@ interface DashboardProps {
   cards: CreditCard[];
   invoices: CreditCardInvoice[];
   monthBalance: MonthBalance;
+  alertDaysBefore?: number;
+  onMarkPaid?: (id: string) => void;
+  onPostpone?: (id: string, days: number) => void;
+  onEditExpense?: (expense: Expense) => void;
+  onDuplicateExpense?: (expense: Expense) => void;
 }
 
 export function Dashboard({
@@ -133,6 +139,11 @@ export function Dashboard({
   cards,
   invoices,
   monthBalance,
+  alertDaysBefore,
+  onMarkPaid,
+  onPostpone,
+  onEditExpense,
+  onDuplicateExpense,
 }: DashboardProps) {
   const totalExpenses = useMemo(() => sumExpenses(expenses), [expenses]);
   const totalPaid = useMemo(() => sumExpenses(expenses, { status: "paid" }), [expenses]);
@@ -337,6 +348,20 @@ export function Dashboard({
       {/* Alerts */}
       <StaggerItem>
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
+      </StaggerItem>
+
+      {/* Upcoming expense alerts */}
+      <StaggerItem>
+        <UpcomingAlerts
+          expenses={expenses}
+          currentDate={currentDate}
+          monthBalance={monthBalance}
+          alertDaysBefore={alertDaysBefore}
+          onMarkPaid={onMarkPaid}
+          onPostpone={onPostpone}
+          onEdit={onEditExpense}
+          onDuplicate={onDuplicateExpense}
+        />
       </StaggerItem>
 
       {/* KPI Cards */}

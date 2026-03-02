@@ -152,7 +152,17 @@ export function ExpenseTable({
   useEffect(() => {
     const handler = () => openNewExpense("planned");
     window.addEventListener("open-add-expense", handler);
-    return () => window.removeEventListener("open-add-expense", handler);
+
+    const editHandler = (e: Event) => {
+      const expense = (e as CustomEvent).detail as Expense;
+      if (expense) openEditExpense(expense);
+    };
+    window.addEventListener("edit-expense", editHandler);
+
+    return () => {
+      window.removeEventListener("open-add-expense", handler);
+      window.removeEventListener("edit-expense", editHandler);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -501,6 +511,7 @@ export function ExpenseTable({
             currentDate={currentDate}
             categories={allCategories}
             accounts={accounts}
+            existingExpenses={expenses}
             defaultStatus={defaultStatus}
             onSubmit={(data) => {
               if (editingExpense) onUpdate(editingExpense.id, data);

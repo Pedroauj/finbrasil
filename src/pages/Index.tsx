@@ -12,6 +12,8 @@ import { AccountManager } from "@/components/AccountManager";
 import { MonthNavigator } from "@/components/MonthNavigator";
 import { ModeToggle } from "@/components/ModeToggle";
 import { DEFAULT_CATEGORIES } from "@/types/expense";
+import type { Expense } from "@/types/expense";
+import { useUpcomingAlertCount } from "@/components/UpcomingAlerts";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
@@ -20,6 +22,7 @@ import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AppShell, NavKey } from "@/components/AppShell";
 
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bot, LogOut } from "lucide-react";
 
 const NAV_LABELS: Record<NavKey, string> = {
@@ -109,6 +112,22 @@ export default function Index() {
 
   const [assistantOpen, setAssistantOpen] = React.useState(false);
   const [nav, setNav] = React.useState<NavKey>("dashboard");
+
+  // Alert days before config
+  const LS_ALERT_DAYS = "finbrasil.settings.alertDaysBefore";
+  const [alertDaysBefore, setAlertDaysBefore] = React.useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("finbrasil.settings.alertDaysBefore");
+      const v = raw ? parseInt(raw, 10) : 3;
+      return [1, 2, 3, 5, 7].includes(v) ? v : 3;
+    } catch { return 3; }
+  });
+
+  const alertCount = useUpcomingAlertCount(store.expenses ?? [], alertDaysBefore);
+  const navBadges = React.useMemo<Partial<Record<NavKey, number>>>(() => {
+    if (alertCount <= 0) return {};
+    return { expenses: alertCount };
+  }, [alertCount]);
 
   const allCategories = React.useMemo(
     () => [...DEFAULT_CATEGORIES, ...(store.customCategories ?? [])],
@@ -214,6 +233,32 @@ export default function Index() {
 
     window.location.reload();
   }, [store]);
+  // Alert quick actions
+  const handleMarkPaid = React.useCallback((id: string) => {
+    store.updateExpense(id, { status: "paid" as const });
+  }, [store]);
+
+  const handlePostpone = React.useCallback((id: string, days: number) => {
+    const exp = (store.expenses ?? []).find((e: Expense) => e.id === id);
+    if (!exp) return;
+    const [y, m, d] = exp.date.split("-").map(Number);
+    const newDate = new Date(y, m - 1, d + days);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dateStr = `${newDate.getFullYear()}-${pad(newDate.getMonth() + 1)}-${pad(newDate.getDate())}`;
+    store.updateExpense(id, { date: dateStr });
+  }, [store]);
+
+  const handleEditFromAlert = React.useCallback((expense: Expense) => {
+    setNav("expenses");
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("edit-expense", { detail: expense }));
+    }, 100);
+  }, []);
+
+  const handleDuplicateExpense = React.useCallback((expense: Expense) => {
+    const { id, ...rest } = expense;
+    store.addExpense({ ...rest, description: `${rest.description} (cópia)` });
+  }, [store]);
 
   const Content = React.useMemo(() => {
     switch (nav) {
@@ -228,6 +273,11 @@ export default function Index() {
               cards={store.creditCards}
               invoices={store.invoices}
               monthBalance={store.monthBalance}
+              alertDaysBefore={alertDaysBefore}
+              onMarkPaid={handleMarkPaid}
+              onPostpone={handlePostpone}
+              onEditExpense={handleEditFromAlert}
+              onDuplicateExpense={handleDuplicateExpense}
             />
           </PageShell>
         );
@@ -446,6 +496,38 @@ export default function Index() {
 
                   <div className="h-px bg-border/60" />
 
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Alertas de gastos</div>
+                      <div className="text-xs text-muted-foreground">
+                        Dias de antecedência para alertar.
+                      </div>
+                    </div>
+                    <div className="w-[140px]">
+                      <Select
+                        value={String(alertDaysBefore)}
+                        onValueChange={(v) => {
+                          const n = parseInt(v, 10);
+                          setAlertDaysBefore(n);
+                          try { localStorage.setItem("finbrasil.settings.alertDaysBefore", v); } catch {}
+                        }}
+                      >
+                        <SelectTrigger className="h-10 rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 5, 7].map((d) => (
+                            <SelectItem key={d} value={String(d)}>
+                              {d} {d === 1 ? "dia" : "dias"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-border/60" />
+
                   <div className="flex justify-end">
                     <Button className="h-10 rounded-xl" onClick={savePreferences}>
                       Salvar preferências
@@ -538,10 +620,15 @@ export default function Index() {
     profileEmail,
     privacyMode,
     monthStartDayDraft,
+    alertDaysBefore,
     saveProfile,
     savePreferences,
     exportCSV,
     resetFinance,
+    handleMarkPaid,
+    handlePostpone,
+    handleEditFromAlert,
+    handleDuplicateExpense,
   ]);
 
   const rightActions = (
@@ -576,6 +663,7 @@ export default function Index() {
         title={pageTitle}
         rightActions={rightActions}
         onNewExpense={onNewExpense}
+        badges={navBadges}
       >
         {Content}
       </AppShell>
