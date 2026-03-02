@@ -52,15 +52,16 @@ function SidebarNav({
   collapsed,
   onToggleCollapsed,
   showToggle,
+  badges,
 }: {
   active: NavKey;
   onNavigate: (k: NavKey) => void;
   footer?: ReactNode;
   onNewExpense?: () => void;
-
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   showToggle?: boolean;
+  badges?: Partial<Record<NavKey, number>>;
 }) {
   const isCollapsed = !!collapsed;
 
@@ -120,6 +121,7 @@ function SidebarNav({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key;
+            const badgeCount = badges?.[item.key] ?? 0;
 
             return (
               <button
@@ -165,6 +167,15 @@ function SidebarNav({
                 />
 
                 {!isCollapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
+
+                {badgeCount > 0 && (
+                  <span className={cn(
+                    "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none",
+                    isCollapsed ? "absolute -top-1 -right-1 h-4 min-w-[16px] px-1" : "h-5 min-w-[20px] px-1.5"
+                  )}>
+                    {badgeCount}
+                  </span>
+                )}
 
                 {!isCollapsed ? (
                   <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_70%_30%,hsl(var(--primary)/0.08),transparent_60%)]" />
@@ -232,6 +243,7 @@ export function AppShell({
   footer,
   children,
   onNewExpense,
+  badges,
 }: {
   active: NavKey;
   onNavigate: (k: NavKey) => void;
@@ -240,6 +252,7 @@ export function AppShell({
   footer?: ReactNode;
   children: ReactNode;
   onNewExpense?: () => void;
+  badges?: Partial<Record<NavKey, number>>;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -281,6 +294,7 @@ export function AppShell({
             collapsed={collapsed}
             onToggleCollapsed={() => setCollapsed((v) => !v)}
             showToggle
+            badges={badges}
           />
         </aside>
 
@@ -303,6 +317,7 @@ export function AppShell({
                       onNewExpense={onNewExpense}
                       collapsed={false}
                       showToggle={false}
+                      badges={badges}
                     />
                   </SheetContent>
                 </Sheet>

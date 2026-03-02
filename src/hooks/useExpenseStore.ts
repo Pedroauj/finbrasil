@@ -257,23 +257,42 @@ export function useExpenseStore() {
 
       const recurringExpenseIds = new Set((instances || []).map((i: any) => i.expense_id));
 
-      setExpenses(
-        (data || []).map((e: any) => ({
+      const today = new Date();
+      const todayStr = toISODate(today);
+
+      // Auto-mark overdue: planned expenses with date < today
+      const overdueIds: string[] = [];
+      const mapped = (data || []).map((e: any) => {
+        let status = (e.status as Expense["status"]) || "paid";
+        if (status === "planned" && e.date < todayStr) {
+          status = "overdue";
+          overdueIds.push(e.id);
+        }
+        return {
           id: e.id,
           date: e.date,
           description: e.description,
           category: e.category,
           amount: Number(e.amount),
           isRecurring: recurringExpenseIds.has(e.id),
-          status: (e.status as Expense["status"]) || "paid",
+          status,
           accountId: e.account_id || undefined,
           cardId: e.card_id || undefined,
           isInstallment: e.is_installment || false,
           installmentCount: e.installment_count || undefined,
           currentInstallment: e.current_installment || undefined,
           parentInstallmentId: e.parent_installment_id || undefined,
-        }))
-      );
+        };
+      });
+
+      setExpenses(mapped);
+
+      // Persist overdue status changes to DB
+      if (overdueIds.length > 0) {
+        for (const oid of overdueIds) {
+          supabase.from("expenses").update({ status: "overdue" }).eq("id", oid).then(() => {});
+        }
+      }
 
       setLoading(false);
     };
