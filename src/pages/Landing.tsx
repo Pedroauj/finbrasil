@@ -12,6 +12,10 @@ import {
   Wallet,
   PieChart,
   Calendar,
+  Star,
+  Lock,
+  Zap,
+  MessageSquare,
 } from "lucide-react";
 
 /* ───────── Background ───────── */
@@ -63,11 +67,8 @@ function Reveal({
 function DashboardPreview() {
   return (
     <div className="relative">
-      {/* Glow behind */}
       <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-emerald-500/[0.06] blur-2xl" />
-
       <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 backdrop-blur-xl shadow-2xl shadow-black/40">
-        {/* Top bar */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded-full bg-emerald-400/60" />
@@ -79,8 +80,6 @@ function DashboardPreview() {
             <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
           </div>
         </div>
-
-        {/* KPI row */}
         <div className="grid grid-cols-3 gap-3 mb-4">
           {[
             { label: "Receitas", value: "R$ 8.450", color: "text-emerald-400" },
@@ -93,8 +92,6 @@ function DashboardPreview() {
             </div>
           ))}
         </div>
-
-        {/* Chart bars */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <div className="mb-3 text-[10px] text-white/40 uppercase tracking-wider">Gastos por categoria</div>
           <div className="flex items-end gap-2 h-20">
@@ -109,8 +106,6 @@ function DashboardPreview() {
             ))}
           </div>
         </div>
-
-        {/* Recent items */}
         <div className="mt-3 space-y-2">
           {[
             { icon: CreditCard, desc: "Nubank — Fatura", val: "-R$ 1.340" },
@@ -124,6 +119,57 @@ function DashboardPreview() {
               </span>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────── AI Chat Mockup ───────── */
+function AIChatPreview() {
+  return (
+    <div className="relative">
+      <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-emerald-500/[0.04] blur-2xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 backdrop-blur-xl">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-400/20">
+            <Bot className="h-3.5 w-3.5 text-emerald-400" />
+          </div>
+          <span className="text-xs font-medium text-white/50">Assistente FinBrasil</span>
+        </div>
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <div className="rounded-2xl rounded-tr-md bg-emerald-500/15 border border-emerald-500/10 px-4 py-2.5 max-w-[80%]">
+              <p className="text-xs text-white/70">Como estão meus gastos com alimentação?</p>
+            </div>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="flex"
+          >
+            <div className="rounded-2xl rounded-tl-md bg-white/[0.04] border border-white/[0.06] px-4 py-2.5 max-w-[85%]">
+              <p className="text-xs text-white/60 leading-relaxed">
+                Você gastou <span className="text-emerald-400 font-semibold">18% acima da média</span> em alimentação este mês.
+                Considere revisar pedidos por delivery — eles representam 62% dessa categoria.
+              </p>
+            </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.9, duration: 0.5 }}
+            className="flex"
+          >
+            <div className="rounded-2xl rounded-tl-md bg-white/[0.04] border border-white/[0.06] px-4 py-2.5 max-w-[85%]">
+              <p className="text-xs text-white/60 leading-relaxed">
+                💡 Se reduzir delivery em 30%, você economiza <span className="text-emerald-400 font-semibold">~R$ 180/mês</span>.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -154,6 +200,41 @@ function BentoCard({
           </div>
           <h3 className="mb-1.5 text-base font-bold text-white/90">{title}</h3>
           <p className="text-sm leading-relaxed text-white/45">{description}</p>
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+/* ───────── Testimonial Card ───────── */
+function TestimonialCard({
+  name,
+  role,
+  text,
+  delay = 0,
+}: {
+  name: string;
+  role: string;
+  text: string;
+  delay?: number;
+}) {
+  return (
+    <Reveal delay={delay}>
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur">
+        <div className="flex gap-0.5 mb-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star key={i} className="h-3.5 w-3.5 fill-emerald-400 text-emerald-400" />
+          ))}
+        </div>
+        <p className="text-sm leading-relaxed text-white/50 mb-4">"{text}"</p>
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/15 grid place-items-center">
+            <span className="text-xs font-bold text-emerald-400">{name[0]}</span>
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-white/70">{name}</div>
+            <div className="text-[11px] text-white/30">{role}</div>
+          </div>
         </div>
       </div>
     </Reveal>
@@ -209,6 +290,11 @@ export default function Landing() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
+              {/* Hook phrase */}
+              <p className="mb-4 text-sm font-medium text-emerald-400/80 tracking-wide">
+                Você sabe para onde seu dinheiro está indo?
+              </p>
+
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-1 text-xs font-medium text-emerald-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Gestão financeira inteligente
@@ -249,8 +335,21 @@ export default function Landing() {
                 </Button>
               </div>
 
+              {/* Microcopy below CTA */}
+              <div className="mt-5 flex flex-wrap gap-4 text-[11px] text-white/35">
+                <span className="flex items-center gap-1.5">
+                  <CreditCard className="h-3 w-3 text-emerald-500/40" /> Não pedimos cartão
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Zap className="h-3 w-3 text-emerald-500/40" /> Leva menos de 30 segundos
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Lock className="h-3 w-3 text-emerald-500/40" /> Dados criptografados
+                </span>
+              </div>
+
               {/* Micro trust */}
-              <div className="mt-10 flex flex-wrap gap-6 text-xs text-white/30">
+              <div className="mt-8 flex flex-wrap gap-6 text-xs text-white/30">
                 <span className="flex items-center gap-1.5">
                   <Shield className="h-3.5 w-3.5 text-emerald-500/50" /> Criptografia de ponta
                 </span>
@@ -278,6 +377,41 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Social Proof: Testimonials ── */}
+      <section className="relative z-10 pb-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <Reveal>
+            <div className="text-center mb-10">
+              <p className="text-sm font-medium text-emerald-400/70 mb-2">+1.000 usuários organizando suas finanças</p>
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                O que nossos usuários <span className="text-emerald-400">dizem</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <TestimonialCard
+              name="Lucas Mendes"
+              role="Desenvolvedor, São Paulo"
+              text="Finalmente consigo ver para onde vai cada centavo. O dashboard é incrível e a IA me ajuda a identificar gastos desnecessários."
+              delay={0}
+            />
+            <TestimonialCard
+              name="Ana Carolina"
+              role="Designer, Belo Horizonte"
+              text="Uso há 3 meses e já consegui economizar mais de R$ 2.000. O controle de parcelamento é perfeito."
+              delay={0.08}
+            />
+            <TestimonialCard
+              name="Rafael Santos"
+              role="Autônomo, Curitiba"
+              text="Como autônomo, minha renda varia muito. O FinBrasil me dá clareza total sobre meu fluxo de caixa."
+              delay={0.16}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ── Features — Bento grid ── */}
       <section className="relative z-10 pb-28">
         <div className="mx-auto max-w-7xl px-6">
@@ -294,7 +428,6 @@ export default function Landing() {
           </Reveal>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Tall card */}
             <BentoCard
               icon={BarChart3}
               title="Dashboards inteligentes"
@@ -326,6 +459,48 @@ export default function Landing() {
               description="Categorize automaticamente e entenda seus hábitos de consumo."
               delay={0.2}
             />
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI Showcase ── */}
+      <section className="relative z-10 pb-28">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <Reveal>
+              <div>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-1 text-xs font-medium text-emerald-300">
+                  <Bot className="h-3.5 w-3.5" />
+                  Inteligência Artificial
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-4">
+                  Sua assistente financeira{" "}
+                  <span className="text-emerald-400">pessoal</span>
+                </h2>
+                <p className="text-sm leading-relaxed text-white/40 max-w-md mb-6">
+                  Converse com a IA do FinBrasil para entender seus padrões de gasto, receber alertas inteligentes
+                  e sugestões personalizadas para economizar mais.
+                </p>
+                <div className="space-y-3">
+                  {[
+                    { icon: MessageSquare, text: "Análise de padrões de consumo" },
+                    { icon: TrendingUp, text: "Sugestões de economia personalizadas" },
+                    { icon: Shield, text: "Alertas de gastos acima da média" },
+                  ].map((item) => (
+                    <div key={item.text} className="flex items-center gap-3 text-sm text-white/50">
+                      <div className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/15">
+                        <item.icon className="h-3.5 w-3.5 text-emerald-400" />
+                      </div>
+                      {item.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.15}>
+              <AIChatPreview />
+            </Reveal>
           </div>
         </div>
       </section>

@@ -23,7 +23,8 @@ import { AppShell, NavKey } from "@/components/AppShell";
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, LogOut } from "lucide-react";
+import { Bot, LogOut, Plus, Trash2, Target } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 const NAV_LABELS: Record<NavKey, string> = {
   dashboard: "Dashboard",
@@ -103,6 +104,78 @@ function toCSV(rows: Array<Record<string, any>>) {
 
   // BOM UTF-8 (abre certo no Excel)
   return "\uFEFF" + lines.join("\n");
+}
+
+/* ───── Goals Manager (Settings) ───── */
+interface FinancialGoal { id: string; description: string; target: number; current: number; }
+
+function GoalsManager() {
+  const [goals, setGoals] = React.useState<FinancialGoal[]>(() => {
+    try { const r = localStorage.getItem("finbrasil.goals"); return r ? JSON.parse(r) : []; } catch { return []; }
+  });
+  const [desc, setDesc] = React.useState("");
+  const [target, setTarget] = React.useState("");
+  const [current, setCurrent] = React.useState("");
+
+  const save = (updated: FinancialGoal[]) => {
+    setGoals(updated);
+    try { localStorage.setItem("finbrasil.goals", JSON.stringify(updated)); } catch {}
+  };
+
+  const add = () => {
+    const t = parseFloat(target);
+    const c = parseFloat(current) || 0;
+    if (!desc.trim() || isNaN(t) || t <= 0) return;
+    save([...goals, { id: crypto.randomUUID(), description: desc.trim(), target: t, current: c }]);
+    setDesc(""); setTarget(""); setCurrent("");
+  };
+
+  const remove = (id: string) => save(goals.filter(g => g.id !== id));
+
+  return (
+    <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
+      <div className="flex items-center gap-2">
+        <Target className="h-4 w-4 text-muted-foreground" />
+        <div className="text-sm font-semibold">Metas financeiras</div>
+      </div>
+      <div className="mt-1 text-xs text-muted-foreground">
+        Defina metas e acompanhe no dashboard.
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {goals.map(g => {
+          const pct = g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0;
+          return (
+            <div key={g.id} className="rounded-xl border border-border/40 bg-background/20 p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium truncate">{g.description}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(g.id)}>
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </div>
+              <Progress value={pct} className="h-1.5 rounded-full" />
+              <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+                <span>R$ {g.current.toFixed(2)}</span>
+                <span>{pct.toFixed(0)}%</span>
+                <span>R$ {g.target.toFixed(2)}</span>
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="space-y-2 pt-2">
+          <Input placeholder="Descrição da meta" value={desc} onChange={e => setDesc(e.target.value)} className="h-9 rounded-xl text-sm" />
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="Valor alvo (R$)" type="number" value={target} onChange={e => setTarget(e.target.value)} className="h-9 rounded-xl text-sm" />
+            <Input placeholder="Valor atual (R$)" type="number" value={current} onChange={e => setCurrent(e.target.value)} className="h-9 rounded-xl text-sm" />
+          </div>
+          <Button className="h-9 rounded-xl w-full" onClick={add}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar meta
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Index() {
@@ -553,6 +626,9 @@ export default function Index() {
                 </div>
               </div>
 
+              {/* METAS FINANCEIRAS */}
+              <GoalsManager />
+
               {/* DADOS & PLANO */}
               <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
                 <div className="text-sm font-semibold">Dados & Plano</div>
@@ -590,12 +666,13 @@ export default function Index() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-medium">Plano</div>
-                      <div className="text-xs text-muted-foreground">Freemium / Premium.</div>
+                      <div className="text-xs text-muted-foreground">
+                        Gratuito — IA limitada, 1 conta, 1 cartão.
+                      </div>
                     </div>
-                    <Button className="h-10 rounded-xl">Fazer upgrade</Button>
+                    <Button className="h-10 rounded-xl">Upgrade Pro</Button>
                   </div>
 
-                  {/* Info útil (debug amigável) */}
                   <div className="pt-2 text-xs text-muted-foreground">
                     Mês financeiro atual:{" "}
                     <span className="text-foreground font-medium">

@@ -142,15 +142,14 @@ function SidebarNav({
 
                   isActive
                     ? cn(
-                        "text-foreground bg-primary/10",
-                        "shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]",
-                        "ring-1 ring-primary/18",
+                        "text-foreground bg-primary/8",
+                        "ring-1 ring-primary/12",
                         "before:opacity-100",
                         isCollapsed
-                          ? "before:bg-[radial-gradient(200px_circle_at_50%_40%,hsl(var(--primary)/0.10),transparent_75%)]"
-                          : "before:bg-[radial-gradient(260px_circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_68%)]",
-                        "after:pointer-events-none after:absolute after:left-0 after:top-2 after:bottom-2 after:w-[2px] after:rounded-full",
-                        "after:bg-gradient-to-b after:from-transparent after:via-primary after:to-transparent after:opacity-90"
+                          ? "before:bg-[radial-gradient(200px_circle_at_50%_40%,hsl(var(--primary)/0.06),transparent_75%)]"
+                          : "before:bg-[radial-gradient(260px_circle_at_20%_30%,hsl(var(--primary)/0.10),transparent_68%)]",
+                        "after:pointer-events-none after:absolute after:left-0 after:top-2.5 after:bottom-2.5 after:w-[2px] after:rounded-full",
+                        "after:bg-primary/50"
                       )
                     : "text-muted-foreground",
 

@@ -28,6 +28,8 @@
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 20%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
@@ -63,6 +65,8 @@
 
     --destructive: 0 72% 52%;
     --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 20%;
 
     /* Bordas suaves */
     --border: 180 6% 18%;
