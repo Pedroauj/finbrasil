@@ -1,4 +1,6 @@
-import React, { useMemo } from "react";
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -91,7 +93,6 @@ function safeDate(value: any) {
   return Number.isFinite(d.getTime()) ? d : null;
 }
 
-/* ───── Small UI ───── */
 function Tile({
   label,
   value,
@@ -126,7 +127,6 @@ function Tile({
   );
 }
 
-/* ───── FinScore ───── */
 function computeFinScore(
   balance: number,
   income: number,
@@ -134,7 +134,6 @@ function computeFinScore(
   budgetTotal: number
 ): number {
   let score = 50;
-
   if (balance > 0) score += 15;
   if (balance > 0 && income > 0 && balance / income > 0.2) score += 10;
 
@@ -149,7 +148,6 @@ function computeFinScore(
   return clamp(Math.round(score), 0, 100);
 }
 
-/* ───── Goals (localStorage) ───── */
 interface FinancialGoal {
   id: string;
   description: string;
@@ -172,11 +170,8 @@ interface DashboardProps {
   budget: Budget;
   prevMonthExpenses: Expense[];
   currentDate: Date;
-
-  // NOTE: defensivo — evita crash se vier undefined
   cards?: CreditCard[];
   invoices?: CreditCardInvoice[];
-
   monthBalance: MonthBalance;
   alertDaysBefore?: number;
   onMarkPaid?: (id: string) => void;
@@ -199,9 +194,14 @@ export function Dashboard({
   onEditExpense,
   onDuplicateExpense,
 }: DashboardProps) {
-  // Debug flag via URL: ?debug=1
-  const debugMode =
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("debug");
+  // ✅ evita crash de hidratação/SSR com Recharts
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const debugMode = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).has("debug");
+  }, []);
 
   const totalExpenses = useMemo(() => sumExpenses(expenses), [expenses]);
   const totalPaid = useMemo(() => sumExpenses(expenses, { status: "paid" }), [expenses]);
@@ -209,8 +209,9 @@ export function Dashboard({
   const totalOverdue = useMemo(() => sumExpenses(expenses, { status: "overdue" }), [expenses]);
   const prevTotal = useMemo(() => sumExpenses(prevMonthExpenses), [prevMonthExpenses]);
 
-  const budgetPercent = budget?.total > 0 ? Math.min((totalExpenses / budget.total) * 100, 100) : 0;
-  const budgetExceeded = budget?.total > 0 && totalExpenses > budget.total;
+  const budgetTotal = budget?.total ?? 0;
+  const budgetPercent = budgetTotal > 0 ? Math.min((totalExpenses / budgetTotal) * 100, 100) : 0;
+  const budgetExceeded = budgetTotal > 0 && totalExpenses > budgetTotal;
 
   const categoryData = useMemo(() => groupExpensesByCategory(expenses), [expenses]);
   const statusData = useMemo(() => groupExpensesByStatus(expenses), [expenses]);
@@ -239,7 +240,7 @@ export function Dashboard({
   const income = monthBalance?.income ?? 0;
   const balance = monthBalance?.balance ?? 0;
 
-  const todayReal = new Date();
+  const todayReal = useMemo(() => new Date(), []);
   const isCurrentMonth = isSameMonth(todayReal, currentDate);
 
   const dim = daysInMonth(currentDate);
@@ -358,21 +359,17 @@ export function Dashboard({
   }, [expenses, currentDate]);
 
   const finScore = useMemo(
-    () => computeFinScore(balance, income, totalExpenses, budget?.total ?? 0),
-    [balance, income, totalExpenses, budget?.total]
+    () => computeFinScore(balance, income, totalExpenses, budgetTotal),
+    [balance, income, totalExpenses, budgetTotal]
   );
 
   const insightText = useMemo(() => {
-    if ((budget?.total ?? 0) > 0 && budgetPercent >= 80) {
-      return `Você já utilizou ${budgetPercent.toFixed(
-        0
-      )}% do orçamento mensal. Considere reduzir gastos nos próximos dias.`;
+    if (budgetTotal > 0 && budgetPercent >= 80) {
+      return `Você já utilizou ${budgetPercent.toFixed(0)}% do orçamento mensal. Considere reduzir gastos nos próximos dias.`;
     }
     if (topCategory && totalExpenses > 0) {
       const pct = ((topCategory.total / totalExpenses) * 100).toFixed(0);
-      return `Sua maior categoria é "${topCategory.category}" com ${pct}% dos gastos (${formatCurrency(
-        topCategory.total
-      )}).`;
+      return `Sua maior categoria é "${topCategory.category}" com ${pct}% dos gastos (${formatCurrency(topCategory.total)}).`;
     }
     if (savingsRate > 30) {
       return `Ótimo! Sua taxa de poupança está em ${savingsRate.toFixed(0)}%. Continue assim!`;
@@ -380,16 +377,13 @@ export function Dashboard({
     if (totalExpenses === 0) {
       return "Registre seus gastos para receber insights personalizados sobre suas finanças.";
     }
-    return `Gasto médio diário de ${formatCurrency(
-      avgDailySpend
-    )}. Mantenha o controle para fechar o mês positivo.`;
-  }, [budget?.total, budgetPercent, topCategory, totalExpenses, savingsRate, avgDailySpend]);
+    return `Gasto médio diário de ${formatCurrency(avgDailySpend)}. Mantenha o controle para fechar o mês positivo.`;
+  }, [budgetTotal, budgetPercent, topCategory, totalExpenses, savingsRate, avgDailySpend]);
 
   const goals = useMemo(() => getGoals(), []);
 
   return (
     <StaggerContainer className="space-y-8">
-      {/* Insight do mês */}
       <StaggerItem>
         <div className={cn(appCard, "border-primary/20")}>
           <div className="p-5 flex items-start gap-4">
@@ -406,7 +400,6 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Header */}
       <StaggerItem>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -420,12 +413,10 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Alerts */}
       <StaggerItem>
         <InvoiceAlerts cards={cards} invoices={invoices} currentDate={currentDate} />
       </StaggerItem>
 
-      {/* Debug auditoria */}
       {debugMode && (
         <StaggerItem>
           <Card className={cn(appCard, "border-border/80")}>
@@ -443,78 +434,34 @@ export function Dashboard({
                 </div>
                 <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
                   <div className="text-xs text-muted-foreground">income (store)</div>
-                  <div className="text-sm font-semibold tabular-nums text-foreground">
-                    {formatCurrency(income)}
-                  </div>
+                  <div className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(income)}</div>
                 </div>
                 <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
                   <div className="text-xs text-muted-foreground">balance (store)</div>
-                  <div
-                    className={cn(
-                      "text-sm font-semibold tabular-nums",
-                      balance >= 0 ? "text-foreground" : "text-destructive"
-                    )}
-                  >
+                  <div className={cn("text-sm font-semibold tabular-nums", balance >= 0 ? "text-foreground" : "text-destructive")}>
                     {formatCurrency(balance)}
                   </div>
                 </div>
                 <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
                   <div className="text-xs text-muted-foreground">income - expenses</div>
-                  <div
-                    className={cn(
-                      "text-sm font-semibold tabular-nums",
-                      computedBalance >= 0 ? "text-foreground" : "text-destructive"
-                    )}
-                  >
+                  <div className={cn("text-sm font-semibold tabular-nums", computedBalance >= 0 ? "text-foreground" : "text-destructive")}>
                     {formatCurrency(computedBalance)}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
-                  <div className="text-xs text-muted-foreground">expenses (mês)</div>
-                  <div className="text-sm font-semibold tabular-nums text-foreground">
-                    {formatCurrency(totalExpenses)}
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
-                  <div className="text-xs text-muted-foreground">faturas (mês)</div>
-                  <div className="text-sm font-semibold tabular-nums text-foreground">
-                    {formatCurrency(totalInvoices)}
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
-                  <div className="text-xs text-muted-foreground">divergência?</div>
-                  <div
-                    className={cn(
-                      "text-sm font-semibold",
-                      balanceMismatch ? "text-destructive" : "text-muted-foreground"
-                    )}
-                  >
-                    {balanceMismatch ? "SIM" : "não"}
                   </div>
                 </div>
                 <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
                   <div className="text-xs text-muted-foreground">despesas no mês (datas)</div>
                   <div className="text-xs text-muted-foreground">
                     {expenseDatesInMonth
-                      ? `${expenseDatesInMonth.count} • ${format(
-                        expenseDatesInMonth.min,
-                        "dd/MM"
-                      )} → ${format(expenseDatesInMonth.max, "dd/MM")}`
+                      ? `${expenseDatesInMonth.count} • ${format(expenseDatesInMonth.min, "dd/MM")} → ${format(expenseDatesInMonth.max, "dd/MM")}`
                       : "nenhuma"}
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-3 text-xs text-muted-foreground">
-                Dica: feche o debug removendo <span className="font-mono">?debug=1</span> da URL.
               </div>
             </CardContent>
           </Card>
         </StaggerItem>
       )}
 
-      {/* Integridade dos dados */}
       {showDataWarning && (
         <StaggerItem>
           <Card className={cn(appCard, "border-destructive/30")}>
@@ -523,43 +470,16 @@ export function Dashboard({
                 <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
                   <AlertTriangle className="h-5 w-5 text-destructive" />
                 </div>
-
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-foreground">
                     Atenção: números podem estar incompletos
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground leading-relaxed">
                     {income === 0 && totalExpenses > 0
-                      ? "Você tem gastos registrados, mas ainda não registrou receita neste período. Isso pode deixar saldo e projeções pouco úteis."
+                      ? "Você tem gastos registrados, mas ainda não registrou receita neste período."
                       : balanceMismatch
-                        ? "O saldo informado difere do cálculo básico (receita - gastos). Verifique saldo inicial/caixa e receitas do mês."
+                        ? "O saldo informado difere do cálculo básico (receita - gastos)."
                         : "Verifique saldo inicial/caixa e receitas para que saldo e projeções reflitam sua realidade."}
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
-                      <div className="text-xs text-muted-foreground">Receita (mês)</div>
-                      <div className="text-sm font-semibold tabular-nums">
-                        {formatCurrency(income)}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
-                      <div className="text-xs text-muted-foreground">Gastos (mês)</div>
-                      <div className="text-sm font-semibold tabular-nums">
-                        {formatCurrency(totalExpenses)}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-2">
-                      <div className="text-xs text-muted-foreground">Saldo (calculado)</div>
-                      <div
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          computedBalance >= 0 ? "text-foreground" : "text-destructive"
-                        )}
-                      >
-                        {formatCurrency(computedBalance)}
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -568,7 +488,6 @@ export function Dashboard({
         </StaggerItem>
       )}
 
-      {/* Próximos alertas */}
       <StaggerItem>
         <UpcomingAlerts
           expenses={expenses}
@@ -582,33 +501,18 @@ export function Dashboard({
         />
       </StaggerItem>
 
-      {/* KPIs principais */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Saldo do mês
-                  </p>
-                  <p
-                    className={cn(
-                      "mt-1 text-2xl font-bold tracking-tight tabular-nums",
-                      balance >= 0 ? "text-foreground" : "text-destructive"
-                    )}
-                  >
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Saldo do mês</p>
+                  <p className={cn("mt-1 text-2xl font-bold tracking-tight tabular-nums", balance >= 0 ? "text-foreground" : "text-destructive")}>
                     {formatCurrency(balance)}
                   </p>
                 </div>
-                <div
-                  className={cn(
-                    "rounded-2xl p-3 ring-1",
-                    balance >= 0
-                      ? "bg-primary/10 ring-primary/15"
-                      : "bg-destructive/10 ring-destructive/15"
-                  )}
-                >
+                <div className={cn("rounded-2xl p-3 ring-1", balance >= 0 ? "bg-primary/10 ring-primary/15" : "bg-destructive/10 ring-destructive/15")}>
                   <Wallet className={cn("h-5 w-5", balance >= 0 ? "text-primary" : "text-destructive")} />
                 </div>
               </div>
@@ -620,12 +524,8 @@ export function Dashboard({
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Receita do mês
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                    {formatCurrency(income)}
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Receita do mês</p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">{formatCurrency(income)}</p>
                 </div>
                 <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15">
                   <ArrowUpCircle className="h-5 w-5 text-primary" />
@@ -639,18 +539,13 @@ export function Dashboard({
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Gastos do mês
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                    {formatCurrency(totalExpenses)}
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gastos do mês</p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">{formatCurrency(totalExpenses)}</p>
                 </div>
                 <div className="rounded-2xl bg-destructive/10 p-3 ring-1 ring-destructive/15">
                   <ArrowDownCircle className="h-5 w-5 text-destructive" />
                 </div>
               </div>
-
               {prevTotal > 0 ? (
                 <div className="mt-3 flex items-center gap-1.5 text-xs">
                   {expenseDelta > 0 ? (
@@ -673,68 +568,24 @@ export function Dashboard({
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Faturas (mês)
-                  </p>
-                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                    {formatCurrency(totalInvoices)}
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Faturas (mês)</p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-foreground tabular-nums">{formatCurrency(totalInvoices)}</p>
                 </div>
                 <div className="rounded-2xl bg-accent/50 p-3 ring-1 ring-border/60">
                   <CreditCardIcon className="h-5 w-5 text-foreground/70" />
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em{" "}
-                {monthLabel}
+                {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"} em {monthLabel}
               </p>
             </CardContent>
           </Card>
         </div>
       </StaggerItem>
 
-      {/* Secundários + Resumo rápido + FinScore + Metas */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="space-y-4 xl:col-span-2">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur px-4 py-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Percent className="h-3.5 w-3.5" />
-                  Taxa de poupança
-                </div>
-                <p className="mt-1 text-lg font-bold tabular-nums text-foreground">
-                  {income > 0 ? `${clamp(savingsRate, -999, 999).toFixed(1)}%` : "—"}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur px-4 py-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Flame className="h-3.5 w-3.5" />
-                  Gasto médio/dia
-                </div>
-                <p className="mt-1 text-lg font-bold tabular-nums text-foreground">
-                  {formatCurrency(avgDailySpend)}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {dayIndex} {dayIndex === 1 ? "dia" : "dias"} ({isCurrentMonth ? "até hoje" : "fechado"})
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur px-4 py-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CreditCardIcon className="h-3.5 w-3.5" />
-                  Faturas
-                </div>
-                <p className="mt-1 text-lg font-bold tabular-nums text-foreground">
-                  {formatCurrency(totalInvoices)}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {currentInvoices.length} {currentInvoices.length === 1 ? "cartão" : "cartões"}
-                </p>
-              </div>
-            </div>
-
             <CashBalance balance={monthBalance} className={cn(appCard)} />
           </div>
 
@@ -748,16 +599,8 @@ export function Dashboard({
               </CardHeader>
               <CardContent className="pb-5 space-y-3">
                 <div className="grid grid-cols-2 gap-2">
-                  <Tile
-                    label="Hoje"
-                    value={formatCurrency(todaySpend)}
-                    icon={<CalendarDays className="h-4 w-4" />}
-                  />
-                  <Tile
-                    label="Semana"
-                    value={formatCurrency(weekSpend)}
-                    icon={<CalendarDays className="h-4 w-4" />}
-                  />
+                  <Tile label="Hoje" value={formatCurrency(todaySpend)} icon={<CalendarDays className="h-4 w-4" />} />
+                  <Tile label="Semana" value={formatCurrency(weekSpend)} icon={<CalendarDays className="h-4 w-4" />} />
                 </div>
 
                 <Tile
@@ -765,7 +608,7 @@ export function Dashboard({
                   value={`~ ${formatCurrency(projectedMonthSpend)}`}
                   sub="Mantendo o ritmo atual"
                   icon={<Flame className="h-4 w-4" />}
-                  tone={budget?.total > 0 && projectedMonthSpend > budget.total ? "bad" : "neutral"}
+                  tone={budgetTotal > 0 && projectedMonthSpend > budgetTotal ? "bad" : "neutral"}
                 />
 
                 <Tile
@@ -789,32 +632,13 @@ export function Dashboard({
             <Card className={appCard}>
               <CardContent className="p-5">
                 <div className="flex items-center gap-4">
-                  <div
-                    className={cn(
-                      "rounded-2xl p-3 ring-1",
-                      finScore >= 70
-                        ? "bg-primary/10 ring-primary/15"
-                        : finScore >= 40
-                          ? "bg-yellow-500/10 ring-yellow-500/15"
-                          : "bg-destructive/10 ring-destructive/15"
-                    )}
-                  >
-                    <Trophy
-                      className={cn(
-                        "h-5 w-5",
-                        finScore >= 70 ? "text-primary" : finScore >= 40 ? "text-yellow-500" : "text-destructive"
-                      )}
-                    />
+                  <div className={cn("rounded-2xl p-3 ring-1", finScore >= 70 ? "bg-primary/10 ring-primary/15" : finScore >= 40 ? "bg-yellow-500/10 ring-yellow-500/15" : "bg-destructive/10 ring-destructive/15")}>
+                    <Trophy className={cn("h-5 w-5", finScore >= 70 ? "text-primary" : finScore >= 40 ? "text-yellow-500" : "text-destructive")} />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">FinScore</p>
                     <div className="flex items-baseline gap-1 mt-1">
-                      <span
-                        className={cn(
-                          "text-3xl font-extrabold tabular-nums",
-                          finScore >= 70 ? "text-primary" : finScore >= 40 ? "text-yellow-500" : "text-destructive"
-                        )}
-                      >
+                      <span className={cn("text-3xl font-extrabold tabular-nums", finScore >= 70 ? "text-primary" : finScore >= 40 ? "text-yellow-500" : "text-destructive")}>
                         {finScore}
                       </span>
                       <span className="text-sm text-muted-foreground font-medium">/100</span>
@@ -824,15 +648,6 @@ export function Dashboard({
                 <div className="mt-3">
                   <Progress value={finScore} className="h-2 rounded-full" />
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {finScore >= 80
-                    ? "Excelente controle financeiro!"
-                    : finScore >= 60
-                      ? "Bom, mas pode melhorar."
-                      : finScore >= 40
-                        ? "Atenção aos gastos."
-                        : "Seus gastos precisam de atenção."}
-                </p>
               </CardContent>
             </Card>
 
@@ -842,7 +657,6 @@ export function Dashboard({
                   <Target className="h-4 w-4 text-muted-foreground" />
                   <p className="text-sm font-semibold">Metas financeiras</p>
                 </div>
-
                 {goals.length === 0 ? (
                   <div className="text-center py-4">
                     <p className="text-xs text-muted-foreground mb-2">Nenhuma meta cadastrada.</p>
@@ -874,21 +688,20 @@ export function Dashboard({
         </div>
       </StaggerItem>
 
-      {/* Orçamento */}
-      {(budget?.total ?? 0) > 0 && (
+      {(budgetTotal ?? 0) > 0 && (
         <StaggerItem>
           <Card className={appCard}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
                 <p className="text-sm font-bold tabular-nums text-foreground">
-                  {formatCurrency(totalExpenses)} / {formatCurrency(budget.total)}
+                  {formatCurrency(totalExpenses)} / {formatCurrency(budgetTotal)}
                 </p>
               </div>
               <Progress value={budgetPercent} className="h-2.5 rounded-full" />
               {budgetExceeded && (
                 <p className="mt-2 text-xs text-destructive font-medium">
-                  Orçamento excedido em {formatCurrency(totalExpenses - budget.total)}
+                  Orçamento excedido em {formatCurrency(totalExpenses - budgetTotal)}
                 </p>
               )}
             </CardContent>
@@ -896,7 +709,7 @@ export function Dashboard({
         </StaggerItem>
       )}
 
-      {/* Charts */}
+      {/* ✅ Charts: só no client (mounted), evitando tela branca */}
       <StaggerItem>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <Card className={cn(appCard, "xl:col-span-2")}>
@@ -907,7 +720,9 @@ export function Dashboard({
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-5">
-              {dailySeries.every((d) => d.total === 0) ? (
+              {!mounted ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Carregando gráfico…</p>
+              ) : dailySeries.every((d) => d.total === 0) ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">
                   Nenhum gasto registrado neste mês.
                 </p>
@@ -949,7 +764,9 @@ export function Dashboard({
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-5">
-              {categoryData.length === 0 ? (
+              {!mounted ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Carregando gráfico…</p>
+              ) : categoryData.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">
                   Nenhum gasto registrado neste mês.
                 </p>
@@ -1032,56 +849,38 @@ export function Dashboard({
               <CardTitle className="text-sm font-semibold">Por status</CardTitle>
             </CardHeader>
             <CardContent className="pb-5">
-              {statusData.every((s) => s.total === 0) ? (
+              {!mounted ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Carregando gráfico…</p>
+              ) : statusData.every((s) => s.total === 0) ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">Sem dados para exibir.</p>
               ) : (
-                <>
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
-                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.paid }} />
-                      <span className="text-muted-foreground">Pago</span>
-                      <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPaid)}</span>
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
-                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.planned }} />
-                      <span className="text-muted-foreground">Planejado</span>
-                      <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalPlanned)}</span>
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/20 px-3 py-1 text-xs">
-                      <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS.overdue }} />
-                      <span className="text-muted-foreground">Atrasado</span>
-                      <span className="font-semibold tabular-nums text-foreground">{formatCurrency(totalOverdue)}</span>
-                    </div>
-                  </div>
-
-                  <div className="h-[220px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statusData} barCategoryGap="30%">
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                        <XAxis dataKey="label" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                        <YAxis
-                          tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
-                          tick={{ fontSize: 11 }}
-                          className="fill-muted-foreground"
-                          width={60}
-                        />
-                        <Tooltip
-                          formatter={(value: number) => formatCurrency(value)}
-                          contentStyle={{
-                            borderRadius: "12px",
-                            border: "1px solid hsl(var(--border))",
-                            background: "hsl(var(--card))",
-                          }}
-                        />
-                        <Bar dataKey="total" radius={[8, 8, 0, 0]}>
-                          {statusData.map((entry) => (
-                            <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? "hsl(var(--muted))"} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={statusData} barCategoryGap="30%">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="label" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                      <YAxis
+                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        width={60}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "1px solid hsl(var(--border))",
+                          background: "hsl(var(--card))",
+                        }}
+                      />
+                      <Bar dataKey="total" radius={[8, 8, 0, 0]}>
+                        {statusData.map((entry) => (
+                          <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? "hsl(var(--muted))"} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -1094,45 +893,33 @@ export function Dashboard({
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-5">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="text-xs text-muted-foreground">
-                  {prevTotal > 0 ? "Atual vs anterior" : "Sem mês anterior registrado"}
+              {!mounted ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Carregando gráfico…</p>
+              ) : (
+                <div className="h-[240px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={compareBars} barCategoryGap="35%">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                      <YAxis
+                        tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                        tick={{ fontSize: 11 }}
+                        className="fill-muted-foreground"
+                        width={60}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "1px solid hsl(var(--border))",
+                          background: "hsl(var(--card))",
+                        }}
+                      />
+                      <Bar dataKey="total" radius={[10, 10, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="text-xs">
-                  {prevTotal > 0 ? (
-                    <span className={expenseDelta > 0 ? "text-destructive" : "text-primary"}>
-                      {expenseDelta > 0 ? "+" : ""}
-                      {expenseDelta.toFixed(1)}%
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="h-[240px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={compareBars} barCategoryGap="35%">
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                    <YAxis
-                      tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
-                      tick={{ fontSize: 11 }}
-                      className="fill-muted-foreground"
-                      width={60}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={{
-                        borderRadius: "12px",
-                        border: "1px solid hsl(var(--border))",
-                        background: "hsl(var(--card))",
-                      }}
-                    />
-                    <Bar dataKey="total" radius={[10, 10, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
