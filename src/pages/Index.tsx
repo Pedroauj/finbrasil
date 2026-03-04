@@ -721,6 +721,8 @@ export default function Index() {
     handleDuplicateExpense,
   ]);
 
+  const planLabelText = userPlan === "pro" ? "Plano: Inteligente" : userPlan === "ultra" ? "Plano: Elite" : "Plano: Essencial";
+
   const rightActions = (
     <>
       <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
@@ -743,12 +745,15 @@ export default function Index() {
         <LogOut className="h-4 w-4" />
         <span className="hidden sm:inline">Sair</span>
       </Button>
+    </>
+  );
 
+  const mobileActions = (
+    <>
+      <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
       <ModeToggle />
-
-      <Button variant="outline" className="h-10 gap-2 rounded-xl" onClick={signOut}>
+      <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={signOut}>
         <LogOut className="h-4 w-4" />
-        <span className="hidden sm:inline">Sair</span>
       </Button>
     </>
   );
@@ -768,8 +773,11 @@ export default function Index() {
         onNavigate={setNav}
         title={pageTitle}
         rightActions={rightActions}
+        mobileActions={mobileActions}
         onNewExpense={onNewExpense}
         badges={navBadges}
+        planLabel={planLabelText}
+        onPlanClick={() => setNav("settings")}
       >
         {Content}
       </AppShell>

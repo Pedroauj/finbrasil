@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users } from "lucide-react";
+import { Shield, Users, Search } from "lucide-react";
 import type { PlanTier, UserRole } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ interface AdminPanelProps {
 export function AdminPanel({ currentUserRole }: AdminPanelProps) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   const fetchUsers = useCallback(async () => {
     const { data } = await supabase.from("profiles").select("*");
@@ -49,6 +51,13 @@ export function AdminPanel({ currentUserRole }: AdminPanelProps) {
 
   if (loading) return null;
 
+  const filtered = search.trim()
+    ? users.filter((u) =>
+        (u.display_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        u.user_id.toLowerCase().includes(search.toLowerCase())
+      )
+    : users;
+
   return (
     <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur lg:col-span-2">
       <div className="flex items-center gap-2 mb-1">
@@ -59,13 +68,24 @@ export function AdminPanel({ currentUserRole }: AdminPanelProps) {
         Gerencie usuários, planos e permissões.
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-        <Users className="h-3.5 w-3.5" />
-        {users.length} usuário{users.length !== 1 ? "s" : ""}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 pl-9 rounded-xl text-sm"
+          />
+        </div>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Users className="h-3.5 w-3.5" />
+          {filtered.length}/{users.length}
+        </div>
       </div>
 
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
-        {users.map((user) => (
+        {filtered.map((user) => (
           <div
             key={user.user_id}
             className="rounded-xl border border-border/40 bg-background/20 p-3 flex flex-wrap items-center gap-3"

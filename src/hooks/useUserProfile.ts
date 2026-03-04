@@ -10,6 +10,10 @@ export interface UserProfile {
   role: UserRole;
   fin_score: number;
   referral_code: string | null;
+  subscription_provider: string | null;
+  subscription_status: string;
+  subscription_id: string | null;
+  current_period_end: string | null;
 }
 
 export function useUserProfile(userId: string | undefined) {
@@ -30,6 +34,10 @@ export function useUserProfile(userId: string | undefined) {
         role: (data as any).role ?? "user",
         fin_score: (data as any).fin_score ?? 50,
         referral_code: (data as any).referral_code ?? null,
+        subscription_provider: (data as any).subscription_provider ?? null,
+        subscription_status: (data as any).subscription_status ?? "inactive",
+        subscription_id: (data as any).subscription_id ?? null,
+        current_period_end: (data as any).current_period_end ?? null,
       } as UserProfile);
     }
     setLoading(false);
