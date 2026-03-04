@@ -27,7 +27,7 @@ interface Props {
   onSaveBudget: (budget: Budget) => void;
 }
 
-export function ({
+export function IncomeManager({
   salary, extraIncomes, budget, customCategories, currentDate,
   onSaveSalary, onDeleteSalary, onAddExtraIncome, onUpdateExtraIncome, onDeleteExtraIncome, onSaveBudget,
 }: Props) {
