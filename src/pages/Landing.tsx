@@ -2,6 +2,8 @@ import React from "react";
 import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { PLANS } from "@/lib/plans";
 import {
   BarChart3,
   CreditCard,
@@ -16,6 +18,9 @@ import {
   Lock,
   Zap,
   MessageSquare,
+  Check,
+  Sparkles,
+  Crown,
 } from "lucide-react";
 
 /* ───────── Background ───────── */
@@ -301,17 +306,15 @@ export default function Landing() {
               </div>
 
               <h1 className="text-[2.5rem] font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]">
-                Seu dinheiro.
+                Domine suas finanças
                 <br />
                 <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent">
-                  Sua clareza.
+                  com inteligência artificial.
                 </span>
-                <br />
-                <span className="text-white/60">Seu controle.</span>
               </h1>
 
               <p className="mt-6 max-w-md text-base leading-relaxed text-white/45 lg:text-lg">
-                Organize gastos, cartões de crédito e investimentos em um painel inteligente feito para o brasileiro.
+                Entenda seus gastos, planeje o futuro e tome decisões financeiras melhores com o FinBrasil.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -354,7 +357,7 @@ export default function Landing() {
                   <Shield className="h-3.5 w-3.5 text-emerald-500/50" /> Criptografia de ponta
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Wallet className="h-3.5 w-3.5 text-emerald-500/50" /> 100% gratuito
+                  <Wallet className="h-3.5 w-3.5 text-emerald-500/50" /> Comece grátis, evolua quando quiser
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-emerald-500/50" /> Sem cartão de crédito
@@ -538,6 +541,75 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Plans Section ── */}
+      <section className="relative z-10 pb-28">
+        <div className="mx-auto max-w-7xl px-6">
+          <Reveal>
+            <div className="text-center mb-10">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Escolha o plano ideal para <span className="text-emerald-400">você</span>
+              </h2>
+              <p className="mt-2 text-sm text-white/40 max-w-md mx-auto">
+                Comece grátis e evolua conforme suas necessidades financeiras crescem.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
+            {PLANS.map((plan, i) => {
+              const PlanIcon = plan.key === "ultra" ? Crown : plan.key === "pro" ? Sparkles : Star;
+              return (
+                <Reveal key={plan.key} delay={i * 0.1}>
+                  <div className={`relative rounded-2xl border p-6 backdrop-blur h-full flex flex-col ${
+                    plan.popular
+                      ? "border-emerald-500/30 bg-emerald-500/[0.06]"
+                      : "border-white/[0.06] bg-white/[0.03]"
+                  }`}>
+                    {plan.popular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-bold text-slate-950 uppercase tracking-wider">
+                          Mais popular
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`rounded-xl p-2.5 ring-1 ${
+                        plan.popular ? "bg-emerald-500/15 ring-emerald-400/20" : "bg-white/[0.05] ring-white/[0.08]"
+                      }`}>
+                        <PlanIcon className={`h-5 w-5 ${plan.popular ? "text-emerald-400" : "text-white/40"}`} />
+                      </div>
+                      <div>
+                        <div className="text-base font-bold text-white/90">{plan.name}</div>
+                        <div className={`text-sm font-bold ${plan.popular ? "text-emerald-400" : "text-white/60"}`}>{plan.price}</div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-white/40 mb-4">{plan.description}</p>
+                    <ul className="space-y-2 mb-6 flex-1">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-xs text-white/55">
+                          <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className={`w-full h-10 rounded-xl text-sm font-semibold ${
+                        plan.popular
+                          ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                          : "bg-white/[0.06] text-white/70 hover:bg-white/[0.1]"
+                      }`}
+                      onClick={() => navigate("/auth?mode=signup")}
+                    >
+                      {plan.key === "free" ? "Começar grátis" : "Começar agora"}
+                    </Button>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── Trust ── */}
       <section className="relative z-10 pb-28">
         <div className="mx-auto max-w-7xl px-6">
@@ -552,7 +624,7 @@ export default function Landing() {
                 {
                   icon: Wallet,
                   title: "Sem custos escondidos",
-                  desc: "Todas as funcionalidades essenciais são gratuitas. Sem surpresas.",
+                  desc: "Comece gratuitamente e evolua conforme suas necessidades. Sem surpresas.",
                 },
                 {
                   icon: Calendar,
@@ -586,11 +658,11 @@ export default function Landing() {
                 <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
                   Comece agora.{" "}
                   <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                    É grátis.
+                    Seu futuro financeiro começa aqui.
                   </span>
                 </h2>
                 <p className="mx-auto mt-4 max-w-md text-sm text-white/40">
-                  Leva menos de 30 segundos para criar sua conta e ter o controle das suas finanças na palma da mão.
+                  Crie sua conta e tenha o controle das suas finanças com inteligência artificial.
                 </p>
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className="mt-8">
                   <Button
@@ -598,7 +670,7 @@ export default function Landing() {
                     className="group h-12 rounded-xl bg-emerald-500 px-8 text-sm font-bold text-slate-950 shadow-xl shadow-emerald-500/20 hover:bg-emerald-400 hover:shadow-emerald-500/30 transition-all duration-300"
                     onClick={() => navigate("/auth?mode=signup")}
                   >
-                    Começar gratuitamente
+                    Criar conta grátis
                     <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Button>
                 </motion.div>

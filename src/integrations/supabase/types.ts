@@ -299,19 +299,31 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string | null
+          fin_score: number
           id: string
+          plan: string
+          referral_code: string | null
+          role: string
           user_id: string
         }
         Insert: {
           created_at?: string
           display_name?: string | null
+          fin_score?: number
           id?: string
+          plan?: string
+          referral_code?: string | null
+          role?: string
           user_id: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
+          fin_score?: number
           id?: string
+          plan?: string
+          referral_code?: string | null
+          role?: string
           user_id?: string
         }
         Relationships: []
