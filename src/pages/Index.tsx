@@ -25,6 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bot, LogOut, Plus, Trash2, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { PlansSection } from "@/components/PlansSection";
+import { AdminPanel } from "@/components/AdminPanel";
+import { PremiumModal } from "@/components/PremiumModal";
 
 const NAV_LABELS: Record<NavKey, string> = {
   dashboard: "Dashboard",
@@ -185,6 +189,19 @@ export default function Index() {
 
   const [assistantOpen, setAssistantOpen] = React.useState(false);
   const [nav, setNav] = React.useState<NavKey>("dashboard");
+  const [premiumModalOpen, setPremiumModalOpen] = React.useState(false);
+  const [premiumFeatureName, setPremiumFeatureName] = React.useState("");
+
+  const { profile } = useUserProfile(auth?.user?.id);
+  const userPlan = profile?.plan ?? "free";
+  const userRole = profile?.role ?? "user";
+
+  const requirePremium = React.useCallback((featureName: string): boolean => {
+    if (userPlan !== "free") return false;
+    setPremiumFeatureName(featureName);
+    setPremiumModalOpen(true);
+    return true;
+  }, [userPlan]);
 
   // Alert days before config
   const LS_ALERT_DAYS = "finbrasil.settings.alertDaysBefore";
@@ -629,11 +646,14 @@ export default function Index() {
               {/* METAS FINANCEIRAS */}
               <GoalsManager />
 
-              {/* DADOS & PLANO */}
+              {/* PLANOS & COBRANÇA */}
+              <PlansSection currentPlan={userPlan} />
+
+              {/* DADOS */}
               <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
-                <div className="text-sm font-semibold">Dados & Plano</div>
+                <div className="text-sm font-semibold">Dados</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Exportação, limpeza e upgrades.
+                  Exportação e limpeza de dados.
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -661,18 +681,6 @@ export default function Index() {
                     </Button>
                   </div>
 
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Plano</div>
-                      <div className="text-xs text-muted-foreground">
-                        Gratuito — IA limitada, 1 conta, 1 cartão.
-                      </div>
-                    </div>
-                    <Button className="h-10 rounded-xl">Upgrade Pro</Button>
-                  </div>
-
                   <div className="pt-2 text-xs text-muted-foreground">
                     Mês financeiro atual:{" "}
                     <span className="text-foreground font-medium">
@@ -681,6 +689,11 @@ export default function Index() {
                   </div>
                 </div>
               </div>
+
+              {/* ADMIN PANEL (owner/admin only) */}
+              {(userRole === "owner" || userRole === "admin") && (
+                <AdminPanel currentUserRole={userRole} />
+              )}
             </div>
           </PageShell>
         );
@@ -715,10 +728,20 @@ export default function Index() {
       <Button
         variant="outline"
         className="h-10 gap-2 rounded-xl"
-        onClick={() => setAssistantOpen(true)}
+        onClick={() => {
+          if (requirePremium("Assistente financeiro com IA")) return;
+          setAssistantOpen(true);
+        }}
       >
         <Bot className="h-4 w-4" />
         <span className="hidden sm:inline">Assistente</span>
+      </Button>
+
+      <ModeToggle />
+
+      <Button variant="outline" className="h-10 gap-2 rounded-xl" onClick={signOut}>
+        <LogOut className="h-4 w-4" />
+        <span className="hidden sm:inline">Sair</span>
       </Button>
 
       <ModeToggle />
@@ -732,6 +755,12 @@ export default function Index() {
 
   return (
     <>
+      <PremiumModal
+        open={premiumModalOpen}
+        onOpenChange={setPremiumModalOpen}
+        featureName={premiumFeatureName}
+        onViewPlans={() => setNav("settings")}
+      />
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
       <AppShell
