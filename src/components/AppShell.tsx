@@ -15,6 +15,7 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  Crown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -133,13 +134,11 @@ function SidebarNav({
                   "hover:bg-muted/50",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "overflow-hidden",
-
                   "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
                   isCollapsed
                     ? "before:bg-[radial-gradient(160px_circle_at_50%_40%,hsl(var(--primary)/0.07),transparent_72%)]"
                     : "before:bg-[radial-gradient(200px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
                   "hover:before:opacity-100",
-
                   isActive
                     ? cn(
                         "text-foreground bg-primary/8",
@@ -152,7 +151,6 @@ function SidebarNav({
                         "after:bg-primary/50"
                       )
                     : "text-muted-foreground",
-
                   isCollapsed && "justify-center px-2"
                 )}
               >
@@ -168,10 +166,14 @@ function SidebarNav({
                 {!isCollapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
 
                 {badgeCount > 0 && (
-                  <span className={cn(
-                    "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none",
-                    isCollapsed ? "absolute -top-1 -right-1 h-4 min-w-[16px] px-1" : "h-5 min-w-[20px] px-1.5"
-                  )}>
+                  <span
+                    className={cn(
+                      "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none",
+                      isCollapsed
+                        ? "absolute -top-1 -right-1 h-4 min-w-[16px] px-1"
+                        : "h-5 min-w-[20px] px-1.5"
+                    )}
+                  >
                     {badgeCount}
                   </span>
                 )}
@@ -239,19 +241,41 @@ export function AppShell({
   onNavigate,
   title,
   rightActions,
+  mobileActions,
   footer,
   children,
   onNewExpense,
   badges,
+
+  /** Opcional: atalho vendável para planos (leva pra Ajustes → Planos & Cobrança) */
+  planLabel,
+  onPlanClick,
 }: {
   active: NavKey;
   onNavigate: (k: NavKey) => void;
   title?: string;
+
+  /**
+   * Ações do topo para DESKTOP (md+).
+   * Evita duplicação quando você tem ações específicas de mobile/desktop.
+   */
   rightActions?: ReactNode;
+
+  /**
+   * Ações do topo para MOBILE (<md).
+   * Se você tinha botões duplicados, mova o "Sair" mobile pra cá.
+   */
+  mobileActions?: ReactNode;
+
   footer?: ReactNode;
   children: ReactNode;
   onNewExpense?: () => void;
   badges?: Partial<Record<NavKey, number>>;
+
+  /** Ex: "Plano: Ultra" / "Plano: Pro" */
+  planLabel?: string;
+  /** Clique do atalho de planos (normalmente: onNavigate("settings")) */
+  onPlanClick?: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -274,7 +298,7 @@ export function AppShell({
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
 
       <div className="flex min-h-screen w-full">
-        {/* Sidebar desktop (fica “presa” no scroll) */}
+        {/* Sidebar desktop */}
         <aside
           className={cn(
             "hidden bg-background/60 backdrop-blur xl:block",
@@ -322,12 +346,37 @@ export function AppShell({
                 </Sheet>
               </div>
 
-              {/* ✅ Mantém apenas o título (removeu o subtítulo) */}
+              {/* Title */}
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{title}</div>
               </div>
 
-              <div className="flex items-center gap-2">{rightActions}</div>
+              {/* Plan shortcut (optional) */}
+              {planLabel ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="hidden sm:flex h-10 rounded-xl gap-2"
+                  onClick={onPlanClick ?? (() => onNavigate("settings"))}
+                  title="Gerenciar planos"
+                >
+                  <Crown className="h-4 w-4" />
+                  <span className="text-sm">{planLabel}</span>
+                </Button>
+              ) : null}
+
+              {/* Actions: split mobile vs desktop to prevent duplication */}
+              <div className="flex items-center gap-2">
+                {/* Mobile actions only (<md) */}
+                {mobileActions ? (
+                  <div className="flex items-center gap-2 md:hidden">{mobileActions}</div>
+                ) : null}
+
+                {/* Desktop actions only (md+) */}
+                {rightActions ? (
+                  <div className="hidden md:flex items-center gap-2">{rightActions}</div>
+                ) : null}
+              </div>
             </div>
           </header>
 
@@ -347,5 +396,5 @@ export function AppShell({
   );
 }
 
-// ✅ Ajuda caso alguma parte do projeto importe como default
+// Ajuda caso alguma parte do projeto importe como default
 export default AppShell;
