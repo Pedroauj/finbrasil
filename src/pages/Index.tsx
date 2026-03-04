@@ -12,6 +12,8 @@ import { AccountManager } from "@/components/AccountManager";
 import { MonthNavigator } from "@/components/MonthNavigator";
 import { ModeToggle } from "@/components/ModeToggle";
 import { DEFAULT_CATEGORIES } from "@/types/expense";
+import type { Expense } from "@/types/expense";
+import { useUpcomingAlertCount } from "@/components/UpcomingAlerts";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
@@ -20,7 +22,13 @@ import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AppShell, NavKey } from "@/components/AppShell";
 
 import { Input } from "@/components/ui/input";
-import { Bot, LogOut } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Bot, LogOut, Plus, Trash2, Target } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { PlansSection } from "@/components/PlansSection";
+import { AdminPanel } from "@/components/AdminPanel";
+import { PremiumModal } from "@/components/PremiumModal";
 
 const NAV_LABELS: Record<NavKey, string> = {
   dashboard: "Dashboard",
@@ -78,11 +86,11 @@ function downloadTextFile(filename: string, content: string, mime = "text/plain;
 function toCSV(rows: Array<Record<string, any>>) {
   if (!rows.length) return "";
   const headers = Array.from(
-    rows.reduce((set, r) => {
+    rows.reduce<Set<string>>((set, r) => {
       Object.keys(r).forEach((k) => set.add(k));
       return set;
     }, new Set<string>())
-  );
+  ) as string[];
 
   const escape = (v: any) => {
     const s = v === null || v === undefined ? "" : String(v);
@@ -102,6 +110,78 @@ function toCSV(rows: Array<Record<string, any>>) {
   return "\uFEFF" + lines.join("\n");
 }
 
+/* ───── Goals Manager (Settings) ───── */
+interface FinancialGoal { id: string; description: string; target: number; current: number; }
+
+function GoalsManager() {
+  const [goals, setGoals] = React.useState<FinancialGoal[]>(() => {
+    try { const r = localStorage.getItem("finbrasil.goals"); return r ? JSON.parse(r) : []; } catch { return []; }
+  });
+  const [desc, setDesc] = React.useState("");
+  const [target, setTarget] = React.useState("");
+  const [current, setCurrent] = React.useState("");
+
+  const save = (updated: FinancialGoal[]) => {
+    setGoals(updated);
+    try { localStorage.setItem("finbrasil.goals", JSON.stringify(updated)); } catch {}
+  };
+
+  const add = () => {
+    const t = parseFloat(target);
+    const c = parseFloat(current) || 0;
+    if (!desc.trim() || isNaN(t) || t <= 0) return;
+    save([...goals, { id: crypto.randomUUID(), description: desc.trim(), target: t, current: c }]);
+    setDesc(""); setTarget(""); setCurrent("");
+  };
+
+  const remove = (id: string) => save(goals.filter(g => g.id !== id));
+
+  return (
+    <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
+      <div className="flex items-center gap-2">
+        <Target className="h-4 w-4 text-muted-foreground" />
+        <div className="text-sm font-semibold">Metas financeiras</div>
+      </div>
+      <div className="mt-1 text-xs text-muted-foreground">
+        Defina metas e acompanhe no dashboard.
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {goals.map(g => {
+          const pct = g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0;
+          return (
+            <div key={g.id} className="rounded-xl border border-border/40 bg-background/20 p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium truncate">{g.description}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(g.id)}>
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </div>
+              <Progress value={pct} className="h-1.5 rounded-full" />
+              <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+                <span>R$ {g.current.toFixed(2)}</span>
+                <span>{pct.toFixed(0)}%</span>
+                <span>R$ {g.target.toFixed(2)}</span>
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="space-y-2 pt-2">
+          <Input placeholder="Descrição da meta" value={desc} onChange={e => setDesc(e.target.value)} className="h-9 rounded-xl text-sm" />
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="Valor alvo (R$)" type="number" value={target} onChange={e => setTarget(e.target.value)} className="h-9 rounded-xl text-sm" />
+            <Input placeholder="Valor atual (R$)" type="number" value={current} onChange={e => setCurrent(e.target.value)} className="h-9 rounded-xl text-sm" />
+          </div>
+          <Button className="h-9 rounded-xl w-full" onClick={add}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar meta
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Index() {
   const auth = useAuth() as any;
   const { signOut } = auth;
@@ -109,6 +189,35 @@ export default function Index() {
 
   const [assistantOpen, setAssistantOpen] = React.useState(false);
   const [nav, setNav] = React.useState<NavKey>("dashboard");
+  const [premiumModalOpen, setPremiumModalOpen] = React.useState(false);
+  const [premiumFeatureName, setPremiumFeatureName] = React.useState("");
+
+  const { profile } = useUserProfile(auth?.user?.id);
+  const userPlan = profile?.plan ?? "free";
+  const userRole = profile?.role ?? "user";
+
+  const requirePremium = React.useCallback((featureName: string): boolean => {
+    if (userPlan !== "free") return false;
+    setPremiumFeatureName(featureName);
+    setPremiumModalOpen(true);
+    return true;
+  }, [userPlan]);
+
+  // Alert days before config
+  const LS_ALERT_DAYS = "finbrasil.settings.alertDaysBefore";
+  const [alertDaysBefore, setAlertDaysBefore] = React.useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("finbrasil.settings.alertDaysBefore");
+      const v = raw ? parseInt(raw, 10) : 3;
+      return [1, 2, 3, 5, 7].includes(v) ? v : 3;
+    } catch { return 3; }
+  });
+
+  const alertCount = useUpcomingAlertCount(store.expenses ?? [], alertDaysBefore);
+  const navBadges = React.useMemo<Partial<Record<NavKey, number>>>(() => {
+    if (alertCount <= 0) return {};
+    return { expenses: alertCount };
+  }, [alertCount]);
 
   const allCategories = React.useMemo(
     () => [...DEFAULT_CATEGORIES, ...(store.customCategories ?? [])],
@@ -214,6 +323,32 @@ export default function Index() {
 
     window.location.reload();
   }, [store]);
+  // Alert quick actions
+  const handleMarkPaid = React.useCallback((id: string) => {
+    store.updateExpense(id, { status: "paid" as const });
+  }, [store]);
+
+  const handlePostpone = React.useCallback((id: string, days: number) => {
+    const exp = (store.expenses ?? []).find((e: Expense) => e.id === id);
+    if (!exp) return;
+    const [y, m, d] = exp.date.split("-").map(Number);
+    const newDate = new Date(y, m - 1, d + days);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const dateStr = `${newDate.getFullYear()}-${pad(newDate.getMonth() + 1)}-${pad(newDate.getDate())}`;
+    store.updateExpense(id, { date: dateStr });
+  }, [store]);
+
+  const handleEditFromAlert = React.useCallback((expense: Expense) => {
+    setNav("expenses");
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("edit-expense", { detail: expense }));
+    }, 100);
+  }, []);
+
+  const handleDuplicateExpense = React.useCallback((expense: Expense) => {
+    const { id, ...rest } = expense;
+    store.addExpense({ ...rest, description: `${rest.description} (cópia)` });
+  }, [store]);
 
   const Content = React.useMemo(() => {
     switch (nav) {
@@ -228,6 +363,11 @@ export default function Index() {
               cards={store.creditCards}
               invoices={store.invoices}
               monthBalance={store.monthBalance}
+              alertDaysBefore={alertDaysBefore}
+              onMarkPaid={handleMarkPaid}
+              onPostpone={handlePostpone}
+              onEditExpense={handleEditFromAlert}
+              onDuplicateExpense={handleDuplicateExpense}
             />
           </PageShell>
         );
@@ -446,6 +586,38 @@ export default function Index() {
 
                   <div className="h-px bg-border/60" />
 
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium">Alertas de gastos</div>
+                      <div className="text-xs text-muted-foreground">
+                        Dias de antecedência para alertar.
+                      </div>
+                    </div>
+                    <div className="w-[140px]">
+                      <Select
+                        value={String(alertDaysBefore)}
+                        onValueChange={(v) => {
+                          const n = parseInt(v, 10);
+                          setAlertDaysBefore(n);
+                          try { localStorage.setItem("finbrasil.settings.alertDaysBefore", v); } catch {}
+                        }}
+                      >
+                        <SelectTrigger className="h-10 rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 5, 7].map((d) => (
+                            <SelectItem key={d} value={String(d)}>
+                              {d} {d === 1 ? "dia" : "dias"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-border/60" />
+
                   <div className="flex justify-end">
                     <Button className="h-10 rounded-xl" onClick={savePreferences}>
                       Salvar preferências
@@ -471,11 +643,17 @@ export default function Index() {
                 </div>
               </div>
 
-              {/* DADOS & PLANO */}
+              {/* METAS FINANCEIRAS */}
+              <GoalsManager />
+
+              {/* PLANOS & COBRANÇA */}
+              <PlansSection currentPlan={userPlan} />
+
+              {/* DADOS */}
               <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
-                <div className="text-sm font-semibold">Dados & Plano</div>
+                <div className="text-sm font-semibold">Dados</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Exportação, limpeza e upgrades.
+                  Exportação e limpeza de dados.
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -503,17 +681,6 @@ export default function Index() {
                     </Button>
                   </div>
 
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Plano</div>
-                      <div className="text-xs text-muted-foreground">Freemium / Premium.</div>
-                    </div>
-                    <Button className="h-10 rounded-xl">Fazer upgrade</Button>
-                  </div>
-
-                  {/* Info útil (debug amigável) */}
                   <div className="pt-2 text-xs text-muted-foreground">
                     Mês financeiro atual:{" "}
                     <span className="text-foreground font-medium">
@@ -522,6 +689,11 @@ export default function Index() {
                   </div>
                 </div>
               </div>
+
+              {/* ADMIN PANEL (owner/admin only) */}
+              {(userRole === "owner" || userRole === "admin") && (
+                <AdminPanel currentUserRole={userRole} />
+              )}
             </div>
           </PageShell>
         );
@@ -538,10 +710,15 @@ export default function Index() {
     profileEmail,
     privacyMode,
     monthStartDayDraft,
+    alertDaysBefore,
     saveProfile,
     savePreferences,
     exportCSV,
     resetFinance,
+    handleMarkPaid,
+    handlePostpone,
+    handleEditFromAlert,
+    handleDuplicateExpense,
   ]);
 
   const rightActions = (
@@ -551,10 +728,20 @@ export default function Index() {
       <Button
         variant="outline"
         className="h-10 gap-2 rounded-xl"
-        onClick={() => setAssistantOpen(true)}
+        onClick={() => {
+          if (requirePremium("Assistente financeiro com IA")) return;
+          setAssistantOpen(true);
+        }}
       >
         <Bot className="h-4 w-4" />
         <span className="hidden sm:inline">Assistente</span>
+      </Button>
+
+      <ModeToggle />
+
+      <Button variant="outline" className="h-10 gap-2 rounded-xl" onClick={signOut}>
+        <LogOut className="h-4 w-4" />
+        <span className="hidden sm:inline">Sair</span>
       </Button>
 
       <ModeToggle />
@@ -568,6 +755,12 @@ export default function Index() {
 
   return (
     <>
+      <PremiumModal
+        open={premiumModalOpen}
+        onOpenChange={setPremiumModalOpen}
+        featureName={premiumFeatureName}
+        onViewPlans={() => setNav("settings")}
+      />
       <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
 
       <AppShell
@@ -576,6 +769,7 @@ export default function Index() {
         title={pageTitle}
         rightActions={rightActions}
         onNewExpense={onNewExpense}
+        badges={navBadges}
       >
         {Content}
       </AppShell>

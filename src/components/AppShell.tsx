@@ -1,4 +1,6 @@
 // src/components/AppShell.tsx
+"use client";
+
 import { ReactNode, useEffect, useState } from "react";
 import {
   Menu,
@@ -13,6 +15,7 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  Crown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,15 +53,16 @@ function SidebarNav({
   collapsed,
   onToggleCollapsed,
   showToggle,
+  badges,
 }: {
   active: NavKey;
   onNavigate: (k: NavKey) => void;
   footer?: ReactNode;
   onNewExpense?: () => void;
-
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   showToggle?: boolean;
+  badges?: Partial<Record<NavKey, number>>;
 }) {
   const isCollapsed = !!collapsed;
 
@@ -69,21 +73,18 @@ function SidebarNav({
         <div
           className={cn(
             "relative rounded-2xl border border-border/50 bg-card/60 shadow-sm",
-            // quando colapsado, centraliza tudo e remove gaps que “tortam”
-            isCollapsed ? "grid place-items-center px-2 py-3" : "flex items-center gap-3 px-3 py-3"
+            isCollapsed
+              ? "grid place-items-center px-2 py-3"
+              : "flex items-center gap-3 px-3 py-3"
           )}
         >
-          {/* “Logo” — quando colapsado fica neutro pra não virar “bola verde” */}
           <div
             className={cn(
               "h-9 w-9 rounded-xl ring-1 shrink-0",
-              isCollapsed
-                ? "bg-muted/30 ring-border/60"
-                : "bg-primary/10 ring-primary/15"
+              isCollapsed ? "bg-muted/30 ring-border/60" : "bg-primary/10 ring-primary/15"
             )}
           />
 
-          {/* Texto (só aparece expandido) */}
           {!isCollapsed ? (
             <div className="leading-tight">
               <div className="text-sm font-semibold whitespace-nowrap">FinBrasil</div>
@@ -93,7 +94,6 @@ function SidebarNav({
             </div>
           ) : null}
 
-          {/* Toggle (desktop) — absoluto pra não empurrar nada */}
           {showToggle ? (
             <Button
               type="button"
@@ -122,6 +122,7 @@ function SidebarNav({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key;
+            const badgeCount = badges?.[item.key] ?? 0;
 
             return (
               <button
@@ -133,29 +134,23 @@ function SidebarNav({
                   "hover:bg-muted/50",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   "overflow-hidden",
-
-                  // aura mais contida no modo colapsado
                   "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
                   isCollapsed
                     ? "before:bg-[radial-gradient(160px_circle_at_50%_40%,hsl(var(--primary)/0.07),transparent_72%)]"
                     : "before:bg-[radial-gradient(200px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
                   "hover:before:opacity-100",
-
                   isActive
                     ? cn(
-                        "text-foreground bg-primary/10",
-                        "shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]",
-                        "ring-1 ring-primary/18",
+                        "text-foreground bg-primary/8",
+                        "ring-1 ring-primary/12",
                         "before:opacity-100",
                         isCollapsed
-                          ? "before:bg-[radial-gradient(200px_circle_at_50%_40%,hsl(var(--primary)/0.10),transparent_75%)]"
-                          : "before:bg-[radial-gradient(260px_circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_68%)]",
-                        "after:pointer-events-none after:absolute after:left-0 after:top-2 after:bottom-2 after:w-[2px] after:rounded-full",
-                        "after:bg-gradient-to-b after:from-transparent after:via-primary after:to-transparent after:opacity-90"
+                          ? "before:bg-[radial-gradient(200px_circle_at_50%_40%,hsl(var(--primary)/0.06),transparent_75%)]"
+                          : "before:bg-[radial-gradient(260px_circle_at_20%_30%,hsl(var(--primary)/0.10),transparent_68%)]",
+                        "after:pointer-events-none after:absolute after:left-0 after:top-2.5 after:bottom-2.5 after:w-[2px] after:rounded-full",
+                        "after:bg-primary/50"
                       )
                     : "text-muted-foreground",
-
-                  // colapsado: garante centro perfeito
                   isCollapsed && "justify-center px-2"
                 )}
               >
@@ -168,9 +163,20 @@ function SidebarNav({
                   )}
                 />
 
-                {!isCollapsed ? (
-                  <span className="flex-1 text-left">{item.label}</span>
-                ) : null}
+                {!isCollapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
+
+                {badgeCount > 0 && (
+                  <span
+                    className={cn(
+                      "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none",
+                      isCollapsed
+                        ? "absolute -top-1 -right-1 h-4 min-w-[16px] px-1"
+                        : "h-5 min-w-[20px] px-1.5"
+                    )}
+                  >
+                    {badgeCount}
+                  </span>
+                )}
 
                 {!isCollapsed ? (
                   <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_70%_30%,hsl(var(--primary)/0.08),transparent_60%)]" />
@@ -180,7 +186,6 @@ function SidebarNav({
           })}
         </div>
 
-        {/* Botão Novo gasto */}
         {onNewExpense ? (
           <div className={cn("mt-4", isCollapsed ? "flex justify-center" : "px-1")}>
             <Button
@@ -193,7 +198,6 @@ function SidebarNav({
               )}
               title={isCollapsed ? "Novo gasto" : undefined}
             >
-              {/* glow grande só no modo expandido */}
               {!isCollapsed ? (
                 <>
                   <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/25 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -237,17 +241,41 @@ export function AppShell({
   onNavigate,
   title,
   rightActions,
+  mobileActions,
   footer,
   children,
   onNewExpense,
+  badges,
+
+  /** Opcional: atalho vendável para planos (leva pra Ajustes → Planos & Cobrança) */
+  planLabel,
+  onPlanClick,
 }: {
   active: NavKey;
   onNavigate: (k: NavKey) => void;
   title?: string;
+
+  /**
+   * Ações do topo para DESKTOP (md+).
+   * Evita duplicação quando você tem ações específicas de mobile/desktop.
+   */
   rightActions?: ReactNode;
+
+  /**
+   * Ações do topo para MOBILE (<md).
+   * Se você tinha botões duplicados, mova o "Sair" mobile pra cá.
+   */
+  mobileActions?: ReactNode;
+
   footer?: ReactNode;
   children: ReactNode;
   onNewExpense?: () => void;
+  badges?: Partial<Record<NavKey, number>>;
+
+  /** Ex: "Plano: Ultra" / "Plano: Pro" */
+  planLabel?: string;
+  /** Clique do atalho de planos (normalmente: onNavigate("settings")) */
+  onPlanClick?: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -270,12 +298,14 @@ export function AppShell({
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
 
       <div className="flex min-h-screen w-full">
+        {/* Sidebar desktop */}
         <aside
           className={cn(
             "hidden bg-background/60 backdrop-blur xl:block",
             "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
             "transition-[width] duration-300 ease-out",
-            "will-change-[width] overflow-hidden"
+            "will-change-[width]",
+            "sticky top-0 h-screen shrink-0 overflow-y-auto"
           )}
           style={{ width: collapsed ? 80 : 288 }}
         >
@@ -287,6 +317,7 @@ export function AppShell({
             collapsed={collapsed}
             onToggleCollapsed={() => setCollapsed((v) => !v)}
             showToggle
+            badges={badges}
           />
         </aside>
 
@@ -309,17 +340,43 @@ export function AppShell({
                       onNewExpense={onNewExpense}
                       collapsed={false}
                       showToggle={false}
+                      badges={badges}
                     />
                   </SheetContent>
                 </Sheet>
               </div>
 
+              {/* Title */}
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{title}</div>
-                <div className="text-xs text-muted-foreground truncate">Visão geral e controle</div>
               </div>
 
-              <div className="flex items-center gap-2">{rightActions}</div>
+              {/* Plan shortcut (optional) */}
+              {planLabel ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="hidden sm:flex h-10 rounded-xl gap-2"
+                  onClick={onPlanClick ?? (() => onNavigate("settings"))}
+                  title="Gerenciar planos"
+                >
+                  <Crown className="h-4 w-4" />
+                  <span className="text-sm">{planLabel}</span>
+                </Button>
+              ) : null}
+
+              {/* Actions: split mobile vs desktop to prevent duplication */}
+              <div className="flex items-center gap-2">
+                {/* Mobile actions only (<md) */}
+                {mobileActions ? (
+                  <div className="flex items-center gap-2 md:hidden">{mobileActions}</div>
+                ) : null}
+
+                {/* Desktop actions only (md+) */}
+                {rightActions ? (
+                  <div className="hidden md:flex items-center gap-2">{rightActions}</div>
+                ) : null}
+              </div>
             </div>
           </header>
 
@@ -338,3 +395,6 @@ export function AppShell({
     </div>
   );
 }
+
+// Ajuda caso alguma parte do projeto importe como default
+export default AppShell;

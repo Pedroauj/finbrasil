@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Plus, X } from "lucide-react";
 
 interface ExpenseFormProps {
@@ -19,11 +20,10 @@ interface ExpenseFormProps {
   currentDate: Date;
   categories: string[];
   accounts?: FinancialAccount[];
+  existingExpenses?: Expense[];
   onSubmit: (data: Omit<Expense, "id">) => void;
   onCancel: () => void;
   onAddCategory: (cat: string) => void;
-
-  /** usado quando criando um gasto novo */
   defaultStatus?: TransactionStatus;
 }
 
@@ -32,6 +32,7 @@ export function ExpenseForm({
   currentDate,
   categories,
   accounts = [],
+  existingExpenses = [],
   onSubmit,
   onCancel,
   onAddCategory,
@@ -42,8 +43,6 @@ export function ExpenseForm({
   const computedInitialStatus = useMemo<TransactionStatus>(() => {
     if (expense?.status) return expense.status;
     if (defaultStatus) return defaultStatus;
-
-    // evita inconsistência de timezone com string YYYY-MM-DD
     const d = parseISO(defaultDate);
     const today = new Date();
     return d <= today ? "paid" : "planned";
@@ -61,7 +60,15 @@ export function ExpenseForm({
   const [newCategory, setNewCategory] = useState("");
   const [showNewCategory, setShowNewCategory] = useState(false);
 
-  // ✅ mantém o form sincronizado ao alternar entre "novo" e "editar"
+  // Installment fields
+  const [isInstallment, setIsInstallment] = useState(expense?.isInstallment || false);
+  const [installmentCount, setInstallmentCount] = useState(
+    expense?.installmentCount?.toString() || "2"
+  );
+
+  // Disable installment toggle when editing
+  const isEditing = !!expense;
+
   useEffect(() => {
     setDate(defaultDate);
     setDescription(expense?.description || "");
@@ -69,16 +76,41 @@ export function ExpenseForm({
     setAmount(expense?.amount?.toString() || "");
     setAccountId(expense?.accountId || "none");
     setStatus(computedInitialStatus);
-
+    setIsInstallment(expense?.isInstallment || false);
+    setInstallmentCount(expense?.installmentCount?.toString() || "2");
     setNewCategory("");
     setShowNewCategory(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expense?.id, defaultDate, computedInitialStatus, categories]);
 
+  const parsedAmount = parseFloat(amount) || 0;
+  const parsedCount = parseInt(installmentCount) || 2;
+  const perInstallment = isInstallment && parsedCount > 1 ? parsedAmount / parsedCount : 0;
+
+  // Duplicate detection
+  const duplicateWarning = useMemo(() => {
+    if (isEditing || !description.trim() || !amount || !date) return null;
+    const descLower = description.trim().toLowerCase();
+    const found = existingExpenses.find(
+      (e) =>
+        e.date === date &&
+        Math.abs(e.amount - parsedAmount) < 0.01 &&
+        e.description.toLowerCase().includes(descLower)
+    );
+    return found ? found : null;
+  }, [isEditing, description, amount, date, parsedAmount, existingExpenses]);
+
+  const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const desc = description.trim();
     if (!desc || !amount || !category) return;
+
+    if (duplicateWarning && !duplicateConfirmed) {
+      setDuplicateConfirmed(true);
+      return;
+    }
 
     onSubmit({
       date,
@@ -87,6 +119,8 @@ export function ExpenseForm({
       amount: parseFloat(amount),
       status,
       accountId: accountId === "none" ? undefined : accountId,
+      isInstallment: isInstallment && parsedCount > 1,
+      installmentCount: isInstallment && parsedCount > 1 ? parsedCount : undefined,
     });
   }
 
@@ -163,7 +197,6 @@ export function ExpenseForm({
                 placeholder="Nova categoria"
                 className="rounded-xl"
               />
-
               <Button
                 type="button"
                 size="icon"
@@ -174,7 +207,6 @@ export function ExpenseForm({
               >
                 <Plus className="h-4 w-4" />
               </Button>
-
               <Button
                 type="button"
                 size="icon"
@@ -203,7 +235,6 @@ export function ExpenseForm({
                   ))}
                 </SelectContent>
               </Select>
-
               <Button
                 type="button"
                 size="icon"
@@ -219,7 +250,9 @@ export function ExpenseForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="amount">Valor (R$)</Label>
+          <Label htmlFor="amount">
+            {isInstallment && parsedCount > 1 ? "Valor total (R$)" : "Valor (R$)"}
+          </Label>
           <Input
             id="amount"
             type="number"
@@ -272,6 +305,67 @@ export function ExpenseForm({
         )}
       </div>
 
+      {/* ── Installment section ── */}
+      {!isEditing && (
+        <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Parcelamento</p>
+              <p className="text-xs text-muted-foreground">
+                Divide o valor em parcelas mensais automáticas
+              </p>
+            </div>
+            <Switch
+              checked={isInstallment}
+              onCheckedChange={setIsInstallment}
+            />
+          </div>
+
+          {isInstallment && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="installmentCount">Nº de parcelas</Label>
+                <Input
+                  id="installmentCount"
+                  type="number"
+                  min="2"
+                  max="48"
+                  value={installmentCount}
+                  onChange={(e) => setInstallmentCount(e.target.value)}
+                  className="rounded-xl"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Valor por parcela</Label>
+                <div className="flex h-10 items-center rounded-xl border border-input bg-background px-3 text-sm font-semibold tabular-nums">
+                  {parsedAmount > 0 && parsedCount > 1
+                    ? `R$ ${perInstallment.toFixed(2)}`
+                    : "—"}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Installment info when editing ── */}
+      {isEditing && expense?.isInstallment && (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
+          <p className="text-xs font-medium text-primary">
+            📆 Parcela {expense.currentInstallment}/{expense.installmentCount}
+          </p>
+        </div>
+      )}
+      {/* Duplicate warning */}
+      {duplicateWarning && duplicateConfirmed && (
+        <div className="rounded-2xl border border-[hsl(var(--warning))]/25 bg-[hsl(var(--warning))]/8 p-3">
+          <p className="text-xs font-medium text-[hsl(var(--warning))]">
+            ⚠️ Esse gasto parece duplicado ({duplicateWarning.description} — {format(new Date(duplicateWarning.date), "dd/MM")}). Clique novamente para confirmar.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center justify-end gap-2 pt-1">
         <Button
           type="button"
@@ -282,7 +376,13 @@ export function ExpenseForm({
           Voltar
         </Button>
         <Button type="submit" className="rounded-xl">
-          {expense ? "Salvar" : "Adicionar"}
+          {duplicateWarning && !duplicateConfirmed
+            ? "Verificar duplicidade"
+            : expense
+            ? "Salvar"
+            : isInstallment && parsedCount > 1
+            ? `Criar ${parsedCount}x parcelas`
+            : "Adicionar"}
         </Button>
       </div>
     </form>

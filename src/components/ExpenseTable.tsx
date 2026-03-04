@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   DollarSign,
   ListChecks,
+  CalendarRange,
 } from "lucide-react";
 
 import type { Expense, FinancialAccount, TransactionStatus } from "@/types/expense";
@@ -37,6 +38,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { ExpenseForm } from "./ExpenseForm";
 import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
@@ -77,7 +88,7 @@ interface ExpenseTableProps {
   accounts?: FinancialAccount[];
   onAdd: (expense: Omit<Expense, "id">) => void;
   onUpdate: (id: string, updates: Partial<Omit<Expense, "id">>) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, deleteAll?: boolean) => void;
   onAddCategory: (cat: string) => void;
 }
 
@@ -100,6 +111,7 @@ export function ExpenseTable({
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
 
   const allCategories = useMemo(
     () => [...DEFAULT_CATEGORIES, ...customCategories],
@@ -140,7 +152,17 @@ export function ExpenseTable({
   useEffect(() => {
     const handler = () => openNewExpense("planned");
     window.addEventListener("open-add-expense", handler);
-    return () => window.removeEventListener("open-add-expense", handler);
+
+    const editHandler = (e: Event) => {
+      const expense = (e as CustomEvent).detail as Expense;
+      if (expense) openEditExpense(expense);
+    };
+    window.addEventListener("edit-expense", editHandler);
+
+    return () => {
+      window.removeEventListener("open-add-expense", handler);
+      window.removeEventListener("edit-expense", editHandler);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -390,12 +412,21 @@ export function ExpenseTable({
                           </TableCell>
 
                           <TableCell>
-                            <span className="flex items-center gap-1.5">
+                            <span className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-foreground">{expense.description}</span>
                               {expense.isRecurring && (
                                 <span title="Recorrente">
                                   <RefreshCw className="h-3 w-3 text-primary" />
                                 </span>
+                              )}
+                              {expense.isInstallment && expense.currentInstallment && expense.installmentCount && (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-[10px] font-medium border-primary/20 bg-primary/5 text-primary rounded-lg"
+                                >
+                                  <CalendarRange className="h-3 w-3" />
+                                  {expense.currentInstallment}/{expense.installmentCount}
+                                </Badge>
                               )}
                             </span>
                           </TableCell>
@@ -438,7 +469,13 @@ export function ExpenseTable({
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-lg text-destructive hover:text-destructive"
-                                onClick={() => onDelete(expense.id)}
+                                onClick={() => {
+                                  if (expense.isInstallment) {
+                                    setDeleteTarget(expense);
+                                  } else {
+                                    onDelete(expense.id);
+                                  }
+                                }}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
@@ -474,6 +511,7 @@ export function ExpenseTable({
             currentDate={currentDate}
             categories={allCategories}
             accounts={accounts}
+            existingExpenses={expenses}
             defaultStatus={defaultStatus}
             onSubmit={(data) => {
               if (editingExpense) onUpdate(editingExpense.id, data);
@@ -485,6 +523,45 @@ export function ExpenseTable({
           />
         </DialogContent>
       </Dialog>
+
+      {/* Installment delete dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir parcela</AlertDialogTitle>
+            <AlertDialogDescription>
+              Este gasto faz parte de um parcelamento
+              {deleteTarget?.installmentCount && ` (${deleteTarget.currentInstallment}/${deleteTarget.installmentCount})`}.
+              O que deseja fazer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget) {
+                  onDelete(deleteTarget.id, false);
+                  setDeleteTarget(null);
+                }
+              }}
+            >
+              Apenas esta parcela
+            </AlertDialogAction>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget) {
+                  onDelete(deleteTarget.id, true);
+                  setDeleteTarget(null);
+                }
+              }}
+            >
+              Todas as parcelas
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

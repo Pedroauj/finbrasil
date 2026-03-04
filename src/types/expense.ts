@@ -65,6 +65,10 @@ export interface Expense {
   cardId?: string;
   status: TransactionStatus;
   accountId?: string;
+  isInstallment?: boolean;
+  installmentCount?: number;
+  currentInstallment?: number;
+  parentInstallmentId?: string | null;
 }
 
 export interface RecurringExpense {

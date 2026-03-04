@@ -163,9 +163,13 @@ export type Database = {
           amount: number
           category: string
           created_at: string
+          current_installment: number | null
           date: string
           description: string
           id: string
+          installment_count: number | null
+          is_installment: boolean
+          parent_installment_id: string | null
           status: Database["public"]["Enums"]["transaction_status"]
           user_id: string
         }
@@ -174,9 +178,13 @@ export type Database = {
           amount: number
           category: string
           created_at?: string
+          current_installment?: number | null
           date: string
           description: string
           id?: string
+          installment_count?: number | null
+          is_installment?: boolean
+          parent_installment_id?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           user_id: string
         }
@@ -185,9 +193,13 @@ export type Database = {
           amount?: number
           category?: string
           created_at?: string
+          current_installment?: number | null
           date?: string
           description?: string
           id?: string
+          installment_count?: number | null
+          is_installment?: boolean
+          parent_installment_id?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           user_id?: string
         }
@@ -197,6 +209,13 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_parent_installment_id_fkey"
+            columns: ["parent_installment_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
             referencedColumns: ["id"]
           },
         ]
@@ -280,19 +299,31 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string | null
+          fin_score: number
           id: string
+          plan: string
+          referral_code: string | null
+          role: string
           user_id: string
         }
         Insert: {
           created_at?: string
           display_name?: string | null
+          fin_score?: number
           id?: string
+          plan?: string
+          referral_code?: string | null
+          role?: string
           user_id: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
+          fin_score?: number
           id?: string
+          plan?: string
+          referral_code?: string | null
+          role?: string
           user_id?: string
         }
         Relationships: []
