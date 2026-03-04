@@ -298,32 +298,44 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          current_period_end: string | null
           display_name: string | null
           fin_score: number
           id: string
           plan: string
           referral_code: string | null
           role: string
+          subscription_id: string | null
+          subscription_provider: string | null
+          subscription_status: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          current_period_end?: string | null
           display_name?: string | null
           fin_score?: number
           id?: string
           plan?: string
           referral_code?: string | null
           role?: string
+          subscription_id?: string | null
+          subscription_provider?: string | null
+          subscription_status?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          current_period_end?: string | null
           display_name?: string | null
           fin_score?: number
           id?: string
           plan?: string
           referral_code?: string | null
           role?: string
+          subscription_id?: string | null
+          subscription_provider?: string | null
+          subscription_status?: string
           user_id?: string
         }
         Relationships: []
