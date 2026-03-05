@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FinBrasilLogo } from "@/components/FinBrasilLogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -98,10 +99,7 @@ const Auth = () => {
             Voltar
           </button>
           <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-400/20">
-              <span className="text-base">🪙</span>
-            </div>
-            <span className="font-bold tracking-tight">FinBrasil</span>
+            <FinBrasilLogo height={30} />
           </div>
         </div>
 
