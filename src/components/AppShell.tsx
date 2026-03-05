@@ -78,12 +78,11 @@ function SidebarNav({
               : "rounded-2xl border border-border/50 bg-card/60 shadow-sm flex items-center gap-3 px-3 py-3"
           )}
         >
-          <div
-            className={cn(
-              "h-9 w-9 rounded-xl ring-1 shrink-0",
-              isCollapsed ? "bg-muted/30 ring-border/60" : "bg-primary/10 ring-primary/15"
-            )}
-          />
+          {!isCollapsed && (
+            <div
+              className="h-9 w-9 rounded-xl ring-1 shrink-0 bg-primary/10 ring-primary/15"
+            />
+          )}
 
           {!isCollapsed ? (
             <div className="leading-tight">
@@ -101,7 +100,7 @@ function SidebarNav({
               className={cn(
                 "h-8 w-8 rounded-xl flex items-center justify-center transition-colors",
                 "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                isCollapsed ? "" : "ml-auto"
+                isCollapsed ? "mx-auto" : "ml-auto"
               )}
               title={isCollapsed ? "Expandir menu" : "Minimizar menu"}
             >
