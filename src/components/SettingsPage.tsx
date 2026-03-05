@@ -186,9 +186,10 @@ interface SettingsPageProps {
   userRole: UserRole;
   alertDaysBefore: number;
   setAlertDaysBefore: (v: number) => void;
+  initialTab?: string;
 }
 
-export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore, setAlertDaysBefore }: SettingsPageProps) {
+export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore, setAlertDaysBefore, initialTab }: SettingsPageProps) {
   const { theme, setTheme } = useTheme();
 
   // Profile state
@@ -270,7 +271,7 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
   const themeLabel = theme === "dark" ? "Escuro" : theme === "light" ? "Claro" : "Sistema";
 
   return (
-    <Tabs defaultValue="profile" className="space-y-6">
+    <Tabs defaultValue={initialTab || "profile"} key={initialTab} className="space-y-6">
       <TabsList className="bg-muted/50 backdrop-blur rounded-2xl h-12 p-1 w-full grid grid-cols-4">
         <TabsTrigger value="profile" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2 text-xs sm:text-sm">
           <User className="h-4 w-4" />
