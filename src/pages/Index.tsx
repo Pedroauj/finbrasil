@@ -405,9 +405,9 @@ export default function Index() {
           cardCount: (store.creditCards ?? []).length,
           plan: userPlan,
         }}
-        onExpenseAdded={() => {
+        onDataChanged={() => {
           store.forceRefresh?.();
-          toast.success("Despesa registrada pelo assistente!");
+          toast.success("Dados registrados pelo assistente!");
         }}
       />
 
