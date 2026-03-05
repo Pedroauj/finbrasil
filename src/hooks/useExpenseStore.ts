@@ -116,6 +116,7 @@ export function useExpenseStore() {
   // Estado base
   // =========================
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [refreshKey, setRefreshKey] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [budget, setBudgetState] = useState<Budget>({ total: 0, byCategory: {} });
   const [prevMonthExpenses, setPrevMonthExpenses] = useState<Expense[]>([]);
@@ -298,7 +299,7 @@ export function useExpenseStore() {
     };
 
     load();
-  }, [user, month, year, startDate, endDate, materializeRecurring]);
+  }, [user, month, year, startDate, endDate, materializeRecurring, refreshKey]);
 
   /** =========================
    *  Despesas do período anterior
@@ -1497,5 +1498,8 @@ export function useExpenseStore() {
     addExtraIncome,
     updateExtraIncome,
     deleteExtraIncome,
+
+    forceRefresh: () => setRefreshKey((k) => k + 1),
   };
+
 }
