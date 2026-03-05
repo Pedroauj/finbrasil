@@ -349,14 +349,14 @@ export default function Landing() {
       <BackgroundFX />
 
       {/* ── Navbar ── */}
-      <nav className="relative z-20 border-b border-white/[0.04]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2.5">
+      <header className="relative z-20 border-b border-white/[0.04]" role="banner">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4" aria-label="Navegação principal">
+          <a href="/" className="flex items-center gap-2.5" aria-label="FinBrasil — Página inicial">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-400/20">
-              <span className="text-sm">🪙</span>
+              <span className="text-sm" role="img" aria-label="Moeda">🪙</span>
             </div>
             <span className="text-base font-bold tracking-tight">FinBrasil</span>
-          </div>
+          </a>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -374,11 +374,13 @@ export default function Landing() {
               Começar grátis
             </Button>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
+
+      <main>
 
       {/* ── Hero — asymmetric split ── */}
-      <section className="relative z-10 py-20 md:py-28 lg:py-32">
+      <section className="relative z-10 py-20 md:py-28 lg:py-32" aria-labelledby="hero-heading">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
             {/* Left — copy */}
@@ -397,7 +399,7 @@ export default function Landing() {
                 Gestão financeira inteligente
               </div>
 
-              <h1 className="text-[2.5rem] font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]">
+              <h1 id="hero-heading" className="text-[2.5rem] font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]">
                 Domine suas finanças
                 <br />
                 <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent">
@@ -473,12 +475,12 @@ export default function Landing() {
       </section>
 
       {/* ── Social Proof: Testimonials ── */}
-      <section className="relative z-10 pb-20">
+      <section className="relative z-10 pb-20" aria-labelledby="testimonials-heading">
         <div className="mx-auto max-w-7xl px-6">
           <Reveal>
             <div className="text-center mb-10">
               <p className="text-sm font-medium text-emerald-400/70 mb-2">+1.000 usuários organizando suas finanças</p>
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h2 id="testimonials-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">
                 O que nossos usuários <span className="text-emerald-400">dizem</span>
               </h2>
             </div>
@@ -508,11 +510,11 @@ export default function Landing() {
       </section>
 
       {/* ── Features — Bento grid ── */}
-      <section className="relative z-10 pb-28">
+      <section className="relative z-10 pb-28" aria-labelledby="features-heading">
         <div className="mx-auto max-w-7xl px-6">
           <Reveal>
             <div className="mb-10">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h2 id="features-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">
                 Feito para quem quer{" "}
                 <span className="text-emerald-400">ver resultado.</span>
               </h2>
@@ -564,7 +566,7 @@ export default function Landing() {
       </section>
 
       {/* ── AI Showcase ── */}
-      <section className="relative z-10 pb-28">
+      <section className="relative z-10 pb-28" aria-labelledby="ai-heading">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <Reveal>
@@ -573,7 +575,7 @@ export default function Landing() {
                   <Bot className="h-3.5 w-3.5" />
                   Inteligência Artificial
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl mb-4">
+                <h2 id="ai-heading" className="text-2xl font-bold tracking-tight sm:text-3xl mb-4">
                   Sua assistente financeira{" "}
                   <span className="text-emerald-400">pessoal</span>
                 </h2>
@@ -639,11 +641,11 @@ export default function Landing() {
       </section>
 
       {/* ── Plans Section ── */}
-      <section className="relative z-10 pb-28">
+      <section className="relative z-10 pb-28" aria-labelledby="plans-heading">
         <div className="mx-auto max-w-7xl px-6">
           <Reveal>
             <div className="text-center mb-10">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h2 id="plans-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">
                 Escolha o plano ideal para <span className="text-emerald-400">você</span>
               </h2>
               <p className="mt-2 text-sm text-white/40 max-w-md mx-auto">
@@ -777,18 +779,20 @@ export default function Landing() {
         </div>
       </section>
 
+      </main>
+
       {/* ── FAQ ── */}
       <FAQSection />
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 border-t border-white/[0.04] py-8">
+      <footer className="relative z-10 border-t border-white/[0.04] py-8" role="contentinfo">
         <div className="mx-auto max-w-7xl px-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="flex items-center gap-2">
+          <a href="/" className="flex items-center gap-2" aria-label="FinBrasil">
             <div className="grid h-6 w-6 place-items-center rounded-md bg-emerald-500/15">
-              <span className="text-xs">🪙</span>
+              <span className="text-xs" role="img" aria-label="Moeda">🪙</span>
             </div>
             <span className="text-sm font-semibold text-white/40">FinBrasil</span>
-          </div>
+          </a>
           <span className="text-xs text-white/20">
             © {new Date().getFullYear()} FinBrasil. Todos os direitos reservados.
           </span>
