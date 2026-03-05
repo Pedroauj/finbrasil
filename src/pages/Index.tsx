@@ -21,14 +21,10 @@ import { PageShell } from "@/components/layout/PageShell";
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AppShell, NavKey } from "@/components/AppShell";
 
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, LogOut, Plus, Trash2, Target } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Bot, LogOut } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { PlansSection } from "@/components/PlansSection";
-import { AdminPanel } from "@/components/AdminPanel";
 import { PremiumModal } from "@/components/PremiumModal";
+import { SettingsPage } from "@/components/SettingsPage";
 
 const NAV_LABELS: Record<NavKey, string> = {
   dashboard: "Dashboard",
@@ -41,146 +37,7 @@ const NAV_LABELS: Record<NavKey, string> = {
   settings: "Ajustes",
 };
 
-const LS = {
-  profileName: "finbrasil.profile.name",
-  profileEmail: "finbrasil.profile.email",
-  monthStartDay: "finbrasil.settings.monthStartDay",
-  privacyMode: "finbrasil.settings.privacyMode",
-} as const;
-
-function safeGet(key: string) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-function safeSet(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value);
-  } catch { }
-}
-function safeDel(key: string) {
-  try {
-    localStorage.removeItem(key);
-  } catch { }
-}
-
-function clampInt(n: number, min: number, max: number) {
-  if (Number.isNaN(n)) return min;
-  return Math.max(min, Math.min(max, Math.trunc(n)));
-}
-
-function downloadTextFile(filename: string, content: string, mime = "text/plain;charset=utf-8") {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function toCSV(rows: Array<Record<string, any>>) {
-  if (!rows.length) return "";
-  const headers = Array.from(
-    rows.reduce<Set<string>>((set, r) => {
-      Object.keys(r).forEach((k) => set.add(k));
-      return set;
-    }, new Set<string>())
-  ) as string[];
-
-  const escape = (v: any) => {
-    const s = v === null || v === undefined ? "" : String(v);
-    const needs = /[",\n;]/.test(s);
-    const normalized = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-    const quoted = normalized.replace(/"/g, '""');
-    return needs ? `"${quoted}"` : quoted;
-  };
-
-  // separador ";" pra Excel PT-BR
-  const lines = [
-    headers.map(escape).join(";"),
-    ...rows.map((r) => headers.map((h) => escape(r[h])).join(";")),
-  ];
-
-  // BOM UTF-8 (abre certo no Excel)
-  return "\uFEFF" + lines.join("\n");
-}
-
-/* ───── Goals Manager (Settings) ───── */
-interface FinancialGoal { id: string; description: string; target: number; current: number; }
-
-function GoalsManager() {
-  const [goals, setGoals] = React.useState<FinancialGoal[]>(() => {
-    try { const r = localStorage.getItem("finbrasil.goals"); return r ? JSON.parse(r) : []; } catch { return []; }
-  });
-  const [desc, setDesc] = React.useState("");
-  const [target, setTarget] = React.useState("");
-  const [current, setCurrent] = React.useState("");
-
-  const save = (updated: FinancialGoal[]) => {
-    setGoals(updated);
-    try { localStorage.setItem("finbrasil.goals", JSON.stringify(updated)); } catch {}
-  };
-
-  const add = () => {
-    const t = parseFloat(target);
-    const c = parseFloat(current) || 0;
-    if (!desc.trim() || isNaN(t) || t <= 0) return;
-    save([...goals, { id: crypto.randomUUID(), description: desc.trim(), target: t, current: c }]);
-    setDesc(""); setTarget(""); setCurrent("");
-  };
-
-  const remove = (id: string) => save(goals.filter(g => g.id !== id));
-
-  return (
-    <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
-      <div className="flex items-center gap-2">
-        <Target className="h-4 w-4 text-muted-foreground" />
-        <div className="text-sm font-semibold">Metas financeiras</div>
-      </div>
-      <div className="mt-1 text-xs text-muted-foreground">
-        Defina metas e acompanhe no dashboard.
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {goals.map(g => {
-          const pct = g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0;
-          return (
-            <div key={g.id} className="rounded-xl border border-border/40 bg-background/20 p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium truncate">{g.description}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(g.id)}>
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              </div>
-              <Progress value={pct} className="h-1.5 rounded-full" />
-              <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
-                <span>R$ {g.current.toFixed(2)}</span>
-                <span>{pct.toFixed(0)}%</span>
-                <span>R$ {g.target.toFixed(2)}</span>
-              </div>
-            </div>
-          );
-        })}
-
-        <div className="space-y-2 pt-2">
-          <Input placeholder="Descrição da meta" value={desc} onChange={e => setDesc(e.target.value)} className="h-9 rounded-xl text-sm" />
-          <div className="grid grid-cols-2 gap-2">
-            <Input placeholder="Valor alvo (R$)" type="number" value={target} onChange={e => setTarget(e.target.value)} className="h-9 rounded-xl text-sm" />
-            <Input placeholder="Valor atual (R$)" type="number" value={current} onChange={e => setCurrent(e.target.value)} className="h-9 rounded-xl text-sm" />
-          </div>
-          <Button className="h-9 rounded-xl w-full" onClick={add}>
-            <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar meta
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+const LS_ALERT_DAYS = "finbrasil.settings.alertDaysBefore";
 
 export default function Index() {
   const auth = useAuth() as any;
@@ -241,88 +98,6 @@ export default function Index() {
     settings: "Preferências, segurança e dados",
   };
 
-  // =========================
-  // Settings state (funcional)
-  // =========================
-  const [profileName, setProfileName] = React.useState("");
-  const [profileEmail, setProfileEmail] = React.useState("");
-  const [privacyMode, setPrivacyMode] = React.useState<boolean>(false);
-
-  // Campo controlado do input (pra não “brigar” com store enquanto digita)
-  const [monthStartDayDraft, setMonthStartDayDraft] = React.useState<number>(1);
-
-  React.useEffect(() => {
-    const savedName = safeGet(LS.profileName) ?? "";
-    const savedEmail = safeGet(LS.profileEmail) ?? "";
-    const authEmail = auth?.user?.email ?? auth?.session?.user?.email ?? "";
-
-    const savedPrivacy = (safeGet(LS.privacyMode) ?? "0") === "1";
-
-    setProfileName(savedName);
-    setProfileEmail(authEmail || savedEmail);
-    setPrivacyMode(savedPrivacy);
-
-    // Store é a fonte de verdade do mês financeiro
-    const fromStore = clampInt(Number(store?.monthStartDay ?? 1), 1, 28);
-    setMonthStartDayDraft(fromStore);
-  }, [auth?.user?.email, auth?.session?.user?.email, store?.monthStartDay]);
-
-  const saveProfile = React.useCallback(() => {
-    safeSet(LS.profileName, profileName.trim());
-    safeSet(LS.profileEmail, profileEmail.trim());
-  }, [profileName, profileEmail]);
-
-  const savePreferences = React.useCallback(() => {
-    const day = clampInt(monthStartDayDraft, 1, 28);
-    setMonthStartDayDraft(day);
-
-    // Mantém compatível com o localStorage
-    safeSet(LS.monthStartDay, String(day));
-    safeSet(LS.privacyMode, privacyMode ? "1" : "0");
-
-    // Agora liga no STORE de verdade (muda o período na hora)
-    if (typeof store.setMonthStartDay === "function") store.setMonthStartDay(day);
-
-    // (Ainda não implementamos privacy no store inteiro; fica salvo pro futuro)
-    if (typeof store.setPrivacyMode === "function") store.setPrivacyMode(privacyMode);
-  }, [monthStartDayDraft, privacyMode, store]);
-
-  const exportCSV = React.useCallback(() => {
-    const expenses = Array.isArray(store.expenses) ? store.expenses : [];
-
-    const rows = expenses.map((e: any) => ({
-      date: e.date ?? "",
-      description: e.description ?? "",
-      category: e.category ?? "",
-      amount: e.amount ?? "",
-      status: e.status ?? "",
-      accountId: e.accountId ?? e.account ?? "",
-      paymentMethod: e.paymentMethod ?? "",
-      createdAt: e.createdAt ?? "",
-    }));
-
-    const csv = toCSV(rows);
-    const yyyy = new Date().getFullYear();
-    downloadTextFile(`finbrasil-despesas-${yyyy}.csv`, csv, "text/csv;charset=utf-8");
-  }, [store.expenses]);
-
-  const resetFinance = React.useCallback(() => {
-    const ok = window.confirm(
-      "Tem certeza? Isso é irreversível.\n\nVou tentar limpar seus dados financeiros e configurações locais."
-    );
-    if (!ok) return;
-
-    safeDel(LS.profileName);
-    safeDel(LS.profileEmail);
-    safeDel(LS.monthStartDay);
-    safeDel(LS.privacyMode);
-
-    if (typeof store.resetAll === "function") store.resetAll();
-    if (typeof store.clearAllData === "function") store.clearAllData();
-    if (typeof store.resetFinance === "function") store.resetFinance();
-
-    window.location.reload();
-  }, [store]);
   // Alert quick actions
   const handleMarkPaid = React.useCallback((id: string) => {
     store.updateExpense(id, { status: "paid" as const });
@@ -489,213 +264,14 @@ export default function Index() {
       case "settings":
         return (
           <PageShell title="Ajustes" subtitle={subtitleByNav.settings}>
-            <div className="grid gap-4 lg:grid-cols-2">
-              {/* PERFIL */}
-              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
-                <div className="text-sm font-semibold">Perfil</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Informações básicas da sua conta.
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Nome</div>
-                    <Input
-                      value={profileName}
-                      onChange={(e) => setProfileName(e.target.value)}
-                      placeholder="Seu nome"
-                      className="h-10 rounded-xl"
-                    />
-                  </div>
-
-                  <div className="h-px bg-border/60" />
-
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Email</div>
-                    <Input
-                      value={profileEmail}
-                      onChange={(e) => setProfileEmail(e.target.value)}
-                      placeholder="seuemail@exemplo.com"
-                      className="h-10 rounded-xl"
-                    />
-                  </div>
-
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex justify-end">
-                    <Button className="h-10 rounded-xl" onClick={saveProfile}>
-                      Salvar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* PREFERÊNCIAS */}
-              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
-                <div className="text-sm font-semibold">Preferências</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Personalize a experiência do app.
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Tema</div>
-                      <div className="text-xs text-muted-foreground">Claro / Escuro.</div>
-                    </div>
-                    <ModeToggle />
-                  </div>
-
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Mês financeiro</div>
-                      <div className="text-xs text-muted-foreground">
-                        Dia que inicia seu mês (1–28).
-                      </div>
-                    </div>
-                    <div className="w-[140px]">
-                      <Input
-                        type="number"
-                        min={1}
-                        max={28}
-                        value={monthStartDayDraft}
-                        onChange={(e) => setMonthStartDayDraft(parseInt(e.target.value || "1", 10))}
-                        className="h-10 rounded-xl"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Modo privacidade</div>
-                      <div className="text-xs text-muted-foreground">
-                        Ocultar valores por padrão.
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="h-10 rounded-xl"
-                      onClick={() => setPrivacyMode((v) => !v)}
-                    >
-                      {privacyMode ? "Ativado" : "Desativado"}
-                    </Button>
-                  </div>
-
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Alertas de gastos</div>
-                      <div className="text-xs text-muted-foreground">
-                        Dias de antecedência para alertar.
-                      </div>
-                    </div>
-                    <div className="w-[140px]">
-                      <Select
-                        value={String(alertDaysBefore)}
-                        onValueChange={(v) => {
-                          const n = parseInt(v, 10);
-                          setAlertDaysBefore(n);
-                          try { localStorage.setItem("finbrasil.settings.alertDaysBefore", v); } catch {}
-                        }}
-                      >
-                        <SelectTrigger className="h-10 rounded-xl">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 5, 7].map((d) => (
-                            <SelectItem key={d} value={String(d)}>
-                              {d} {d === 1 ? "dia" : "dias"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex justify-end">
-                    <Button className="h-10 rounded-xl" onClick={savePreferences}>
-                      Salvar preferências
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* SEGURANÇA (placeholder funcional) */}
-              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
-                <div className="text-sm font-semibold">Segurança</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Em breve: troca de senha e 2FA.
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button variant="outline" className="h-10 rounded-xl">
-                    Trocar senha (em breve)
-                  </Button>
-                  <Button variant="outline" className="h-10 rounded-xl">
-                    Configurar 2FA (em breve)
-                  </Button>
-                </div>
-              </div>
-
-              {/* METAS FINANCEIRAS */}
-              <GoalsManager />
-
-              {/* PLANOS & COBRANÇA */}
-              <PlansSection currentPlan={userPlan} />
-
-              {/* DADOS */}
-              <div className="rounded-3xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur">
-                <div className="text-sm font-semibold">Dados</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Exportação e limpeza de dados.
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Exportar dados</div>
-                      <div className="text-xs text-muted-foreground">Baixar CSV das despesas.</div>
-                    </div>
-                    <Button variant="outline" className="h-10 rounded-xl" onClick={exportCSV}>
-                      Exportar CSV
-                    </Button>
-                  </div>
-
-                  <div className="h-px bg-border/60" />
-
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">Reset financeiro</div>
-                      <div className="text-xs text-muted-foreground">
-                        Limpa dados (irreversível).
-                      </div>
-                    </div>
-                    <Button variant="destructive" className="h-10 rounded-xl" onClick={resetFinance}>
-                      Resetar
-                    </Button>
-                  </div>
-
-                  <div className="pt-2 text-xs text-muted-foreground">
-                    Mês financeiro atual:{" "}
-                    <span className="text-foreground font-medium">
-                      dia {store?.monthStartDay ?? 1}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* ADMIN PANEL (owner/admin only) */}
-              {(userRole === "owner" || userRole === "admin") && (
-                <AdminPanel currentUserRole={userRole} />
-              )}
-            </div>
+            <SettingsPage
+              store={store}
+              auth={auth}
+              userPlan={userPlan}
+              userRole={userRole}
+              alertDaysBefore={alertDaysBefore}
+              setAlertDaysBefore={setAlertDaysBefore}
+            />
           </PageShell>
         );
 
@@ -707,19 +283,14 @@ export default function Index() {
     store,
     allCategories,
     subtitleByNav,
-    profileName,
-    profileEmail,
-    privacyMode,
-    monthStartDayDraft,
     alertDaysBefore,
-    saveProfile,
-    savePreferences,
-    exportCSV,
-    resetFinance,
     handleMarkPaid,
     handlePostpone,
     handleEditFromAlert,
     handleDuplicateExpense,
+    userPlan,
+    userRole,
+    auth,
   ]);
 
   const planLabelText = userPlan === "pro" ? "Plano: Inteligente" : userPlan === "ultra" ? "Plano: Elite" : "Plano: Essencial";
