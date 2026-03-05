@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { FinBrasilLogo } from "@/components/FinBrasilLogo";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,7 +72,10 @@ const ResetPassword = () => {
             Voltar ao login
           </button>
           <div className="flex items-center gap-2.5">
-            <FinBrasilLogo height={30} />
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-400/20">
+              <span className="text-base">🪙</span>
+            </div>
+            <span className="font-bold tracking-tight">FinBrasil</span>
           </div>
         </div>
 
