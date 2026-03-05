@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CreditCard, CreditCardInvoice, InvoiceItem, formatCurrency, getCategoryColor } from "@/types/expense";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,45 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
   Plus, Receipt, Trash2, CheckCircle2, Circle, ShoppingBag,
-  Layers, ChevronDown, ChevronUp, FastForward, X, AlertCircle,
+  Layers, ChevronDown, ChevronUp, FastForward, X, AlertCircle, Info,
 } from "lucide-react";
 import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+
+/**
+ * Calcula em qual mês de PAGAMENTO uma compra cai, baseado no dia de fechamento.
+ * Ex: compra dia 5, fechamento dia 25 → fecha no mês atual → paga no mês seguinte.
+ * Ex: compra dia 28, fechamento dia 25 → fecha no mês seguinte → paga 2 meses depois.
+ */
+function getInvoicePaymentMonth(purchaseDate: string, closingDay: number): string {
+  const [year, month, day] = purchaseDate.split("-").map(Number);
+  // Se a compra é antes ou no dia do fechamento, fecha neste mês, paga no próximo
+  // Se a compra é depois do fechamento, fecha no próximo mês, paga 2 meses depois
+  const monthsToAdd = day <= closingDay ? 1 : 2;
+  const target = addMonths(new Date(year, month - 1, 1), monthsToAdd);
+  return format(target, "yyyy-MM");
+}
+
+/**
+ * Calcula o período de compras que compõem uma fatura de pagamento.
+ * Ex: fatura de Abril com fechamento dia 25 → compras de 26/fev a 25/mar
+ */
+function getInvoicePurchasePeriod(paymentMonthKey: string, closingDay: number): { start: string; end: string } {
+  const [year, month] = paymentMonthKey.split("-").map(Number);
+  // O pagamento do mês X contém compras que fecharam no mês X-1
+  const closingMonth = addMonths(new Date(year, month - 1, 1), -1);
+  const prevClosingMonth = addMonths(closingMonth, -1);
+  
+  const startDay = closingDay + 1;
+  const endDay = closingDay;
+  
+  return {
+    start: format(prevClosingMonth, "yyyy-MM") + `-${String(startDay).padStart(2, "0")}`,
+    end: format(closingMonth, "yyyy-MM") + `-${String(endDay).padStart(2, "0")}`,
+  };
+}
 
 interface InvoiceManagerProps {
   card: CreditCard;
@@ -23,7 +56,7 @@ interface InvoiceManagerProps {
   allInvoices: CreditCardInvoice[];
   categories: string[];
   monthKey: string;
-  onAddItem: (item: Omit<InvoiceItem, "id">) => void;
+  onAddItem: (month: string, item: Omit<InvoiceItem, "id">) => void;
   onAddInstallments: (cardId: string, items: { month: string; item: Omit<InvoiceItem, "id"> }[]) => void;
   onRemoveItem: (invoiceId: string, itemId: string) => void;
   onRemoveInstallmentGroup: (cardId: string, groupId: string) => void;
@@ -63,6 +96,19 @@ export function InvoiceManager({
 
   const totalSpent = invoice?.items.reduce((sum, item) => sum + item.amount, 0) || 0;
   const isPaid = invoice?.isPaid || false;
+
+  // Período de compras desta fatura
+  const purchasePeriod = useMemo(() => {
+    const period = getInvoicePurchasePeriod(monthKey, card.closingDay);
+    const [sy, sm, sd] = period.start.split("-").map(Number);
+    const [ey, em, ed] = period.end.split("-").map(Number);
+    const startDate = new Date(sy, sm - 1, sd);
+    const endDate = new Date(ey, em - 1, ed);
+    return {
+      startLabel: format(startDate, "dd/MMM", { locale: ptBR }),
+      endLabel: format(endDate, "dd/MMM", { locale: ptBR }),
+    };
+  }, [monthKey, card.closingDay]);
 
   // Gather all installment groups for this card across all months
   const installmentGroups: InstallmentGroup[] = (() => {
@@ -114,14 +160,14 @@ export function InvoiceManager({
     if (isInstallment && count > 1) {
       const groupId = crypto.randomUUID();
       const installmentAmount = parseFloat((total / count).toFixed(2));
-      const [baseYear, baseMonth] = monthKey.split("-").map(Number);
+      // A primeira parcela vai pro mês de pagamento calculado pela data da compra
+      const firstPaymentMonth = getInvoicePaymentMonth(newItem.date, card.closingDay);
+      const [baseYear, baseMonth] = firstPaymentMonth.split("-").map(Number);
       const itemsToCreate: { month: string; item: Omit<InvoiceItem, "id"> }[] = [];
 
       for (let i = 0; i < count; i++) {
         const targetDate = addMonths(new Date(baseYear, baseMonth - 1, 1), i);
         const targetMonth = format(targetDate, "yyyy-MM");
-        const targetDay = newItem.date.split("-")[2];
-        const targetDateStr = `${targetMonth}-${targetDay}`;
 
         itemsToCreate.push({
           month: targetMonth,
@@ -129,7 +175,7 @@ export function InvoiceManager({
             description: `${newItem.description} (${i + 1}/${count})`,
             amount: installmentAmount,
             category: newItem.category,
-            date: targetDateStr,
+            date: newItem.date,
             installmentGroupId: groupId,
             installmentCurrent: i + 1,
             installmentTotal: count,
@@ -139,7 +185,8 @@ export function InvoiceManager({
       }
       onAddInstallments(card.id, itemsToCreate);
     } else {
-      onAddItem({
+      const targetMonth = getInvoicePaymentMonth(newItem.date, card.closingDay);
+      onAddItem(targetMonth, {
         description: newItem.description,
         amount: total,
         category: newItem.category,
@@ -172,11 +219,16 @@ export function InvoiceManager({
             <Receipt className="h-5 w-5 text-primary" />
             Fatura de {format(new Date(monthKey + "-01"), "MMMM", { locale: ptBR })}
           </CardTitle>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <Badge variant={isPaid ? "default" : "destructive"} className="text-[10px] uppercase font-black">
               {isPaid ? "Paga" : "Aberta"}
             </Badge>
-            <span className="text-xs text-muted-foreground font-medium">Vence dia {card.dueDay}</span>
+            <span className="text-xs text-muted-foreground font-medium">
+              Vence dia {card.dueDay} de {format(new Date(monthKey + "-01"), "MMM", { locale: ptBR })}
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              • Compras de {purchasePeriod.startLabel} a {purchasePeriod.endLabel}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -312,7 +364,16 @@ export function InvoiceManager({
             </Button>
           </form>
 
-          {/* Future commitments summary */}
+          {/* Info about automatic routing */}
+          <div className="p-3 rounded-xl border border-primary/20 bg-primary/5">
+            <div className="flex items-start gap-2">
+              <Info className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                O item será adicionado automaticamente na fatura correta com base na data da compra e no dia de fechamento ({card.closingDay}).
+              </p>
+            </div>
+          </div>
+
           {futureInstallments > 0 && (
             <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
               <div className="flex items-center gap-2 mb-1">
