@@ -51,9 +51,15 @@ export default function Index() {
   const store = useExpenseStore() as any;
 
   const [assistantOpen, setAssistantOpen] = React.useState(false);
-  const [nav, setNav] = React.useState<NavKey>("dashboard");
+  const [nav, setNavRaw] = React.useState<NavKey>("dashboard");
   const [premiumModalOpen, setPremiumModalOpen] = React.useState(false);
   const [premiumFeatureName, setPremiumFeatureName] = React.useState("");
+  const [settingsTab, setSettingsTab] = React.useState<string | undefined>(undefined);
+
+  const setNav = React.useCallback((key: NavKey) => {
+    if (key !== "settings") setSettingsTab(undefined);
+    setNavRaw(key);
+  }, []);
 
   const { profile } = useUserProfile(auth?.user?.id);
   const userPlan = profile?.plan ?? "free";
@@ -316,6 +322,7 @@ export default function Index() {
                 userRole={userRole}
                 alertDaysBefore={alertDaysBefore}
                 setAlertDaysBefore={setAlertDaysBefore}
+                initialTab={settingsTab}
               />
             </div>
           </PageShell>
@@ -382,7 +389,7 @@ export default function Index() {
         open={premiumModalOpen}
         onOpenChange={setPremiumModalOpen}
         featureName={premiumFeatureName}
-        onViewPlans={() => setNav("settings")}
+        onViewPlans={() => { setSettingsTab("plans"); setNav("settings"); }}
       />
       <AssistantPanel
         open={assistantOpen}
@@ -408,7 +415,7 @@ export default function Index() {
         onNewExpense={onNewExpense}
         badges={navBadges}
         planLabel={planLabelText}
-        onPlanClick={() => setNav("settings")}
+        onPlanClick={() => { setSettingsTab("plans"); setNav("settings"); }}
       >
         {Content}
       </AppShell>
