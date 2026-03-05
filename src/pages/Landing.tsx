@@ -527,7 +527,6 @@ export default function Landing() {
               icon={BarChart3}
               title="Relatórios interativos"
               description="Gráficos comparativos mês a mês, evolução do patrimônio e tendências por categoria."
-              className="sm:row-span-2"
               delay={0}
             />
             <BentoCard
