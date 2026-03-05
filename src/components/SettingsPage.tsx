@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { PlansSection } from "@/components/PlansSection";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ModeToggle } from "@/components/ModeToggle";
+import { ThemePicker } from "@/components/ThemePicker";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -360,18 +361,7 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
       {/* ═══ PREFERÊNCIAS ═══ */}
       <TabsContent value="preferences" className="space-y-5 mt-0">
         <SectionCard title="Aparência" icon={Palette}>
-          <SettingRow icon={Sun} title="Tema" description="Escolha entre claro, escuro ou sistema.">
-            <Select value={theme ?? "system"} onValueChange={(v) => setTheme(v as any)}>
-              <SelectTrigger className="w-[130px] h-10 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="light">☀️ Claro</SelectItem>
-                <SelectItem value="dark">🌙 Escuro</SelectItem>
-                <SelectItem value="system">💻 Sistema</SelectItem>
-              </SelectContent>
-            </Select>
-          </SettingRow>
+          <ThemePicker />
           <Divider />
           <SettingRow icon={Eye} title="Modo privacidade" description="Oculta valores monetários na tela.">
             <Switch checked={privacyMode} onCheckedChange={setPrivacyMode} />
