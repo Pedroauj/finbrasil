@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { InteractiveDemoWidget } from "@/components/InteractiveDemoWidget";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PLANS } from "@/lib/plans";
@@ -282,6 +283,13 @@ function FAQSection() {
    ═══════════════════════════════════════════ */
 export default function Landing() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/app", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-slate-950 text-white selection:bg-emerald-500/30">

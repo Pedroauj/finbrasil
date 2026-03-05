@@ -91,7 +91,7 @@ const Auth = () => {
         {/* Top bar */}
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
           <button
-            onClick={() => navigate("/landing")}
+            onClick={() => navigate("/")}
             className="flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
