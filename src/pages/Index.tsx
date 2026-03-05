@@ -19,6 +19,9 @@ import { ReportsPage } from "@/components/ReportsPage";
 import { FinancialGoals } from "@/components/FinancialGoals";
 import { CSVImporter } from "@/components/CSVImporter";
 import { SmartAlerts } from "@/components/SmartAlerts";
+import { OnboardingTour, useOnboarding } from "@/components/OnboardingTour";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { initAnalytics, trackPageView, trackNavigation, trackFeatureUsage } from "@/lib/internalAnalytics";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
@@ -57,12 +60,39 @@ export default function Index() {
   const [premiumFeatureName, setPremiumFeatureName] = React.useState("");
   const [settingsTab, setSettingsTab] = React.useState<string | undefined>(undefined);
 
+  const { showOnboarding, completeOnboarding } = useOnboarding();
+
+  // Init analytics
+  React.useEffect(() => { initAnalytics(); }, []);
+
   const setNav = React.useCallback((key: NavKey) => {
+    trackNavigation(nav, key);
+    trackPageView(key);
     if (key !== "settings") setSettingsTab(undefined);
     setNavRaw(key);
-  }, []);
+  }, [nav]);
 
-  const { profile } = useUserProfile(auth?.user?.id);
+  const { profile, updatePlan } = useUserProfile(auth?.user?.id);
+
+  // Trial logic: auto-downgrade if trial expired
+  const isTrialActive = React.useMemo(() => {
+    if (!profile?.current_period_end) return false;
+    return new Date(profile.current_period_end) > new Date();
+  }, [profile?.current_period_end]);
+
+  const trialDaysLeft = React.useMemo(() => {
+    if (!profile?.current_period_end) return 0;
+    const diff = new Date(profile.current_period_end).getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }, [profile?.current_period_end]);
+
+  // If trial expired, auto-downgrade
+  React.useEffect(() => {
+    if (profile && profile.plan === "pro" && !isTrialActive && profile.subscription_status === "inactive") {
+      updatePlan("free" as any);
+    }
+  }, [profile, isTrialActive, updatePlan]);
+
   const userPlan = profile?.plan ?? "free";
   const userRole = profile?.role ?? "user";
 
@@ -97,6 +127,7 @@ export default function Index() {
   const pageTitle = React.useMemo(() => NAV_LABELS[nav] ?? "FinBrasil", [nav]);
 
   const onNewExpense = React.useCallback(() => {
+    trackFeatureUsage("add_expense");
     window.dispatchEvent(new Event("open-add-expense"));
   }, []);
 
@@ -325,6 +356,9 @@ export default function Index() {
                 setAlertDaysBefore={setAlertDaysBefore}
                 initialTab={settingsTab}
               />
+              {(userRole === "admin" || userRole === "owner") && (
+                <AnalyticsDashboard />
+              )}
             </div>
           </PageShell>
         );
@@ -386,6 +420,8 @@ export default function Index() {
 
   return (
     <>
+      {showOnboarding && <OnboardingTour onComplete={completeOnboarding} />}
+
       <PremiumModal
         open={premiumModalOpen}
         onOpenChange={setPremiumModalOpen}
@@ -419,7 +455,7 @@ export default function Index() {
         mobileActions={mobileActions}
         onNewExpense={onNewExpense}
         badges={navBadges}
-        planLabel={planLabelText}
+        planLabel={isTrialActive && trialDaysLeft > 0 ? `Trial Pro: ${trialDaysLeft}d restantes` : planLabelText}
         onPlanClick={() => { setSettingsTab("plans"); setNav("settings"); }}
       >
         {Content}

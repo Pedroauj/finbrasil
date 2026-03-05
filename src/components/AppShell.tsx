@@ -135,6 +135,7 @@ function SidebarNav({
             return (
               <button
                 key={item.key}
+                data-onboarding={item.key}
                 onClick={() => onNavigate(item.key)}
                 title={isCollapsed ? item.label : undefined}
                 className={cn(
