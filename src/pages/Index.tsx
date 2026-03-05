@@ -14,6 +14,10 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { DEFAULT_CATEGORIES } from "@/types/expense";
 import type { Expense } from "@/types/expense";
 import { useUpcomingAlertCount } from "@/components/UpcomingAlerts";
+import { ReportsPage } from "@/components/ReportsPage";
+import { FinancialGoals } from "@/components/FinancialGoals";
+import { CSVImporter } from "@/components/CSVImporter";
+import { SmartAlerts } from "@/components/SmartAlerts";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
@@ -34,6 +38,8 @@ const NAV_LABELS: Record<NavKey, string> = {
   recurring: "Recorrentes",
   calendar: "Calendário",
   accounts: "Contas",
+  reports: "Relatórios",
+  goals: "Metas",
   settings: "Ajustes",
 };
 
@@ -95,6 +101,8 @@ export default function Index() {
     recurring: "Automatize gastos recorrentes",
     calendar: "Visualize seus lançamentos no calendário",
     accounts: "Organize contas, saldos e transferências",
+    reports: "Gráficos e análises detalhadas",
+    goals: "Defina e acompanhe seus objetivos",
     settings: "Preferências, segurança e dados",
   };
 
@@ -261,17 +269,55 @@ export default function Index() {
           </PageShell>
         );
 
+      case "reports":
+        return (
+          <PageShell title="Relatórios" subtitle={subtitleByNav.reports}>
+            <div className="space-y-5">
+              <SmartAlerts
+                expenses={store.expenses}
+                prevMonthExpenses={store.prevMonthExpenses}
+                budget={store.budget}
+                monthBalance={store.monthBalance}
+              />
+              <ReportsPage
+                expenses={store.expenses}
+                prevMonthExpenses={store.prevMonthExpenses}
+                currentDate={store.currentDate}
+                monthBalance={store.monthBalance}
+                salary={store.salary?.amount}
+                extraIncomes={store.extraIncomes}
+              />
+            </div>
+          </PageShell>
+        );
+
+      case "goals":
+        return (
+          <PageShell title="Metas" subtitle={subtitleByNav.goals}>
+            <FinancialGoals userId={auth?.user?.id} />
+          </PageShell>
+        );
+
       case "settings":
         return (
           <PageShell title="Ajustes" subtitle={subtitleByNav.settings}>
-            <SettingsPage
-              store={store}
-              auth={auth}
-              userPlan={userPlan}
-              userRole={userRole}
-              alertDaysBefore={alertDaysBefore}
-              setAlertDaysBefore={setAlertDaysBefore}
-            />
+            <div className="space-y-5">
+              <CSVImporter
+                accounts={(store.financialAccounts ?? []).map((a: any) => ({ id: a.id, name: a.name }))}
+                categories={allCategories}
+                onImport={(items) => {
+                  items.forEach((item: any) => store.addExpense(item));
+                }}
+              />
+              <SettingsPage
+                store={store}
+                auth={auth}
+                userPlan={userPlan}
+                userRole={userRole}
+                alertDaysBefore={alertDaysBefore}
+                setAlertDaysBefore={setAlertDaysBefore}
+              />
+            </div>
           </PageShell>
         );
 

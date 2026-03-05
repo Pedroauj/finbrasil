@@ -1,5 +1,5 @@
-import React from "react";
-import { motion, useInView } from "framer-motion";
+import React, { useState } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,10 @@ import {
   Check,
   Sparkles,
   Crown,
+  ChevronDown,
+  Target,
+  FileSpreadsheet,
+  Bell,
 } from "lucide-react";
 
 /* ───────── Background ───────── */
@@ -246,6 +250,94 @@ function TestimonialCard({
   );
 }
 
+/* ───────── FAQ ───────── */
+const FAQ_ITEMS = [
+  {
+    q: "O FinBrasil é realmente gratuito?",
+    a: "Sim! O plano Essencial é totalmente gratuito e inclui controle de despesas, receitas e dashboard financeiro. Você pode usar sem limite de tempo."
+  },
+  {
+    q: "Meus dados financeiros estão seguros?",
+    a: "Absolutamente. Usamos criptografia de ponta a ponta e seus dados ficam armazenados em servidores seguros. Nunca compartilhamos informações com terceiros."
+  },
+  {
+    q: "Como funciona a IA do assistente financeiro?",
+    a: "O assistente analisa seus padrões de gasto e receita para oferecer insights personalizados, identificar gastos fora do normal e sugerir formas de economizar. Disponível nos planos Inteligente e Elite."
+  },
+  {
+    q: "Posso importar meu extrato do banco?",
+    a: "Sim! Você pode importar extratos em formato CSV. O sistema detecta automaticamente as colunas e categoriza as despesas usando inteligência artificial."
+  },
+  {
+    q: "Posso usar no celular?",
+    a: "Sim! O FinBrasil é totalmente responsivo e funciona perfeitamente em smartphones, tablets e desktops."
+  },
+  {
+    q: "Posso cancelar meu plano a qualquer momento?",
+    a: "Sim, sem multas ou taxas. Você pode fazer downgrade para o plano gratuito quando quiser e continua tendo acesso às funcionalidades básicas."
+  },
+];
+
+function FAQSection() {
+  const [openIndex, setOpenIndex] = React.useState<number | null>(null);
+
+  return (
+    <section className="relative z-10 pb-28">
+      <div className="mx-auto max-w-3xl px-6">
+        <Reveal>
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Perguntas <span className="text-emerald-400">frequentes</span>
+            </h2>
+            <p className="mt-2 text-sm text-white/40">
+              Tudo que você precisa saber antes de começar.
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="space-y-3">
+          {FAQ_ITEMS.map((item, i) => {
+            const isOpen = openIndex === i;
+            return (
+              <Reveal key={i} delay={i * 0.05}>
+                <button
+                  onClick={() => setOpenIndex(isOpen ? null : i)}
+                  className="w-full text-left rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur transition-all hover:border-emerald-500/20 hover:bg-white/[0.05]"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-semibold text-white/80">{item.q}</span>
+                    <motion.div
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="h-4 w-4 text-white/30 shrink-0" />
+                    </motion.div>
+                  </div>
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <p className="mt-3 text-sm leading-relaxed text-white/40 pr-8">
+                          {item.a}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+              </Reveal>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ═══════════════════════════════════════════
    LANDING PAGE
    ═══════════════════════════════════════════ */
@@ -433,8 +525,8 @@ export default function Landing() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <BentoCard
               icon={BarChart3}
-              title="Dashboards inteligentes"
-              description="Gráficos interativos que mostram exatamente para onde vai cada centavo. Visão diária, semanal e mensal."
+              title="Relatórios interativos"
+              description="Gráficos comparativos mês a mês, evolução do patrimônio e tendências por categoria."
               className="sm:row-span-2"
               delay={0}
             />
@@ -451,16 +543,22 @@ export default function Landing() {
               delay={0.16}
             />
             <BentoCard
-              icon={TrendingUp}
-              title="Evolução mensal"
-              description="Compare meses e veja seu progresso financeiro ao longo do tempo."
+              icon={Target}
+              title="Metas financeiras"
+              description="Defina objetivos visuais com barras de progresso e acompanhe seu avanço em tempo real."
               delay={0.12}
             />
             <BentoCard
-              icon={PieChart}
-              title="Categorias detalhadas"
-              description="Categorize automaticamente e entenda seus hábitos de consumo."
+              icon={FileSpreadsheet}
+              title="Importação de extratos"
+              description="Suba seu extrato CSV do banco e cadastre dezenas de despesas automaticamente."
               delay={0.2}
+            />
+            <BentoCard
+              icon={Bell}
+              title="Alertas inteligentes"
+              description="Notificações quando o orçamento estiver perto do limite ou gastos forem fora do padrão."
+              delay={0.24}
             />
           </div>
         </div>
@@ -679,6 +777,9 @@ export default function Landing() {
           </Reveal>
         </div>
       </section>
+
+      {/* ── FAQ ── */}
+      <FAQSection />
 
       {/* ── Footer ── */}
       <footer className="relative z-10 border-t border-white/[0.04] py-8">
