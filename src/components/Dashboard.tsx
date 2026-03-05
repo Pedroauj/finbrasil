@@ -54,8 +54,10 @@ import { Progress } from "@/components/ui/progress";
 import { CashBalance } from "./CashBalance";
 import { InvoiceAlerts } from "./InvoiceAlerts";
 import { UpcomingAlerts } from "./UpcomingAlerts";
+import { MonthlyReport } from "./MonthlyReport";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
 import { cn } from "@/lib/utils";
+import { computeFinScore, type FinScoreResult } from "@/lib/finScore";
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
@@ -127,26 +129,7 @@ function Tile({
   );
 }
 
-function computeFinScore(
-  balance: number,
-  income: number,
-  totalExpenses: number,
-  budgetTotal: number
-): number {
-  let score = 50;
-  if (balance > 0) score += 15;
-  if (balance > 0 && income > 0 && balance / income > 0.2) score += 10;
-
-  if (budgetTotal > 0 && totalExpenses <= budgetTotal) score += 15;
-  if (budgetTotal > 0 && totalExpenses <= budgetTotal * 0.8) score += 5;
-
-  if (income > 0) score += 5;
-
-  if (balance < 0) score -= 20;
-  if (budgetTotal > 0 && totalExpenses > budgetTotal * 1.2) score -= 10;
-
-  return clamp(Math.round(score), 0, 100);
-}
+// computeFinScore now imported from @/lib/finScore
 
 interface FinancialGoal {
   id: string;
@@ -178,6 +161,7 @@ interface DashboardProps {
   onPostpone?: (id: string, days: number) => void;
   onEditExpense?: (expense: Expense) => void;
   onDuplicateExpense?: (expense: Expense) => void;
+  showMonthlyReport?: boolean;
 }
 
 export function Dashboard({
@@ -193,6 +177,7 @@ export function Dashboard({
   onPostpone,
   onEditExpense,
   onDuplicateExpense,
+  showMonthlyReport,
 }: DashboardProps) {
   // ✅ evita crash de hidratação/SSR com Recharts
   const [mounted, setMounted] = useState(false);
@@ -358,10 +343,20 @@ export function Dashboard({
     return { count: inMonth.length, min: inMonth[0], max: inMonth[inMonth.length - 1] };
   }, [expenses, currentDate]);
 
-  const finScore = useMemo(
-    () => computeFinScore(balance, income, totalExpenses, budgetTotal),
-    [balance, income, totalExpenses, budgetTotal]
+  const finScoreResult = useMemo(
+    () => computeFinScore({
+      income,
+      totalExpenses,
+      budgetTotal,
+      balance,
+      hasIncome: income > 0,
+      hasBudget: budgetTotal > 0,
+      hasExpenses: totalExpenses > 0,
+      prevMonthExpenses: prevTotal,
+    }),
+    [balance, income, totalExpenses, budgetTotal, prevTotal]
   );
+  const finScore = finScoreResult.total;
 
   const insightText = useMemo(() => {
     if (budgetTotal > 0 && budgetPercent >= 80) {
@@ -632,22 +627,33 @@ export function Dashboard({
             <Card className={appCard}>
               <CardContent className="p-5">
                 <div className="flex items-center gap-4">
-                  <div className={cn("rounded-2xl p-3 ring-1", finScore >= 70 ? "bg-primary/10 ring-primary/15" : finScore >= 40 ? "bg-yellow-500/10 ring-yellow-500/15" : "bg-destructive/10 ring-destructive/15")}>
-                    <Trophy className={cn("h-5 w-5", finScore >= 70 ? "text-primary" : finScore >= 40 ? "text-yellow-500" : "text-destructive")} />
+                  <div className={cn("rounded-2xl p-3 ring-1", finScoreResult.color === "primary" ? "bg-primary/10 ring-primary/15" : finScoreResult.color === "yellow" ? "bg-yellow-500/10 ring-yellow-500/15" : "bg-destructive/10 ring-destructive/15")}>
+                    <Trophy className={cn("h-5 w-5", finScoreResult.color === "primary" ? "text-primary" : finScoreResult.color === "yellow" ? "text-yellow-500" : "text-destructive")} />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">FinScore</p>
                     <div className="flex items-baseline gap-1 mt-1">
-                      <span className={cn("text-3xl font-extrabold tabular-nums", finScore >= 70 ? "text-primary" : finScore >= 40 ? "text-yellow-500" : "text-destructive")}>
+                      <span className={cn("text-3xl font-extrabold tabular-nums", finScoreResult.color === "primary" ? "text-primary" : finScoreResult.color === "yellow" ? "text-yellow-500" : "text-destructive")}>
                         {finScore}
                       </span>
-                      <span className="text-sm text-muted-foreground font-medium">/100</span>
+                      <span className="text-sm text-muted-foreground font-medium">/1000</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={cn("text-xs font-bold", finScoreResult.color === "primary" ? "text-primary" : finScoreResult.color === "yellow" ? "text-yellow-500" : "text-destructive")}>{finScoreResult.grade}</span>
+                      <span className="text-xs text-muted-foreground">• {finScoreResult.label}</span>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3">
-                  <Progress value={finScore} className="h-2 rounded-full" />
+                  <Progress value={finScore / 10} className="h-2 rounded-full" />
                 </div>
+                {finScoreResult.tips.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    {finScoreResult.tips.slice(0, 2).map((tip, i) => (
+                      <p key={i} className="text-[11px] text-muted-foreground">💡 {tip}</p>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -924,6 +930,31 @@ export function Dashboard({
           </Card>
         </div>
       </StaggerItem>
+
+      {showMonthlyReport && (
+        <StaggerItem>
+          <MonthlyReport
+            financialData={{
+              month: monthLabelCap,
+              income,
+              totalExpenses,
+              balance,
+              budgetTotal,
+              budgetPercent: budgetPercent.toFixed(1),
+              finScore,
+              finGrade: finScoreResult.grade,
+              savingsRate: savingsRate.toFixed(1),
+              avgDailySpend: avgDailySpend.toFixed(2),
+              topCategories: categoryRanking.slice(0, 5).map(c => ({ name: c.category, amount: c.total, pct: c.pct.toFixed(1) })),
+              prevMonthTotal: prevTotal,
+              expenseDelta: expenseDelta.toFixed(1),
+              totalPaid,
+              totalPlanned,
+              totalOverdue,
+            }}
+          />
+        </StaggerItem>
+      )}
     </StaggerContainer>
   );
 }

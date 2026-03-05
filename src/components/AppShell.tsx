@@ -380,7 +380,7 @@ export function AppShell({
             </div>
           </header>
 
-          <main className="relative flex-1 min-w-0 px-4 sm:px-5 py-5">
+          <main className="relative flex-1 min-w-0 px-3 sm:px-5 py-4 sm:py-5">
             <div
               className="pointer-events-none absolute inset-0 -z-10 rounded-[32px]"
               style={{
