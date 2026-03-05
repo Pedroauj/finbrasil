@@ -3,26 +3,128 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Controle de Gastos</title>
-    <meta name="description" content="FinBrasil - Gestão FInanceira">
-    <meta name="author" content="Lovable" />
+    <title>FinBrasil — Gestão Financeira Inteligente com IA</title>
+    <meta name="description" content="Organize suas finanças pessoais com inteligência artificial. Dashboard completo, controle de gastos, metas financeiras e assistente IA. Comece grátis." />
+    <meta name="author" content="FinBrasil" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://finbrasil.lovable.app/" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    
-    
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://finbrasil.lovable.app/" />
+    <meta property="og:title" content="FinBrasil — Gestão Financeira Inteligente com IA" />
+    <meta property="og:description" content="Organize suas finanças pessoais com IA. Dashboard, controle de gastos, metas e assistente financeiro. Comece grátis." />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="FinBrasil" />
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:title" content="FinBrasil — Gestão Financeira Inteligente com IA" />
+    <meta name="twitter:description" content="Organize suas finanças pessoais com IA. Dashboard, controle de gastos, metas e assistente financeiro." />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    <meta property="og:title" content="Controle de Gastos">
-  <meta name="twitter:title" content="Controle de Gastos">
-  <meta property="og:description" content="Controle de Gastos">
-  <meta name="twitter:description" content="Controle de Gastos">
-  <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/kQxlpsB1vkWcGpopOVC1GhSz58G2/uploads/1770901077594-images.jpg">
-</head>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/kQxlpsB1vkWcGpopOVC1GhSz58G2/uploads/1770901077594-images.jpg" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "FinBrasil",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "description": "Plataforma de gestão financeira pessoal com inteligência artificial. Controle gastos, receitas, metas e receba insights personalizados.",
+      "url": "https://finbrasil.lovable.app",
+      "offers": [
+        {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL",
+          "name": "Plano Essencial",
+          "description": "Gratuito para sempre"
+        },
+        {
+          "@type": "Offer",
+          "price": "19.90",
+          "priceCurrency": "BRL",
+          "name": "Plano Inteligente"
+        },
+        {
+          "@type": "Offer",
+          "price": "39.90",
+          "priceCurrency": "BRL",
+          "name": "Plano Elite"
+        }
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1200",
+        "bestRating": "5"
+      }
+    }
+    </script>
+
+    <!-- FAQ Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "O FinBrasil é realmente gratuito?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sim! O plano Essencial é totalmente gratuito e inclui controle de despesas, receitas e dashboard financeiro. Você pode usar sem limite de tempo."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Meus dados financeiros estão seguros?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutamente. Usamos criptografia de ponta a ponta e seus dados ficam armazenados em servidores seguros. Nunca compartilhamos informações com terceiros."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Como funciona a IA do assistente financeiro?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "O assistente analisa seus padrões de gasto e receita para oferecer insights personalizados, identificar gastos fora do normal e sugerir formas de economizar."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Posso importar meu extrato do banco?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sim! Você pode importar extratos em formato CSV. O sistema detecta automaticamente as colunas e categoriza as despesas usando inteligência artificial."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Posso usar no celular?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sim! O FinBrasil é totalmente responsivo e funciona perfeitamente em smartphones, tablets e desktops."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Posso cancelar meu plano a qualquer momento?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sim, sem multas ou taxas. Você pode fazer downgrade para o plano gratuito quando quiser e continua tendo acesso às funcionalidades básicas."
+          }
+        }
+      ]
+    }
+    </script>
+  </head>
 
   <body>
     <div id="root"></div>
