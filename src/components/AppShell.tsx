@@ -307,7 +307,7 @@ export function AppShell({
             "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
             "transition-[width] duration-300 ease-out",
             "will-change-[width]",
-            "sticky top-0 h-screen shrink-0 overflow-y-auto"
+            "fixed top-0 left-0 h-screen shrink-0 overflow-y-auto z-30"
           )}
           style={{ width: collapsed ? 80 : 288 }}
         >
@@ -322,6 +322,9 @@ export function AppShell({
             badges={badges}
           />
         </aside>
+
+        {/* Spacer for fixed sidebar */}
+        <div className="hidden xl:block shrink-0 transition-[width] duration-300 ease-out" style={{ width: collapsed ? 80 : 288 }} />
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.25)]">
