@@ -72,10 +72,10 @@ function SidebarNav({
       <div className={cn("p-4", isCollapsed && "px-3")}>
         <div
           className={cn(
-            "relative rounded-2xl border border-border/50 bg-card/60 shadow-sm",
+            "relative",
             isCollapsed
               ? "flex flex-col items-center gap-2 px-2 py-3"
-              : "flex items-center gap-3 px-3 py-3"
+              : "rounded-2xl border border-border/50 bg-card/60 shadow-sm flex items-center gap-3 px-3 py-3"
           )}
         >
           <div
