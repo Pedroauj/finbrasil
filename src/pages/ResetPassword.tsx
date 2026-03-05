@@ -50,7 +50,7 @@ const ResetPassword = () => {
       } else {
         setSuccess(true);
         toast.success("Senha atualizada com sucesso!");
-        setTimeout(() => navigate("/"), 2000);
+        setTimeout(() => navigate("/app"), 2000);
       }
     } finally {
       setLoading(false);
