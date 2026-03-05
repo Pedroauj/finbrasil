@@ -107,4 +107,15 @@
   .pill {
     @apply rounded-full border border-border/60 bg-card/60 backdrop-blur px-3 py-1 text-sm;
   }
+
+  /* KPI accent colors */
+  .kpi-green { --kpi: 160 84% 45%; }
+  .kpi-blue { --kpi: 217 91% 60%; }
+  .kpi-red { --kpi: 0 72% 52%; }
+  .kpi-orange { --kpi: 30 95% 55%; }
+  .kpi-purple { --kpi: 270 70% 60%; }
+
+  .status-bar-paid { background: hsl(160 84% 45%); }
+  .status-bar-planned { background: hsl(217 91% 60%); }
+  .status-bar-overdue { background: hsl(0 72% 52%); }
 }
