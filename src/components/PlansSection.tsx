@@ -46,7 +46,7 @@ export function PlansSection({ currentPlan }: PlansSectionProps) {
             <div
               key={plan.key}
               className={cn(
-                "relative rounded-2xl border p-4 transition-all",
+                "relative flex flex-col rounded-2xl border p-5 transition-all",
                 plan.popular
                   ? "border-primary/40 bg-primary/5 ring-1 ring-primary/10"
                   : "border-border/40 bg-background/20",
@@ -54,24 +54,30 @@ export function PlansSection({ currentPlan }: PlansSectionProps) {
               )}
             >
               {plan.popular && (
-                <Badge className="absolute -top-2.5 left-4 text-[10px]">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider font-bold px-3 py-0.5">
                   Mais popular
                 </Badge>
               )}
-              <div className="flex items-center gap-2 mb-2">
+
+              {/* Header: icon + name + price */}
+              <div className="flex items-center gap-3 mb-3">
                 <div className={cn(
-                  "rounded-xl p-2 ring-1",
+                  "rounded-xl p-2.5 ring-1",
                   plan.popular ? "bg-primary/10 ring-primary/15" : "bg-muted/30 ring-border/40"
                 )}>
-                  <Icon className={cn("h-4 w-4", plan.popular ? "text-primary" : "text-muted-foreground")} />
+                  <Icon className={cn("h-5 w-5", plan.popular ? "text-primary" : "text-muted-foreground")} />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">{plan.name}</div>
-                  <div className="text-xs text-primary font-bold">{plan.price}</div>
+                  <div className="text-base font-bold">{plan.name}</div>
+                  <div className="text-sm text-primary font-bold">{plan.price}</div>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mb-3">{plan.description}</p>
-              <ul className="space-y-1.5 mb-4">
+
+              {/* Description */}
+              <p className="text-xs text-muted-foreground mb-4">{plan.description}</p>
+
+              {/* Features list — grows to fill space */}
+              <ul className="space-y-2 mb-5 flex-1">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-xs text-foreground/70">
                     <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
@@ -79,17 +85,22 @@ export function PlansSection({ currentPlan }: PlansSectionProps) {
                   </li>
                 ))}
               </ul>
+
+              {/* CTA button — always at bottom */}
               {isCurrent ? (
-                <Button variant="outline" className="w-full h-9 rounded-xl text-xs" disabled>
+                <Button variant="outline" className="w-full h-10 rounded-xl text-xs" disabled>
                   Plano atual
                 </Button>
               ) : (
                 <Button
-                  className={cn("w-full h-9 rounded-xl text-xs", plan.popular && "bg-primary text-primary-foreground")}
+                  className={cn(
+                    "w-full h-10 rounded-xl text-xs font-semibold",
+                    plan.popular && "bg-primary text-primary-foreground hover:bg-primary/90"
+                  )}
                   variant={plan.popular ? "default" : "outline"}
                   onClick={() => setUpgradeOpen(true)}
                 >
-                  {plan.key === "free" ? "Downgrade" : "Fazer upgrade"}
+                  {plan.key === "free" ? "Começar grátis" : "Começar agora"}
                 </Button>
               )}
             </div>
