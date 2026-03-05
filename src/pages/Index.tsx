@@ -368,6 +368,7 @@ export default function Index() {
               onPostpone={handlePostpone}
               onEditExpense={handleEditFromAlert}
               onDuplicateExpense={handleDuplicateExpense}
+              showMonthlyReport={userPlan !== "free"}
             />
           </PageShell>
         );
@@ -766,7 +767,20 @@ export default function Index() {
         featureName={premiumFeatureName}
         onViewPlans={() => setNav("settings")}
       />
-      <AssistantPanel open={assistantOpen} onOpenChange={setAssistantOpen} />
+      <AssistantPanel
+        open={assistantOpen}
+        onOpenChange={setAssistantOpen}
+        financialContext={{
+          income: store.monthBalance?.income ?? 0,
+          balance: store.monthBalance?.balance ?? 0,
+          totalExpenses: (store.expenses ?? []).reduce((s: number, e: any) => s + (e.amount ?? 0), 0),
+          budgetTotal: store.budget?.total ?? 0,
+          expenseCount: (store.expenses ?? []).length,
+          accountCount: (store.financialAccounts ?? []).length,
+          cardCount: (store.creditCards ?? []).length,
+          plan: userPlan,
+        }}
+      />
 
       <AppShell
         active={nav}
