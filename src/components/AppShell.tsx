@@ -16,6 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Crown,
+  BarChart3,
+  Target,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,8 @@ export type NavKey =
   | "recurring"
   | "calendar"
   | "accounts"
+  | "reports"
+  | "goals"
   | "settings";
 
 const navItems: Array<{ key: NavKey; label: string; icon: any }> = [
@@ -40,6 +44,8 @@ const navItems: Array<{ key: NavKey; label: string; icon: any }> = [
   { key: "recurring", label: "Recorrentes", icon: RefreshCw },
   { key: "calendar", label: "Calendário", icon: Calendar },
   { key: "accounts", label: "Contas", icon: Wallet },
+  { key: "reports", label: "Relatórios", icon: BarChart3 },
+  { key: "goals", label: "Metas", icon: Target },
   { key: "settings", label: "Ajustes", icon: Settings2 },
 ];
 

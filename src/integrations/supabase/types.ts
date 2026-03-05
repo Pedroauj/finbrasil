@@ -295,6 +295,42 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_goals: {
+        Row: {
+          color: string | null
+          created_at: string
+          current_amount: number
+          description: string
+          icon: string | null
+          id: string
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          current_amount?: number
+          description: string
+          icon?: string | null
+          id?: string
+          target_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          current_amount?: number
+          description?: string
+          icon?: string | null
+          id?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
