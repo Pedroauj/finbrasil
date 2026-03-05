@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FinBrasilLogo } from "@/components/FinBrasilLogo";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { InteractiveDemoWidget } from "@/components/InteractiveDemoWidget";
 import { useNavigate } from "react-router-dom";
@@ -299,10 +300,7 @@ export default function Landing() {
       <header className="relative z-20 border-b border-white/[0.04]" role="banner">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4" aria-label="Navegação principal">
           <a href="/" className="flex items-center gap-2.5" aria-label="FinBrasil — Página inicial">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-400/20">
-              <span className="text-sm" role="img" aria-label="Moeda">🪙</span>
-            </div>
-            <span className="text-base font-bold tracking-tight">FinBrasil</span>
+            <FinBrasilLogo height={30} />
           </a>
           <div className="flex items-center gap-2">
             <Button
@@ -735,10 +733,7 @@ export default function Landing() {
       <footer className="relative z-10 border-t border-white/[0.04] py-8" role="contentinfo">
         <div className="mx-auto max-w-7xl px-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <a href="/" className="flex items-center gap-2" aria-label="FinBrasil">
-            <div className="grid h-6 w-6 place-items-center rounded-md bg-emerald-500/15">
-              <span className="text-xs" role="img" aria-label="Moeda">🪙</span>
-            </div>
-            <span className="text-sm font-semibold text-white/40">FinBrasil</span>
+            <FinBrasilLogo height={20} />
           </a>
           <span className="text-xs text-white/20">
             © {new Date().getFullYear()} FinBrasil. Todos os direitos reservados.
