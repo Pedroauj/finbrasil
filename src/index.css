@@ -4,7 +4,6 @@
 
 @layer base {
   :root {
-    /* (se você usa light, pode deixar algo básico aqui) */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -39,18 +38,15 @@
   }
 
   .dark {
-    /* Fundo bem escuro, com contraste suave */
     --background: 180 8% 6%;
     --foreground: 0 0% 98%;
 
-    /* Cards “glass” */
     --card: 180 8% 9%;
     --card-foreground: 0 0% 98%;
 
     --popover: 180 8% 9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Verde “FinBrasil” */
     --primary: 160 84% 45%;
     --primary-foreground: 0 0% 100%;
 
@@ -68,11 +64,30 @@
     --warning: 38 92% 50%;
     --warning-foreground: 38 92% 20%;
 
-    /* Bordas suaves */
     --border: 180 6% 18%;
     --input: 180 6% 18%;
     --ring: 160 84% 45%;
   }
+
+  /* ===== Accent: Blue (Safira) ===== */
+  [data-accent="blue"] { --primary: 217 91% 60%; --ring: 217 91% 60%; }
+  [data-accent="blue"].dark, .dark[data-accent="blue"] { --primary: 217 91% 60%; --ring: 217 91% 60%; }
+
+  /* ===== Accent: Purple (Ametista) ===== */
+  [data-accent="purple"] { --primary: 270 70% 60%; --ring: 270 70% 60%; }
+  [data-accent="purple"].dark, .dark[data-accent="purple"] { --primary: 270 70% 60%; --ring: 270 70% 60%; }
+
+  /* ===== Accent: Orange (Âmbar) ===== */
+  [data-accent="orange"] { --primary: 30 95% 55%; --ring: 30 95% 55%; }
+  [data-accent="orange"].dark, .dark[data-accent="orange"] { --primary: 30 95% 55%; --ring: 30 95% 55%; }
+
+  /* ===== Accent: Rose (Rubi) ===== */
+  [data-accent="rose"] { --primary: 346 77% 55%; --ring: 346 77% 55%; }
+  [data-accent="rose"].dark, .dark[data-accent="rose"] { --primary: 346 77% 55%; --ring: 346 77% 55%; }
+
+  /* ===== Accent: Cyan (Topázio) ===== */
+  [data-accent="cyan"] { --primary: 190 90% 50%; --ring: 190 90% 50%; }
+  [data-accent="cyan"].dark, .dark[data-accent="cyan"] { --primary: 190 90% 50%; --ring: 190 90% 50%; }
 
   * {
     @apply border-border;
@@ -85,7 +100,7 @@
 
 @layer utilities {
 
-  /* “Glass card” padrão */
+  /* "Glass card" padrão */
   .glass {
     @apply border border-border/60 bg-card/70 backdrop-blur;
   }
