@@ -204,7 +204,7 @@ export function CreditCardManager({
               allInvoices={invoices.filter(i => i.cardId === selectedCard.id)}
               categories={categories}
               monthKey={monthKey}
-              onAddItem={item => onAddInvoiceItem(selectedCard.id, monthKey, item)}
+              onAddItem={(month, item) => onAddInvoiceItem(selectedCard.id, month, item)}
               onAddInstallments={onAddInstallments}
               onRemoveItem={onRemoveInvoiceItem}
               onRemoveInstallmentGroup={onRemoveInstallmentGroup}
