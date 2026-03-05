@@ -13,7 +13,7 @@ import {
   Settings2,
   Plus,
   TrendingUp,
-  ChevronLeft,
+  
   ChevronRight,
   Crown,
 } from "lucide-react";
@@ -69,53 +69,56 @@ function SidebarNav({
   return (
     <div className="flex h-full flex-col overflow-visible">
       {/* Brand */}
-      <div className={cn("p-4", isCollapsed && "px-3")}>
+      <div className={cn("p-4 transition-all duration-300 ease-out", isCollapsed && "px-3")}>
         <div
           className={cn(
-            "relative",
+            "relative transition-all duration-300 ease-out",
             isCollapsed
               ? "flex flex-col items-center gap-2 px-2 py-3"
               : "rounded-2xl border border-border/50 bg-card/60 shadow-sm flex items-center gap-3 px-3 py-3"
           )}
         >
-          {!isCollapsed && (
-            <div
-              className="h-9 w-9 rounded-xl ring-1 shrink-0 bg-primary/10 ring-primary/15"
-            />
-          )}
+          <div
+            className={cn(
+              "rounded-xl ring-1 shrink-0 bg-primary/10 ring-primary/15 transition-all duration-300 ease-out overflow-hidden",
+              isCollapsed ? "h-0 w-0 opacity-0 ring-0" : "h-9 w-9 opacity-100"
+            )}
+          />
 
-          {!isCollapsed ? (
-            <div className="leading-tight">
-              <div className="text-sm font-semibold whitespace-nowrap">FinBrasil</div>
-              <div className="text-xs text-muted-foreground whitespace-nowrap">
-                Gestão Financeira
-              </div>
-            </div>
-          ) : null}
+          <div
+            className={cn(
+              "leading-tight transition-all duration-300 ease-out overflow-hidden whitespace-nowrap",
+              isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+            )}
+          >
+            <div className="text-sm font-semibold">FinBrasil</div>
+            <div className="text-xs text-muted-foreground">Gestão Financeira</div>
+          </div>
 
           {showToggle ? (
             <button
               type="button"
               onClick={onToggleCollapsed}
               className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center transition-colors",
+                "h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-300 ease-out",
                 "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                 isCollapsed ? "mx-auto" : "ml-auto"
               )}
               title={isCollapsed ? "Expandir menu" : "Minimizar menu"}
             >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 transition-transform duration-300 ease-out",
+                  !isCollapsed && "rotate-180"
+                )}
+              />
             </button>
           ) : null}
         </div>
       </div>
 
       {/* Nav */}
-      <div className={cn("px-3", isCollapsed && "px-2")}>
+      <div className={cn("px-3 transition-all duration-300 ease-out", isCollapsed && "px-2")}>
         <div className="space-y-1 overflow-visible">
           {navItems.map((item) => {
             const Icon = item.icon;
