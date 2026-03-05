@@ -448,7 +448,7 @@ export function AccountManager({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.type}</p>
                     {item.description && <p className="text-xs text-muted-foreground truncate">{item.description}</p>}
-                    {item.date !== "-" && <p className="text-[10px] text-muted-foreground">{new Date(item.date).toLocaleDateString("pt-BR")}</p>}
+                    {item.date !== "-" && <p className="text-[10px] text-muted-foreground">{(() => { const [y,m,d] = item.date.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("pt-BR"); })()}</p>}
                   </div>
                   <p className={`text-sm font-semibold tabular-nums ${item.amount < 0 ? "text-destructive" : "text-[hsl(var(--success))]"}`}>
                     {item.amount >= 0 ? "+" : ""}{formatCurrency(item.amount)}

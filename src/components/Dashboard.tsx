@@ -90,7 +90,13 @@ function getWeekKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-W${week}`;
 }
 
-function safeDate(value: any) {
+function safeDate(value: any): Date | null {
+  if (!value) return null;
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    return Number.isFinite(dt.getTime()) ? dt : null;
+  }
   const d = new Date(value);
   return Number.isFinite(d.getTime()) ? d : null;
 }

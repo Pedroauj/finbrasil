@@ -124,7 +124,11 @@ export function ExpenseTable({
       .filter((e) => filterCategory === "all" || e.category === filterCategory)
       .filter((e) => filterStatus === "all" || e.status === filterStatus)
       .filter((e) => e.description.toLowerCase().includes(q))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => {
+        const [ay, am, ad] = a.date.split("-").map(Number);
+        const [by, bm, bd] = b.date.split("-").map(Number);
+        return new Date(by, bm - 1, bd).getTime() - new Date(ay, am - 1, ad).getTime();
+      });
   }, [expenses, filterCategory, filterStatus, searchTerm]);
 
   const total = filtered.reduce((sum, e) => sum + e.amount, 0);
@@ -408,7 +412,7 @@ export function ExpenseTable({
                           className="group transition-colors duration-150 hover:bg-muted/40"
                         >
                           <TableCell className="font-medium text-sm">
-                            {format(new Date(expense.date), "dd/MM/yyyy")}
+                            {(() => { const [y,m,d] = expense.date.split("-").map(Number); return format(new Date(y,m-1,d), "dd/MM/yyyy"); })()}
                           </TableCell>
 
                           <TableCell>

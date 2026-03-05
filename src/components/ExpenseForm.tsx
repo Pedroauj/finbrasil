@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import type { Expense, TransactionStatus, FinancialAccount } from "@/types/expense";
 
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,8 @@ export function ExpenseForm({
   const computedInitialStatus = useMemo<TransactionStatus>(() => {
     if (expense?.status) return expense.status;
     if (defaultStatus) return defaultStatus;
-    const d = parseISO(defaultDate);
+    const [y, m, dd] = defaultDate.split("-").map(Number);
+    const d = new Date(y, m - 1, dd);
     const today = new Date();
     return d <= today ? "paid" : "planned";
   }, [expense?.status, defaultStatus, defaultDate]);
@@ -361,7 +362,7 @@ export function ExpenseForm({
       {duplicateWarning && duplicateConfirmed && (
         <div className="rounded-2xl border border-[hsl(var(--warning))]/25 bg-[hsl(var(--warning))]/8 p-3">
           <p className="text-xs font-medium text-[hsl(var(--warning))]">
-            ⚠️ Esse gasto parece duplicado ({duplicateWarning.description} — {format(new Date(duplicateWarning.date), "dd/MM")}). Clique novamente para confirmar.
+            ⚠️ Esse gasto parece duplicado ({duplicateWarning.description} — {(() => { const [y,m,d] = duplicateWarning.date.split("-").map(Number); return format(new Date(y,m-1,d), "dd/MM"); })()}). Clique novamente para confirmar.
           </p>
         </div>
       )}

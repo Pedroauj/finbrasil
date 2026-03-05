@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { 
   format, 
-  parseISO, 
   isSameDay, 
   startOfMonth, 
   endOfMonth, 
@@ -13,6 +12,11 @@ import {
   subMonths
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+function parseDateLocal(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
 import { Expense, formatCurrency, getCategoryColor } from "@/types/expense";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -88,11 +92,11 @@ export function FinancialCalendar({
   }, [filteredExpenses]);
 
   const selectedDateExpenses = useMemo(() => {
-    return filteredExpenses.filter(e => isSameDay(parseISO(e.date), selectedDate));
+    return filteredExpenses.filter(e => isSameDay(parseDateLocal(e.date), selectedDate));
   }, [filteredExpenses, selectedDate]);
 
   const getDayData = (day: Date) => {
-    const dayExpenses = filteredExpenses.filter(e => isSameDay(parseISO(e.date), day));
+    const dayExpenses = filteredExpenses.filter(e => isSameDay(parseDateLocal(e.date), day));
     const total = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
     return { dayExpenses, total };
   };

@@ -308,7 +308,7 @@ export function IncomeManager({
                   ) : (
                     extraIncomes.map(income => (
                       <TableRow key={income.id} className="group transition-colors duration-150">
-                        <TableCell className="font-medium text-sm">{format(new Date(income.date), "dd/MM/yyyy")}</TableCell>
+                        <TableCell className="font-medium text-sm">{(() => { const [y,m,d] = income.date.split("-").map(Number); return format(new Date(y,m-1,d), "dd/MM/yyyy"); })()}</TableCell>
                         <TableCell>{income.description}</TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="font-normal rounded-lg">{income.category}</Badge>
