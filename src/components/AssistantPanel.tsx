@@ -16,10 +16,10 @@ interface AssistantPanelProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   financialContext?: Record<string, any>;
-  onExpenseAdded?: () => void;
+  onDataChanged?: () => void;
 }
 
-export function AssistantPanel({ open, onOpenChange, financialContext, onExpenseAdded }: AssistantPanelProps) {
+export function AssistantPanel({ open, onOpenChange, financialContext, onDataChanged }: AssistantPanelProps) {
   const [input, setInput] = React.useState("");
   const [messages, setMessages] = React.useState<Msg[]>([
     {
@@ -86,8 +86,8 @@ export function AssistantPanel({ open, onOpenChange, financialContext, onExpense
         // Handle fallback JSON response (when streaming fails after tool call)
         if (err.fallbackMessage) {
           upsertAssistant(err.fallbackMessage);
-          if (err.action === "expense_added") {
-            onExpenseAdded?.();
+          if (err.action === "expense_added" || err.action === "income_added") {
+            onDataChanged?.();
           }
           setIsLoading(false);
           return;
@@ -100,9 +100,8 @@ export function AssistantPanel({ open, onOpenChange, financialContext, onExpense
 
       // Check if an expense was added via headers
       const action = resp.headers.get("X-Action");
-      if (action === "expense_added") {
-        // Notify parent to refresh data
-        onExpenseAdded?.();
+      if (action === "expense_added" || action === "income_added") {
+        onDataChanged?.();
       }
 
       // Check for non-streaming JSON response (fallback)
@@ -111,8 +110,8 @@ export function AssistantPanel({ open, onOpenChange, financialContext, onExpense
         const data = await resp.json();
         if (data.fallbackMessage) {
           upsertAssistant(data.fallbackMessage);
-          if (data.action === "expense_added") {
-            onExpenseAdded?.();
+          if (data.action === "expense_added" || data.action === "income_added") {
+            onDataChanged?.();
           }
         }
         setIsLoading(false);
