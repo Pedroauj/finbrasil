@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import { InteractiveDemoWidget } from "@/components/InteractiveDemoWidget";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,68 +70,6 @@ function Reveal({
     >
       {children}
     </motion.div>
-  );
-}
-
-/* ───────── Mini dashboard mockup ───────── */
-function DashboardPreview() {
-  return (
-    <div className="relative">
-      <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-emerald-500/[0.06] blur-2xl" />
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 backdrop-blur-xl shadow-2xl shadow-black/40">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-emerald-400/60" />
-            <span className="text-xs font-medium text-white/50">Dashboard — Fev 2026</span>
-          </div>
-          <div className="flex gap-1.5">
-            <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
-            <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
-            <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {[
-            { label: "Receitas", value: "R$ 8.450", color: "text-emerald-400" },
-            { label: "Gastos", value: "R$ 3.210", color: "text-orange-400" },
-            { label: "Saldo", value: "R$ 5.240", color: "text-cyan-400" },
-          ].map((kpi) => (
-            <div key={kpi.label} className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
-              <div className="text-[10px] text-white/40 uppercase tracking-wider">{kpi.label}</div>
-              <div className={`mt-1 text-sm font-bold ${kpi.color}`}>{kpi.value}</div>
-            </div>
-          ))}
-        </div>
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <div className="mb-3 text-[10px] text-white/40 uppercase tracking-wider">Gastos por categoria</div>
-          <div className="flex items-end gap-2 h-20">
-            {[65, 45, 80, 35, 55, 70, 40].map((h, i) => (
-              <motion.div
-                key={i}
-                className="flex-1 rounded-t-md bg-gradient-to-t from-emerald-500/40 to-emerald-400/20"
-                initial={{ height: 0 }}
-                animate={{ height: `${h}%` }}
-                transition={{ duration: 0.8, delay: 0.6 + i * 0.08, ease: "easeOut" }}
-              />
-            ))}
-          </div>
-        </div>
-        <div className="mt-3 space-y-2">
-          {[
-            { icon: CreditCard, desc: "Nubank — Fatura", val: "-R$ 1.340" },
-            { icon: Wallet, desc: "Salário recebido", val: "+R$ 5.200" },
-          ].map((item) => (
-            <div key={item.desc} className="flex items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2">
-              <item.icon className="h-3.5 w-3.5 text-white/30" />
-              <span className="flex-1 text-xs text-white/50">{item.desc}</span>
-              <span className={`text-xs font-semibold ${item.val.startsWith("+") ? "text-emerald-400" : "text-orange-400"}`}>
-                {item.val}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -467,7 +406,7 @@ export default function Landing() {
               className="hidden lg:block [perspective:1200px]"
             >
               <div className="[transform:rotateY(2deg)_rotateX(1deg)] transition-transform duration-700 hover:[transform:rotateY(0deg)_rotateX(0deg)]">
-                <DashboardPreview />
+                <InteractiveDemoWidget />
               </div>
             </motion.div>
           </div>

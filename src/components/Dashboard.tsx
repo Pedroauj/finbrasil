@@ -55,6 +55,8 @@ import { Progress } from "@/components/ui/progress";
 import { InvoiceAlerts } from "./InvoiceAlerts";
 import { UpcomingAlerts } from "./UpcomingAlerts";
 import { MonthlyReport } from "./MonthlyReport";
+import { Gamification } from "./Gamification";
+import { CurrencyConverter } from "./CurrencyConverter";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
 import { cn } from "@/lib/utils";
 import { computeFinScore, type FinScoreResult } from "@/lib/finScore";
@@ -918,6 +920,20 @@ export function Dashboard({
           </div>
         </StaggerItem>
       )}
+
+      {/* ── Gamification + Currency ── */}
+      <StaggerItem>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <Gamification
+            expenses={expenses}
+            totalExpenses={totalExpenses}
+            budgetTotal={budgetTotal}
+            income={income}
+            balance={balance}
+          />
+          <CurrencyConverter />
+        </div>
+      </StaggerItem>
 
       {/* ── Monthly Report ── */}
       {showMonthlyReport && (
