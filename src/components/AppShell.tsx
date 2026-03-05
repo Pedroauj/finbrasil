@@ -79,9 +79,13 @@ function SidebarNav({
           )}
         >
           {!isCollapsed && (
-            <div
-              className="h-9 w-9 rounded-xl ring-1 shrink-0 bg-primary/10 ring-primary/15"
-            />
+            <div className="h-9 w-9 rounded-xl shrink-0 flex items-center justify-center bg-primary/10">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L3 7V17L12 22L21 17V7L12 2Z" className="fill-primary/20 stroke-primary" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M12 8V16M8 10L12 8L16 10M8 14L12 16L16 14" className="stroke-primary" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="2" className="fill-primary"/>
+              </svg>
+            </div>
           )}
 
           {!isCollapsed ? (
