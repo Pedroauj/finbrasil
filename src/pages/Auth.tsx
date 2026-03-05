@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 const Auth = () => {
@@ -15,6 +16,7 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
 
   const [isLogin, setIsLogin] = useState(searchParams.get("mode") !== "signup");
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -41,6 +43,28 @@ const Auth = () => {
         } else {
           toast.success("Conta criada! Verifique seu e-mail para confirmar o cadastro.");
         }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Digite seu e-mail.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        setIsForgotPassword(false);
       }
     } finally {
       setLoading(false);
@@ -220,6 +244,16 @@ const Auth = () => {
                         />
                       </Field>
 
+                      {isLogin && (
+                        <button
+                          type="button"
+                          onClick={() => setIsForgotPassword(true)}
+                          className="text-xs text-emerald-400/70 hover:text-emerald-400 transition-colors"
+                        >
+                          Esqueci minha senha
+                        </button>
+                      )}
+
                       <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
                         <Button
                           type="submit"
@@ -236,6 +270,50 @@ const Auth = () => {
                         </Button>
                       </motion.div>
                     </motion.form>
+                  </AnimatePresence>
+
+                  {/* Forgot password overlay */}
+                  <AnimatePresence>
+                    {isForgotPassword && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-20 flex flex-col rounded-2xl bg-slate-950/95 backdrop-blur-sm p-7"
+                      >
+                        <h3 className="text-lg font-bold mb-2">Recuperar senha</h3>
+                        <p className="text-sm text-white/50 mb-5">
+                          Digite seu e-mail e enviaremos um link para redefinir sua senha.
+                        </p>
+                        <form onSubmit={handleForgotPassword} className="space-y-4 flex-1">
+                          <Field label="E-mail" id="forgot-email">
+                            <Input
+                              id="forgot-email"
+                              type="email"
+                              placeholder="seu@email.com"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              required
+                              className="h-11 rounded-xl border-white/10 bg-slate-950/40 text-white placeholder:text-white/30 focus-visible:ring-emerald-500/20"
+                            />
+                          </Field>
+                          <Button
+                            type="submit"
+                            className="h-12 w-full rounded-xl bg-emerald-500 text-base font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all duration-300"
+                            disabled={loading}
+                          >
+                            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar link"}
+                          </Button>
+                          <button
+                            type="button"
+                            onClick={() => setIsForgotPassword(false)}
+                            className="w-full text-center text-sm text-white/50 hover:text-white/70 transition-colors"
+                          >
+                            Voltar ao login
+                          </button>
+                        </form>
+                      </motion.div>
+                    )}
                   </AnimatePresence>
 
                   <div className="mt-5 text-center text-xs text-white/35">
