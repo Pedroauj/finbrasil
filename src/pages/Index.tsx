@@ -1,4 +1,5 @@
 import * as React from "react";
+import { toast } from "sonner";
 import { useExpenseStore } from "@/hooks/useExpenseStore";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -403,6 +404,10 @@ export default function Index() {
           accountCount: (store.financialAccounts ?? []).length,
           cardCount: (store.creditCards ?? []).length,
           plan: userPlan,
+        }}
+        onExpenseAdded={() => {
+          store.forceRefresh?.();
+          toast.success("Despesa registrada pelo assistente!");
         }}
       />
 

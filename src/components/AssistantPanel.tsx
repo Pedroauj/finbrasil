@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -15,14 +16,15 @@ interface AssistantPanelProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   financialContext?: Record<string, any>;
+  onExpenseAdded?: () => void;
 }
 
-export function AssistantPanel({ open, onOpenChange, financialContext }: AssistantPanelProps) {
+export function AssistantPanel({ open, onOpenChange, financialContext, onExpenseAdded }: AssistantPanelProps) {
   const [input, setInput] = React.useState("");
   const [messages, setMessages] = React.useState<Msg[]>([
     {
       role: "assistant",
-      content: "Oi! 👋 Eu sou o assistente financeiro do FinBrasil. Posso analisar seus gastos, dar dicas de economia e responder perguntas sobre suas finanças. Como posso ajudar?",
+      content: "Oi! 👋 Eu sou o assistente financeiro do FinBrasil. Posso analisar seus gastos, dar dicas de economia, **registrar despesas** e responder perguntas sobre suas finanças. Como posso ajudar?",
     },
   ]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -57,6 +59,10 @@ export function AssistantPanel({ open, onOpenChange, financialContext }: Assista
     };
 
     try {
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const allMessages = [...messages, userMsg].map((m) => ({
         role: m.role,
         content: m.content,
@@ -66,7 +72,7 @@ export function AssistantPanel({ open, onOpenChange, financialContext }: Assista
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           messages: allMessages,
@@ -76,7 +82,39 @@ export function AssistantPanel({ open, onOpenChange, financialContext }: Assista
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
+
+        // Handle fallback JSON response (when streaming fails after tool call)
+        if (err.fallbackMessage) {
+          upsertAssistant(err.fallbackMessage);
+          if (err.action === "expense_added") {
+            onExpenseAdded?.();
+          }
+          setIsLoading(false);
+          return;
+        }
+
         toast.error(err.error || `Erro ${resp.status}`);
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if an expense was added via headers
+      const action = resp.headers.get("X-Action");
+      if (action === "expense_added") {
+        // Notify parent to refresh data
+        onExpenseAdded?.();
+      }
+
+      // Check for non-streaming JSON response (fallback)
+      const contentType = resp.headers.get("Content-Type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await resp.json();
+        if (data.fallbackMessage) {
+          upsertAssistant(data.fallbackMessage);
+          if (data.action === "expense_added") {
+            onExpenseAdded?.();
+          }
+        }
         setIsLoading(false);
         return;
       }
@@ -145,8 +183,8 @@ export function AssistantPanel({ open, onOpenChange, financialContext }: Assista
 
   const suggestions = [
     "Quanto eu gastei esse mês?",
+    "Gastei R$50 no mercado",
     "Onde posso economizar?",
-    "Como melhorar meu FinScore?",
   ];
 
   return (
@@ -229,7 +267,7 @@ export function AssistantPanel({ open, onOpenChange, financialContext }: Assista
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Pergunte sobre suas finanças…"
+                  placeholder="Pergunte ou diga um gasto…"
                   onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
                   className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                   disabled={isLoading}
