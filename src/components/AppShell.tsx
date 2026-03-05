@@ -67,14 +67,14 @@ function SidebarNav({
   const isCollapsed = !!collapsed;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-visible">
       {/* Brand */}
       <div className={cn("p-4", isCollapsed && "px-3")}>
         <div
           className={cn(
             "relative rounded-2xl border border-border/50 bg-card/60 shadow-sm",
             isCollapsed
-              ? "grid place-items-center px-2 py-3"
+              ? "flex flex-col items-center gap-2 px-2 py-3"
               : "flex items-center gap-3 px-3 py-3"
           )}
         >
@@ -95,14 +95,13 @@ function SidebarNav({
           ) : null}
 
           {showToggle ? (
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
               onClick={onToggleCollapsed}
               className={cn(
-                "h-9 w-9 rounded-xl",
-                isCollapsed ? "absolute right-2 top-2" : "ml-auto"
+                "h-8 w-8 rounded-xl flex items-center justify-center transition-colors",
+                "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                isCollapsed ? "" : "ml-auto"
               )}
               title={isCollapsed ? "Expandir menu" : "Minimizar menu"}
             >
@@ -111,14 +110,14 @@ function SidebarNav({
               ) : (
                 <ChevronLeft className="h-4 w-4" />
               )}
-            </Button>
+            </button>
           ) : null}
         </div>
       </div>
 
       {/* Nav */}
       <div className={cn("px-3", isCollapsed && "px-2")}>
-        <div className="space-y-1">
+        <div className="space-y-1 overflow-visible">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key;
@@ -168,9 +167,9 @@ function SidebarNav({
                 {badgeCount > 0 && (
                   <span
                     className={cn(
-                      "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none",
+                      "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none z-10",
                       isCollapsed
-                        ? "absolute -top-1 -right-1 h-4 min-w-[16px] px-1"
+                        ? "absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 shadow-sm"
                         : "h-5 min-w-[20px] px-1.5"
                     )}
                   >
