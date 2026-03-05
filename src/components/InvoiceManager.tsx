@@ -12,7 +12,7 @@ import {
   Plus, Receipt, Trash2, CheckCircle2, Circle, ShoppingBag,
   Layers, ChevronDown, ChevronUp, FastForward, X, AlertCircle,
 } from "lucide-react";
-import { format, parseISO, addMonths } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -491,7 +491,7 @@ export function InvoiceManager({
                           <span className="font-bold text-sm leading-tight">{item.description}</span>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] font-medium text-muted-foreground uppercase">
-                              {format(parseISO(item.date), "dd 'de' MMM", { locale: ptBR })}
+                              {(() => { const [y,m,d] = item.date.split("-").map(Number); return format(new Date(y,m-1,d), "dd 'de' MMM", { locale: ptBR }); })()}
                             </span>
                             <span className="text-[10px] font-black text-primary/60 uppercase">{item.category}</span>
                           </div>

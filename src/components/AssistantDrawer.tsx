@@ -188,7 +188,7 @@ export function AssistantDrawer({ baseDate, onAddExpense }: Props) {
       `• ${formatCurrencyBRL(full.amount)}\n` +
       `• ${full.category}\n` +
       `• ${statusLabel(full.status)}\n` +
-      `• ${format(new Date(full.date), "dd/MM/yyyy")}\n\n` +
+      `• ${(() => { const [y,m,d] = full.date.split("-").map(Number); return format(new Date(y,m-1,d), "dd/MM/yyyy"); })()}\n\n` +
       `Confirmar?`
     );
   }
