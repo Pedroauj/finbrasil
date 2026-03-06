@@ -1109,6 +1109,36 @@ export function useExpenseStore() {
     setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? { ...i, isPaid: !i.isPaid } : i)));
   }, []);
 
+  // ===========================
+  // Card Recurring Items
+  // ===========================
+  const addCardRecurringItem = useCallback((item: Omit<CardRecurringItem, "id">) => {
+    const newItem: CardRecurringItem = { ...item, id: crypto.randomUUID() };
+    setCardRecurringItems((prev) => [...prev, newItem]);
+  }, []);
+
+  const toggleCardRecurringItem = useCallback((id: string) => {
+    setCardRecurringItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, active: !i.active } : i))
+    );
+  }, []);
+
+  const deleteCardRecurringItem = useCallback((id: string) => {
+    setCardRecurringItems((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  // ===========================
+  // Card Payments (créditos)
+  // ===========================
+  const addCardPayment = useCallback((payment: Omit<CardPayment, "id">) => {
+    const newPayment: CardPayment = { ...payment, id: crypto.randomUUID() };
+    setCardPayments((prev) => [...prev, newPayment]);
+  }, []);
+
+  const deleteCardPayment = useCallback((id: string) => {
+    setCardPayments((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
   /** =========================
    *  Navegação de período financeiro
    *  ========================= */
