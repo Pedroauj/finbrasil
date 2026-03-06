@@ -126,6 +126,8 @@ export function useExpenseStore() {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
+  const [cardRecurringItems, setCardRecurringItems] = useState<CardRecurringItem[]>([]);
+  const [cardPayments, setCardPayments] = useState<CardPayment[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
