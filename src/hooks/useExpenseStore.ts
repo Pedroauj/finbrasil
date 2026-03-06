@@ -169,13 +169,21 @@ export function useExpenseStore() {
 
     const savedInvoices = localStorage.getItem(`invoices_${user.id}`);
     if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
+
+    const savedCardRecurring = localStorage.getItem(`cardRecurring_${user.id}`);
+    if (savedCardRecurring) setCardRecurringItems(JSON.parse(savedCardRecurring));
+
+    const savedCardPayments = localStorage.getItem(`cardPayments_${user.id}`);
+    if (savedCardPayments) setCardPayments(JSON.parse(savedCardPayments));
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
     localStorage.setItem(`cards_${user.id}`, JSON.stringify(creditCards));
     localStorage.setItem(`invoices_${user.id}`, JSON.stringify(invoices));
-  }, [creditCards, invoices, user]);
+    localStorage.setItem(`cardRecurring_${user.id}`, JSON.stringify(cardRecurringItems));
+    localStorage.setItem(`cardPayments_${user.id}`, JSON.stringify(cardPayments));
+  }, [creditCards, invoices, cardRecurringItems, cardPayments, user]);
 
   /** =========================
    *  Recorrentes (materialização)
