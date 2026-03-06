@@ -240,6 +240,8 @@ export default function Index() {
               <CreditCardManager
                 cards={store.creditCards}
                 invoices={store.invoices}
+                cardRecurringItems={store.cardRecurringItems}
+                cardPayments={store.cardPayments}
                 categories={allCategories}
                 currentDate={store.currentDate}
                 onAddCard={store.addCreditCard}
@@ -249,6 +251,11 @@ export default function Index() {
                 onRemoveInvoiceItem={store.removeInvoiceItem}
                 onRemoveInstallmentGroup={store.removeInstallmentGroup}
                 onTogglePaid={store.toggleInvoicePaid}
+                onAddCardRecurringItem={store.addCardRecurringItem}
+                onToggleCardRecurringItem={store.toggleCardRecurringItem}
+                onDeleteCardRecurringItem={store.deleteCardRecurringItem}
+                onAddCardPayment={store.addCardPayment}
+                onDeleteCardPayment={store.deleteCardPayment}
               />
             </div>
           </PageShell>

@@ -15,6 +15,8 @@ import type {
   AdjustmentReason,
   Salary,
   ExtraIncome,
+  CardRecurringItem,
+  CardPayment,
 } from "@/types/expense";
 
 import { getMonthKey } from "@/types/expense";
@@ -124,6 +126,8 @@ export function useExpenseStore() {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [invoices, setInvoices] = useState<CreditCardInvoice[]>([]);
+  const [cardRecurringItems, setCardRecurringItems] = useState<CardRecurringItem[]>([]);
+  const [cardPayments, setCardPayments] = useState<CardPayment[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
@@ -165,13 +169,21 @@ export function useExpenseStore() {
 
     const savedInvoices = localStorage.getItem(`invoices_${user.id}`);
     if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
+
+    const savedCardRecurring = localStorage.getItem(`cardRecurring_${user.id}`);
+    if (savedCardRecurring) setCardRecurringItems(JSON.parse(savedCardRecurring));
+
+    const savedCardPayments = localStorage.getItem(`cardPayments_${user.id}`);
+    if (savedCardPayments) setCardPayments(JSON.parse(savedCardPayments));
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
     localStorage.setItem(`cards_${user.id}`, JSON.stringify(creditCards));
     localStorage.setItem(`invoices_${user.id}`, JSON.stringify(invoices));
-  }, [creditCards, invoices, user]);
+    localStorage.setItem(`cardRecurring_${user.id}`, JSON.stringify(cardRecurringItems));
+    localStorage.setItem(`cardPayments_${user.id}`, JSON.stringify(cardPayments));
+  }, [creditCards, invoices, cardRecurringItems, cardPayments, user]);
 
   /** =========================
    *  Recorrentes (materialização)
@@ -1097,6 +1109,36 @@ export function useExpenseStore() {
     setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? { ...i, isPaid: !i.isPaid } : i)));
   }, []);
 
+  // ===========================
+  // Card Recurring Items
+  // ===========================
+  const addCardRecurringItem = useCallback((item: Omit<CardRecurringItem, "id">) => {
+    const newItem: CardRecurringItem = { ...item, id: crypto.randomUUID() };
+    setCardRecurringItems((prev) => [...prev, newItem]);
+  }, []);
+
+  const toggleCardRecurringItem = useCallback((id: string) => {
+    setCardRecurringItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, active: !i.active } : i))
+    );
+  }, []);
+
+  const deleteCardRecurringItem = useCallback((id: string) => {
+    setCardRecurringItems((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  // ===========================
+  // Card Payments (créditos)
+  // ===========================
+  const addCardPayment = useCallback((payment: Omit<CardPayment, "id">) => {
+    const newPayment: CardPayment = { ...payment, id: crypto.randomUUID() };
+    setCardPayments((prev) => [...prev, newPayment]);
+  }, []);
+
+  const deleteCardPayment = useCallback((id: string) => {
+    setCardPayments((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
   /** =========================
    *  Navegação de período financeiro
    *  ========================= */
@@ -1455,6 +1497,8 @@ export function useExpenseStore() {
     recurringExpenses,
     creditCards,
     invoices,
+    cardRecurringItems,
+    cardPayments,
     loading,
     monthBalance,
     financialAccounts,
@@ -1481,6 +1525,11 @@ export function useExpenseStore() {
     removeInstallmentGroup,
     removeInvoiceItem,
     toggleInvoicePaid,
+    addCardRecurringItem,
+    toggleCardRecurringItem,
+    deleteCardRecurringItem,
+    addCardPayment,
+    deleteCardPayment,
 
     navigateMonth,
     goToMonth,

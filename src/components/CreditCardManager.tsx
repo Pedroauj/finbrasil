@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { CreditCard, CreditCardInvoice, InvoiceItem, formatCurrency } from "@/types/expense";
+import { CreditCard, CreditCardInvoice, InvoiceItem, CardRecurringItem, CardPayment, formatCurrency } from "@/types/expense";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 interface CreditCardManagerProps {
   cards: CreditCard[];
   invoices: CreditCardInvoice[];
+  cardRecurringItems: CardRecurringItem[];
+  cardPayments: CardPayment[];
   categories: string[];
   currentDate: Date;
   onAddCard: (card: Omit<CreditCard, "id">) => void;
@@ -22,11 +24,18 @@ interface CreditCardManagerProps {
   onRemoveInvoiceItem: (invoiceId: string, itemId: string) => void;
   onRemoveInstallmentGroup: (cardId: string, groupId: string) => void;
   onTogglePaid: (invoiceId: string) => void;
+  onAddCardRecurringItem: (item: Omit<CardRecurringItem, "id">) => void;
+  onToggleCardRecurringItem: (id: string) => void;
+  onDeleteCardRecurringItem: (id: string) => void;
+  onAddCardPayment: (payment: Omit<CardPayment, "id">) => void;
+  onDeleteCardPayment: (id: string) => void;
 }
 
 export function CreditCardManager({
   cards,
   invoices,
+  cardRecurringItems,
+  cardPayments,
   categories,
   currentDate,
   onAddCard,
@@ -36,6 +45,11 @@ export function CreditCardManager({
   onRemoveInvoiceItem,
   onRemoveInstallmentGroup,
   onTogglePaid,
+  onAddCardRecurringItem,
+  onToggleCardRecurringItem,
+  onDeleteCardRecurringItem,
+  onAddCardPayment,
+  onDeleteCardPayment,
 }: CreditCardManagerProps) {
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -124,11 +138,15 @@ export function CreditCardManager({
           ) : (
             cards.map(card => {
               const invoice = invoices.find(i => i.cardId === card.id && i.month === monthKey);
-              const totalSpent = invoice?.items.reduce((sum, item) => sum + item.amount, 0) || 0;
-              const available = card.limit - totalSpent;
+              const recurringForCard = cardRecurringItems.filter(r => r.cardId === card.id && r.active);
+              const recurringTotal = recurringForCard.reduce((s, r) => s + r.amount, 0);
+              const invoiceTotal = invoice?.items.reduce((sum, item) => sum + item.amount, 0) || 0;
+              const totalSpent = invoiceTotal + recurringTotal;
+              const paymentsForCard = cardPayments.filter(p => p.cardId === card.id && p.month === monthKey);
+              const totalPayments = paymentsForCard.reduce((s, p) => s + p.amount, 0);
+              const available = card.limit - totalSpent + totalPayments;
               const percent = (totalSpent / card.limit) * 100;
 
-              // Count installment groups for this card
               const installmentGroupIds = new Set(
                 invoices
                   .filter(i => i.cardId === card.id)
@@ -158,6 +176,11 @@ export function CreditCardManager({
                             {installmentGroupIds.size} parcela{installmentGroupIds.size > 1 ? "s" : ""}
                           </span>
                         )}
+                        {recurringForCard.length > 0 && (
+                          <span className="text-[9px] bg-blue-500/15 text-blue-600 font-black px-1.5 py-0.5 rounded-full border border-blue-500/20">
+                            {recurringForCard.length} recorrente{recurringForCard.length > 1 ? "s" : ""}
+                          </span>
+                        )}
                       </div>
                       <Button
                         variant="ghost" size="icon"
@@ -179,6 +202,11 @@ export function CreditCardManager({
                         <span className="text-sm font-bold">{formatCurrency(available)}</span>
                       </div>
                     </div>
+                    {totalPayments > 0 && (
+                      <div className="text-[10px] text-emerald-600 font-bold">
+                        + {formatCurrency(totalPayments)} em créditos/pagamentos
+                      </div>
+                    )}
                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                       <div
                         className={cn("h-full transition-all", percent > 90 ? "bg-destructive" : "bg-primary")}
@@ -204,11 +232,18 @@ export function CreditCardManager({
               allInvoices={invoices.filter(i => i.cardId === selectedCard.id)}
               categories={categories}
               monthKey={monthKey}
+              cardRecurringItems={cardRecurringItems.filter(r => r.cardId === selectedCard.id)}
+              cardPayments={cardPayments.filter(p => p.cardId === selectedCard.id)}
               onAddItem={(month, item) => onAddInvoiceItem(selectedCard.id, month, item)}
               onAddInstallments={onAddInstallments}
               onRemoveItem={onRemoveInvoiceItem}
               onRemoveInstallmentGroup={onRemoveInstallmentGroup}
               onTogglePaid={onTogglePaid}
+              onAddCardRecurringItem={(item) => onAddCardRecurringItem({ ...item, cardId: selectedCard.id })}
+              onToggleCardRecurringItem={onToggleCardRecurringItem}
+              onDeleteCardRecurringItem={onDeleteCardRecurringItem}
+              onAddCardPayment={(payment) => onAddCardPayment({ ...payment, cardId: selectedCard.id })}
+              onDeleteCardPayment={onDeleteCardPayment}
             />
           ) : (
             <Card className="h-full border-none shadow-lg bg-muted/10 flex flex-col items-center justify-center text-center p-10">

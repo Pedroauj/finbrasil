@@ -111,6 +111,26 @@ export interface CreditCardInvoice {
   isPaid: boolean;
 }
 
+/** Item recorrente de cartão (ex: mensalidade de streaming) */
+export interface CardRecurringItem {
+  id: string;
+  cardId: string;
+  description: string;
+  amount: number;
+  category: string;
+  active: boolean;
+}
+
+/** Pagamento/crédito antecipado no cartão */
+export interface CardPayment {
+  id: string;
+  cardId: string;
+  amount: number;
+  date: string; // YYYY-MM-DD
+  description: string;
+  month: string; // YYYY-MM — mês da fatura ao qual o crédito se aplica
+}
+
 export interface Budget {
   total: number;
   byCategory: Record<string, number>;
