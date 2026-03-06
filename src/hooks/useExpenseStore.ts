@@ -15,6 +15,8 @@ import type {
   AdjustmentReason,
   Salary,
   ExtraIncome,
+  CardRecurringItem,
+  CardPayment,
 } from "@/types/expense";
 
 import { getMonthKey } from "@/types/expense";
