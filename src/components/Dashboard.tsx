@@ -419,14 +419,15 @@ export function Dashboard({
   // Sparkline data for KPIs - cumulative daily values
   const balanceSparkData = useMemo(() => {
     const out: number[] = [];
-    let run = income;
+    const startBalance = (monthBalance?.carryOver ?? 0) + income;
+    let run = startBalance;
     for (let d = 1; d <= Math.min(dayIndex, dim); d++) {
       const dayExp = dailySeries.find((s) => s.day === d)?.total ?? 0;
       run -= dayExp;
       out.push(run);
     }
     return out.length > 0 ? out : [0];
-  }, [income, dailySeries, dayIndex, dim]);
+  }, [income, monthBalance?.carryOver, dailySeries, dayIndex, dim]);
 
   const incomeSparkData = useMemo(() => {
     // Simple flat line for income (since it's usually constant)
