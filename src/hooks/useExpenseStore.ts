@@ -737,7 +737,7 @@ export function useExpenseStore() {
     }
 
     return result;
-  }, [allExpenses, allSalaries, allExtraIncomes, invoices, periodStart, monthStartDay]);
+  }, [allExpenses, allSalaries, allExtraIncomes, invoices, cardRecurringItems, periodStart, monthStartDay]);
 
   /** =========================
    *  Expenses CRUD
