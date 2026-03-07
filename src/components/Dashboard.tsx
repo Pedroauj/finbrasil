@@ -273,7 +273,8 @@ export function Dashboard({
   const dayIndex = isCurrentMonth ? todayReal.getDate() : dim;
 
   const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
-  const savingsRate = income > 0 ? (balance / income) * 100 : 0;
+  const monthlySavings = income - totalExpenses;
+  const savingsRate = income > 0 ? (monthlySavings / income) * 100 : 0;
 
   const projectedMonthSpend = avgDailySpend * dim;
   const projectedBalance = income - projectedMonthSpend;
