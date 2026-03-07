@@ -278,14 +278,16 @@ export function Dashboard({
   const projectedMonthSpend = avgDailySpend * dim;
   const projectedBalance = income - projectedMonthSpend;
 
-  const computedBalance = income - totalExpenses;
+  const carryOver = monthBalance?.carryOver ?? 0;
+  const paidInvoices = monthBalance?.paidInvoices ?? 0;
+  const computedBalance = carryOver + income - totalExpenses - paidInvoices;
   const balanceMismatch =
     Number.isFinite(balance) && Number.isFinite(computedBalance)
       ? Math.abs(balance - computedBalance) > 0.01
       : false;
 
   const showDataWarning =
-    (income === 0 && totalExpenses > 0) || (totalExpenses > 0 && balance === 0) || balanceMismatch;
+    (income === 0 && totalExpenses > 0) || balanceMismatch;
 
   const dailySeries = useMemo(() => {
     const map = new Map<number, number>();
