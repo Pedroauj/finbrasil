@@ -534,7 +534,7 @@ export function Dashboard({
               sparkData={balanceSparkData}
               sparkColor="hsl(160, 84%, 45%)"
               accentClass="border-primary/30"
-              sub="Receita - gastos"
+              sub={carryOver !== 0 ? `Inclui saldo anterior: ${formatCurrency(carryOver)}` : "Receita - gastos"}
               badge={prevTotal > 0 ? `${expenseDelta > 0 ? "↑" : "↓"} ${Math.abs(expenseDelta).toFixed(1)}%` : undefined}
               badgeColor={expenseDelta > 0 ? "hsl(0, 72%, 52%)" : "hsl(160, 84%, 45%)"}
             />
