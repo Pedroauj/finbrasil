@@ -265,6 +265,8 @@ export function Dashboard({
 
   const income = monthBalance?.income ?? 0;
   const balance = monthBalance?.balance ?? 0;
+  const carryOver = monthBalance?.carryOver ?? 0;
+  const paidInvoices = monthBalance?.paidInvoices ?? 0;
 
   const todayReal = useMemo(() => new Date(), []);
   const isCurrentMonth = isSameMonth(todayReal, currentDate);
@@ -273,19 +275,20 @@ export function Dashboard({
   const dayIndex = isCurrentMonth ? todayReal.getDate() : dim;
 
   const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
-  const savingsRate = income > 0 ? (balance / income) * 100 : 0;
+  const monthlySavings = income - totalExpenses;
+  const savingsRate = income > 0 ? (monthlySavings / income) * 100 : 0;
 
   const projectedMonthSpend = avgDailySpend * dim;
-  const projectedBalance = income - projectedMonthSpend;
+  const projectedBalance = carryOver + income - projectedMonthSpend - paidInvoices;
 
-  const computedBalance = income - totalExpenses;
+  const computedBalance = carryOver + income - totalExpenses - paidInvoices;
   const balanceMismatch =
     Number.isFinite(balance) && Number.isFinite(computedBalance)
       ? Math.abs(balance - computedBalance) > 0.01
       : false;
 
   const showDataWarning =
-    (income === 0 && totalExpenses > 0) || (totalExpenses > 0 && balance === 0) || balanceMismatch;
+    (income === 0 && totalExpenses > 0) || balanceMismatch;
 
   const dailySeries = useMemo(() => {
     const map = new Map<number, number>();
@@ -416,14 +419,15 @@ export function Dashboard({
   // Sparkline data for KPIs - cumulative daily values
   const balanceSparkData = useMemo(() => {
     const out: number[] = [];
-    let run = income;
+    const startBalance = (monthBalance?.carryOver ?? 0) + income;
+    let run = startBalance;
     for (let d = 1; d <= Math.min(dayIndex, dim); d++) {
       const dayExp = dailySeries.find((s) => s.day === d)?.total ?? 0;
       run -= dayExp;
       out.push(run);
     }
     return out.length > 0 ? out : [0];
-  }, [income, dailySeries, dayIndex, dim]);
+  }, [income, monthBalance?.carryOver, dailySeries, dayIndex, dim]);
 
   const incomeSparkData = useMemo(() => {
     // Simple flat line for income (since it's usually constant)
@@ -530,7 +534,7 @@ export function Dashboard({
               sparkData={balanceSparkData}
               sparkColor="hsl(160, 84%, 45%)"
               accentClass="border-primary/30"
-              sub="Receita - gastos"
+              sub={carryOver !== 0 ? `Inclui saldo anterior: ${formatCurrency(carryOver)}` : "Receita - gastos"}
               badge={prevTotal > 0 ? `${expenseDelta > 0 ? "↑" : "↓"} ${Math.abs(expenseDelta).toFixed(1)}%` : undefined}
               badgeColor={expenseDelta > 0 ? "hsl(0, 72%, 52%)" : "hsl(160, 84%, 45%)"}
             />
