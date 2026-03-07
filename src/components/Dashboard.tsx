@@ -265,6 +265,8 @@ export function Dashboard({
 
   const income = monthBalance?.income ?? 0;
   const balance = monthBalance?.balance ?? 0;
+  const carryOver = monthBalance?.carryOver ?? 0;
+  const paidInvoices = monthBalance?.paidInvoices ?? 0;
 
   const todayReal = useMemo(() => new Date(), []);
   const isCurrentMonth = isSameMonth(todayReal, currentDate);
@@ -277,7 +279,7 @@ export function Dashboard({
   const savingsRate = income > 0 ? (monthlySavings / income) * 100 : 0;
 
   const projectedMonthSpend = avgDailySpend * dim;
-  const projectedBalance = (monthBalance?.carryOver ?? 0) + income - projectedMonthSpend - paidInvoices;
+  const projectedBalance = carryOver + income - projectedMonthSpend - paidInvoices;
 
   const carryOver = monthBalance?.carryOver ?? 0;
   const paidInvoices = monthBalance?.paidInvoices ?? 0;
