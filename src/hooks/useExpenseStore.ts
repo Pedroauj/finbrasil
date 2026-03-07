@@ -705,12 +705,18 @@ export function useExpenseStore() {
         .filter((e) => getFinancialKeyForDate(e.date, monthStartDay) === `${y}-${pad2(m)}`)
         .reduce((s, e) => s + e.amount, 0);
 
-      const paidInvoiceTotal = invoices
-        .filter((i) => {
-          const invoiceKey = getFinancialKeyForDate(`${i.month}-01`, monthStartDay);
-          return invoiceKey === `${y}-${pad2(m)}` && i.isPaid;
-        })
-        .reduce((s, i) => s + i.items.reduce((si, item) => si + Number(item.amount || 0), 0), 0);
+      const paidInvoicesForMonth = invoices.filter((i) => {
+        const invoiceKey = getFinancialKeyForDate(`${i.month}-01`, monthStartDay);
+        return invoiceKey === `${y}-${pad2(m)}` && i.isPaid;
+      });
+
+      const paidInvoiceTotal = paidInvoicesForMonth.reduce((s, i) => {
+        const itemsTotal = i.items.reduce((si, item) => si + Number(item.amount || 0), 0);
+        const recurringTotal = cardRecurringItems
+          .filter((r) => r.cardId === i.cardId && r.active)
+          .reduce((sr, r) => sr + r.amount, 0);
+        return s + itemsTotal + recurringTotal;
+      }, 0);
 
       const balance = carryOver + monthIncome - monthExpenses - paidInvoiceTotal;
 
