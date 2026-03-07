@@ -277,7 +277,7 @@ export function Dashboard({
   const savingsRate = income > 0 ? (monthlySavings / income) * 100 : 0;
 
   const projectedMonthSpend = avgDailySpend * dim;
-  const projectedBalance = income - projectedMonthSpend;
+  const projectedBalance = (monthBalance?.carryOver ?? 0) + income - projectedMonthSpend - paidInvoices;
 
   const carryOver = monthBalance?.carryOver ?? 0;
   const paidInvoices = monthBalance?.paidInvoices ?? 0;
