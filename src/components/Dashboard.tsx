@@ -281,8 +281,6 @@ export function Dashboard({
   const projectedMonthSpend = avgDailySpend * dim;
   const projectedBalance = carryOver + income - projectedMonthSpend - paidInvoices;
 
-  const carryOver = monthBalance?.carryOver ?? 0;
-  const paidInvoices = monthBalance?.paidInvoices ?? 0;
   const computedBalance = carryOver + income - totalExpenses - paidInvoices;
   const balanceMismatch =
     Number.isFinite(balance) && Number.isFinite(computedBalance)
