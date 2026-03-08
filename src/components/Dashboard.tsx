@@ -263,6 +263,19 @@ export function Dashboard({
     [currentInvoices]
   );
 
+  const paidInvoiceDetails = useMemo(() => {
+    const paidInvs = (invoices ?? []).filter((i) => i.month === monthKey && i.isPaid);
+    return paidInvs.map((inv) => {
+      const card = cards.find((c) => c.id === inv.cardId);
+      const itemsTotal = inv.items.reduce((s, it) => s + Number(it.amount || 0), 0);
+      return {
+        cardName: card?.name ?? "Cartão removido",
+        total: itemsTotal,
+        cardId: inv.cardId,
+      };
+    });
+  }, [invoices, monthKey, cards]);
+
   const income = monthBalance?.income ?? 0;
   const balance = monthBalance?.balance ?? 0;
   const carryOver = monthBalance?.carryOver ?? 0;
