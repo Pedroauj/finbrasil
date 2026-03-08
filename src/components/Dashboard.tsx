@@ -263,6 +263,19 @@ export function Dashboard({
     [currentInvoices]
   );
 
+  const paidInvoiceDetails = useMemo(() => {
+    const paidInvs = (invoices ?? []).filter((i) => i.month === monthKey && i.isPaid);
+    return paidInvs.map((inv) => {
+      const card = cards.find((c) => c.id === inv.cardId);
+      const itemsTotal = inv.items.reduce((s, it) => s + Number(it.amount || 0), 0);
+      return {
+        cardName: card?.name ?? "Cartão removido",
+        total: itemsTotal,
+        cardId: inv.cardId,
+      };
+    });
+  }, [invoices, monthKey, cards]);
+
   const income = monthBalance?.income ?? 0;
   const balance = monthBalance?.balance ?? 0;
   const carryOver = monthBalance?.carryOver ?? 0;
@@ -637,6 +650,37 @@ export function Dashboard({
                 <StatusMiniBar label="Planejado" value={totalPlanned} color="hsl(217, 91%, 60%)" />
                 <StatusMiniBar label="Em atraso" value={totalOverdue} color="hsl(0, 72%, 52%)" />
               </div>
+
+              {/* Paid invoices detail */}
+              {paidInvoiceDetails.length > 0 && (
+                <div className="mt-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CreditCardIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Faturas pagas no mês
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    {paidInvoiceDetails.map((inv) => (
+                      <div
+                        key={inv.cardId}
+                        className="flex items-center justify-between rounded-xl border border-border/60 bg-background/20 px-3 py-2"
+                      >
+                        <span className="text-xs font-medium text-foreground truncate">{inv.cardName}</span>
+                        <span className="text-xs font-bold tabular-nums text-destructive">
+                          - {formatCurrency(inv.total)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between px-3 pt-1">
+                      <span className="text-[11px] font-semibold text-muted-foreground">Total faturas</span>
+                      <span className="text-xs font-bold tabular-nums text-destructive">
+                        - {formatCurrency(paidInvoices)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
