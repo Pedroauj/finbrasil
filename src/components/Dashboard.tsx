@@ -471,7 +471,7 @@ export function Dashboard({
   }, [currentInvoices]);
 
   // Budget projection
-  const budgetProjection = avgDailySpend * dim;
+  const budgetProjection = hasEnoughData ? projectedMonthSpend : totalExpenses;
   const budgetRemaining = budgetTotal - totalExpenses;
   const budgetEndDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0), "dd/MM");
 
