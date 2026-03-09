@@ -718,10 +718,19 @@ export function Dashboard({
 
               <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-3 mb-2">
                 <p className="text-[11px] text-muted-foreground">Projeção mensal</p>
-                <p className={cn("text-base font-bold tabular-nums", budgetTotal > 0 && projectedMonthSpend > budgetTotal ? "text-destructive" : "text-foreground")}>
-                  ~ {formatCurrency(projectedMonthSpend)}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Mantendo o ritmo atual</p>
+                {hasEnoughData ? (
+                  <>
+                    <p className={cn("text-base font-bold tabular-nums", budgetTotal > 0 && projectedMonthSpend > budgetTotal ? "text-destructive" : "text-foreground")}>
+                      ~ {formatCurrency(projectedMonthSpend)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Baseado nos últimos {dayIndex} dias</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base font-medium text-muted-foreground">—</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Mínimo de {minDaysForProjection} dias para projetar</p>
+                  </>
+                )}
               </div>
 
               <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-3">
