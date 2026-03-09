@@ -13,6 +13,7 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { ThemePicker } from "@/components/ThemePicker";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
+import { WhatsAppSettings } from "@/components/WhatsAppSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Shield, Palette, Database, Target, Plus, Trash2,
