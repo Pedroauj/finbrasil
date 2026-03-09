@@ -410,6 +410,8 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
         <SectionCard title="Metas financeiras" icon={Target}>
           <GoalsManager />
         </SectionCard>
+
+        {auth?.user?.id && <WhatsAppSettings userId={auth.user.id} />}
       </TabsContent>
 
       {/* ═══ PLANOS ═══ */}
