@@ -425,7 +425,7 @@ export function Dashboard({
       const pct = ((topCategory.total / totalExpenses) * 100).toFixed(0);
       parts.push(`Sua maior categoria é **${topCategory.category}** com ${pct}% dos gastos (${formatCurrency(topCategory.total)}).`);
     }
-    if (isCurrentMonth) {
+    if (isCurrentMonth && hasEnoughData) {
       parts.push(`Mantendo o ritmo atual, você fecha ${monthLabelCap.split(" ")[0].toLowerCase()} com saldo ${projectedBalance >= 0 ? "positivo" : "negativo"} de **${formatCurrency(Math.abs(projectedBalance))}**.`);
     }
     if (parts.length === 0) {
