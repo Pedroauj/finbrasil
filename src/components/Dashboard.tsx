@@ -287,11 +287,18 @@ export function Dashboard({
   const dim = daysInMonth(currentDate);
   const dayIndex = isCurrentMonth ? todayReal.getDate() : dim;
 
-  const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
+  // Use only PAID expenses for projection, and require at least 5 days of data
+  const minDaysForProjection = 5;
+  const hasEnoughData = isCurrentMonth && dayIndex >= minDaysForProjection;
+  const avgDailySpend = hasEnoughData ? totalPaid / dayIndex : 0;
   const monthlySavings = income - totalExpenses;
   const savingsRate = income > 0 ? (monthlySavings / income) * 100 : 0;
 
-  const projectedMonthSpend = avgDailySpend * dim;
+  // Project remaining days only (paid so far + projected remaining)
+  const remainingDays = isCurrentMonth ? Math.max(dim - dayIndex, 0) : 0;
+  const projectedMonthSpend = hasEnoughData
+    ? totalPaid + (avgDailySpend * remainingDays) + totalPlanned
+    : totalExpenses;
   const projectedBalance = carryOver + income - projectedMonthSpend - paidInvoices;
 
   const computedBalance = carryOver + income - totalExpenses - paidInvoices;
