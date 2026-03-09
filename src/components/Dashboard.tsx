@@ -287,11 +287,18 @@ export function Dashboard({
   const dim = daysInMonth(currentDate);
   const dayIndex = isCurrentMonth ? todayReal.getDate() : dim;
 
-  const avgDailySpend = dayIndex > 0 ? totalExpenses / dayIndex : 0;
+  // Use only PAID expenses for projection, and require at least 5 days of data
+  const minDaysForProjection = 5;
+  const hasEnoughData = isCurrentMonth && dayIndex >= minDaysForProjection;
+  const avgDailySpend = hasEnoughData ? totalPaid / dayIndex : 0;
   const monthlySavings = income - totalExpenses;
   const savingsRate = income > 0 ? (monthlySavings / income) * 100 : 0;
 
-  const projectedMonthSpend = avgDailySpend * dim;
+  // Project remaining days only (paid so far + projected remaining)
+  const remainingDays = isCurrentMonth ? Math.max(dim - dayIndex, 0) : 0;
+  const projectedMonthSpend = hasEnoughData
+    ? totalPaid + (avgDailySpend * remainingDays) + totalPlanned
+    : totalExpenses;
   const projectedBalance = carryOver + income - projectedMonthSpend - paidInvoices;
 
   const computedBalance = carryOver + income - totalExpenses - paidInvoices;
@@ -418,7 +425,7 @@ export function Dashboard({
       const pct = ((topCategory.total / totalExpenses) * 100).toFixed(0);
       parts.push(`Sua maior categoria é **${topCategory.category}** com ${pct}% dos gastos (${formatCurrency(topCategory.total)}).`);
     }
-    if (isCurrentMonth) {
+    if (isCurrentMonth && hasEnoughData) {
       parts.push(`Mantendo o ritmo atual, você fecha ${monthLabelCap.split(" ")[0].toLowerCase()} com saldo ${projectedBalance >= 0 ? "positivo" : "negativo"} de **${formatCurrency(Math.abs(projectedBalance))}**.`);
     }
     if (parts.length === 0) {
@@ -464,7 +471,7 @@ export function Dashboard({
   }, [currentInvoices]);
 
   // Budget projection
-  const budgetProjection = avgDailySpend * dim;
+  const budgetProjection = hasEnoughData ? projectedMonthSpend : totalExpenses;
   const budgetRemaining = budgetTotal - totalExpenses;
   const budgetEndDate = format(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0), "dd/MM");
 
@@ -711,10 +718,19 @@ export function Dashboard({
 
               <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-3 mb-2">
                 <p className="text-[11px] text-muted-foreground">Projeção mensal</p>
-                <p className={cn("text-base font-bold tabular-nums", budgetTotal > 0 && projectedMonthSpend > budgetTotal ? "text-destructive" : "text-foreground")}>
-                  ~ {formatCurrency(projectedMonthSpend)}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Mantendo o ritmo atual</p>
+                {hasEnoughData ? (
+                  <>
+                    <p className={cn("text-base font-bold tabular-nums", budgetTotal > 0 && projectedMonthSpend > budgetTotal ? "text-destructive" : "text-foreground")}>
+                      ~ {formatCurrency(projectedMonthSpend)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Baseado nos últimos {dayIndex} dias</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base font-medium text-muted-foreground">—</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Mínimo de {minDaysForProjection} dias para projetar</p>
+                  </>
+                )}
               </div>
 
               <div className="rounded-2xl border border-border/60 bg-background/20 px-3 py-3">
