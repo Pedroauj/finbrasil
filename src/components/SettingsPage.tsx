@@ -13,6 +13,7 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { ThemePicker } from "@/components/ThemePicker";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
+import { WhatsAppSettings } from "@/components/WhatsAppSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Shield, Palette, Database, Target, Plus, Trash2,
@@ -409,6 +410,8 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
         <SectionCard title="Metas financeiras" icon={Target}>
           <GoalsManager />
         </SectionCard>
+
+        {auth?.user?.id && <WhatsAppSettings userId={auth.user.id} />}
       </TabsContent>
 
       {/* ═══ PLANOS ═══ */}
