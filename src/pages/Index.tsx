@@ -22,6 +22,8 @@ import { SmartAlerts } from "@/components/SmartAlerts";
 import { OnboardingTour, useOnboarding } from "@/components/OnboardingTour";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { initAnalytics, trackPageView, trackNavigation, trackFeatureUsage } from "@/lib/internalAnalytics";
+import { NetWorthDashboard } from "@/components/NetWorthDashboard";
+import { FamilyManager } from "@/components/FamilyManager";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
