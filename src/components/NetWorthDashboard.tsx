@@ -178,7 +178,7 @@ export function NetWorthDashboard({ accounts, invoices, expenses, currentDate, u
 
   // Account breakdown for visualization
   const accountBreakdown = useMemo(() => {
-    const activeAccounts = accounts.filter(a => a.is_active !== false);
+    const activeAccounts = accounts.filter(a => a.isActive !== false);
     const typeMap: Record<string, { label: string; total: number; color: string }> = {
       checking: { label: "Conta Corrente", total: 0, color: "hsl(217, 91%, 60%)" },
       savings: { label: "Poupança", total: 0, color: "hsl(160, 84%, 45%)" },
