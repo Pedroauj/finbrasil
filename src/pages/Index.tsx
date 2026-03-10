@@ -143,8 +143,10 @@ export default function Index() {
     recurring: "Automatize gastos recorrentes",
     calendar: "Visualize seus lançamentos no calendário",
     accounts: "Organize contas, saldos e transferências",
+    networth: "Evolução patrimonial consolidada",
     reports: "Gráficos e análises detalhadas",
     goals: "Defina e acompanhe seus objetivos",
+    family: "Compartilhe finanças com quem você ama",
     settings: "Preferências, segurança e dados",
   };
 
