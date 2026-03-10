@@ -22,6 +22,8 @@ import { SmartAlerts } from "@/components/SmartAlerts";
 import { OnboardingTour, useOnboarding } from "@/components/OnboardingTour";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { initAnalytics, trackPageView, trackNavigation, trackFeatureUsage } from "@/lib/internalAnalytics";
+import { NetWorthDashboard } from "@/components/NetWorthDashboard";
+import { FamilyManager } from "@/components/FamilyManager";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
@@ -42,8 +44,10 @@ const NAV_LABELS: Record<NavKey, string> = {
   recurring: "Recorrentes",
   calendar: "Calendário",
   accounts: "Contas",
+  networth: "Patrimônio",
   reports: "Relatórios",
   goals: "Metas",
+  family: "Família",
   settings: "Ajustes",
 };
 
@@ -139,8 +143,10 @@ export default function Index() {
     recurring: "Automatize gastos recorrentes",
     calendar: "Visualize seus lançamentos no calendário",
     accounts: "Organize contas, saldos e transferências",
+    networth: "Evolução patrimonial consolidada",
     reports: "Gráficos e análises detalhadas",
     goals: "Defina e acompanhe seus objetivos",
+    family: "Compartilhe finanças com quem você ama",
     settings: "Preferências, segurança e dados",
   };
 
@@ -340,6 +346,30 @@ export default function Index() {
         return (
           <PageShell title="Metas" subtitle={subtitleByNav.goals}>
             <FinancialGoals userId={auth?.user?.id} />
+          </PageShell>
+        );
+
+      case "networth":
+        return (
+          <PageShell title="Patrimônio" subtitle={subtitleByNav.networth}>
+            <NetWorthDashboard
+              accounts={store.financialAccounts ?? []}
+              invoices={store.invoices ?? []}
+              expenses={store.expenses ?? []}
+              currentDate={store.currentDate}
+              userId={auth?.user?.id}
+            />
+          </PageShell>
+        );
+
+      case "family":
+        return (
+          <PageShell title="Família" subtitle={subtitleByNav.family}>
+            {auth?.user?.id ? (
+              <FamilyManager userId={auth.user.id} />
+            ) : (
+              <p className="text-muted-foreground">Faça login para acessar.</p>
+            )}
           </PageShell>
         );
 
