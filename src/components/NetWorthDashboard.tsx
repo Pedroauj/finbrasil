@@ -188,7 +188,7 @@ export function NetWorthDashboard({ accounts, invoices, expenses, currentDate, u
     };
     activeAccounts.forEach(a => {
       if (typeMap[a.type]) {
-        typeMap[a.type].total += a.type === "investment" ? Number(a.current_value ?? a.balance ?? 0) : Number(a.balance ?? 0);
+        typeMap[a.type].total += a.type === "investment" ? Number(a.currentValue ?? a.balance ?? 0) : Number(a.balance ?? 0);
       }
     });
     return Object.values(typeMap).filter(t => t.total !== 0);
