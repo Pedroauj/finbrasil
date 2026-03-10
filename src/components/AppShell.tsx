@@ -18,6 +18,8 @@ import {
   Crown,
   BarChart3,
   Target,
+  PiggyBank,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,8 @@ export type NavKey =
   | "accounts"
   | "reports"
   | "goals"
+  | "networth"
+  | "family"
   | "settings";
 
 const navItems: Array<{ key: NavKey; label: string; icon: any }> = [
@@ -44,8 +48,10 @@ const navItems: Array<{ key: NavKey; label: string; icon: any }> = [
   { key: "recurring", label: "Recorrentes", icon: RefreshCw },
   { key: "calendar", label: "Calendário", icon: Calendar },
   { key: "accounts", label: "Contas", icon: Wallet },
+  { key: "networth", label: "Patrimônio", icon: PiggyBank },
   { key: "reports", label: "Relatórios", icon: BarChart3 },
   { key: "goals", label: "Metas", icon: Target },
+  { key: "family", label: "Família", icon: Users },
   { key: "settings", label: "Ajustes", icon: Settings2 },
 ];
 

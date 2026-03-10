@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PlansSection } from "@/components/PlansSection";
 import { AdminPanel } from "@/components/AdminPanel";
-import { ModeToggle } from "@/components/ModeToggle";
 import { ThemePicker } from "@/components/ThemePicker";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
@@ -19,7 +17,8 @@ import {
   User, Shield, Palette, Database, Target, Plus, Trash2,
   Download, AlertTriangle, Calendar, Eye, EyeOff, Bell,
   Lock, Mail, Save, Crown, Sun, Moon, Monitor, ChevronRight,
-  FileDown, RotateCcw, KeyRound
+  FileDown, RotateCcw, KeyRound, MessageSquare, Smartphone,
+  Settings2, HelpCircle, CreditCard, Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PlanTier, UserRole } from "@/lib/plans";
@@ -59,96 +58,22 @@ const LS = {
   privacyMode: "finbrasil.settings.privacyMode",
 } as const;
 
-// ─── Goals Manager ──────────────────────────
-interface FinancialGoal { id: string; description: string; target: number; current: number; }
-
-function GoalsManager() {
-  const [goals, setGoals] = useState<FinancialGoal[]>(() => {
-    try { const r = localStorage.getItem("finbrasil.goals"); return r ? JSON.parse(r) : []; } catch { return []; }
-  });
-  const [desc, setDesc] = useState("");
-  const [target, setTarget] = useState("");
-  const [current, setCurrent] = useState("");
-
-  const save = (updated: FinancialGoal[]) => {
-    setGoals(updated);
-    try { localStorage.setItem("finbrasil.goals", JSON.stringify(updated)); } catch {}
-  };
-
-  const add = () => {
-    const t = parseFloat(target);
-    const c = parseFloat(current) || 0;
-    if (!desc.trim() || isNaN(t) || t <= 0) return;
-    save([...goals, { id: crypto.randomUUID(), description: desc.trim(), target: t, current: c }]);
-    setDesc(""); setTarget(""); setCurrent("");
-    toast.success("Meta adicionada!");
-  };
-
-  return (
-    <div className="space-y-4">
-      {goals.length > 0 ? (
-        <div className="space-y-3">
-          {goals.map(g => {
-            const pct = g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0;
-            return (
-              <motion.div
-                key={g.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-border/40 bg-muted/30 p-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold truncate">{g.description}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => save(goals.filter(x => x.id !== g.id))}>
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
-                </div>
-                <Progress value={pct} className="h-2 rounded-full" />
-                <div className="flex justify-between text-[11px] text-muted-foreground mt-1.5">
-                  <span>R$ {g.current.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                  <span className="font-medium text-foreground">{pct.toFixed(0)}%</span>
-                  <span>R$ {g.target.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground">
-          <Target className="h-10 w-10 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Nenhuma meta definida ainda</p>
-          <p className="text-xs mt-1">Adicione sua primeira meta financeira abaixo</p>
-        </div>
-      )}
-
-      <div className="rounded-2xl border border-dashed border-border/60 p-4 space-y-3">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nova meta</div>
-        <Input placeholder="Ex: Reserva de emergência" value={desc} onChange={e => setDesc(e.target.value)} className="h-10 rounded-xl" />
-        <div className="grid grid-cols-2 gap-2">
-          <Input placeholder="Valor alvo (R$)" type="number" value={target} onChange={e => setTarget(e.target.value)} className="h-10 rounded-xl" />
-          <Input placeholder="Valor atual (R$)" type="number" value={current} onChange={e => setCurrent(e.target.value)} className="h-10 rounded-xl" />
-        </div>
-        <Button className="w-full h-10 rounded-xl gap-2" onClick={add}>
-          <Plus className="h-4 w-4" /> Adicionar meta
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Setting Row ────────────────────────────
-function SettingRow({ icon: Icon, title, description, children, danger }: {
-  icon: React.ElementType; title: string; description: string; children: React.ReactNode; danger?: boolean;
+// ─── Quick Setting Item ─────────────────────
+function QuickSetting({ icon: Icon, label, description, children, danger }: {
+  icon: React.ElementType; label: string; description?: string; children: React.ReactNode; danger?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-4">
+    <div className="flex items-center justify-between gap-4 py-3.5 px-1">
       <div className="flex items-start gap-3 min-w-0">
-        <div className={cn("rounded-xl p-2 shrink-0 mt-0.5", danger ? "bg-destructive/10" : "bg-muted/60")}>
+        <div className={cn(
+          "rounded-xl p-2.5 shrink-0",
+          danger ? "bg-destructive/10" : "bg-muted/50"
+        )}>
           <Icon className={cn("h-4 w-4", danger ? "text-destructive" : "text-muted-foreground")} />
         </div>
         <div className="min-w-0">
-          <div className={cn("text-sm font-medium", danger && "text-destructive")}>{title}</div>
-          <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
+          <div className={cn("text-sm font-medium leading-tight", danger && "text-destructive")}>{label}</div>
+          {description && <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</div>}
         </div>
       </div>
       <div className="shrink-0">{children}</div>
@@ -156,27 +81,75 @@ function SettingRow({ icon: Icon, title, description, children, danger }: {
   );
 }
 
-function Divider() { return <div className="h-px bg-border/40" />; }
+function Divider() { return <div className="h-px bg-border/30 mx-1" />; }
 
-// ─── Section Card ───────────────────────────
-function SectionCard({ title, icon: Icon, children, className }: {
-  title: string; icon: React.ElementType; children: React.ReactNode; className?: string;
+// ─── Section with collapsible header ────────
+function SettingsSection({ title, icon: Icon, children, defaultOpen = true, badge, className }: {
+  title: string; icon: React.ElementType; children: React.ReactNode; defaultOpen?: boolean; badge?: string; className?: string;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={cn("rounded-3xl border border-border/50 bg-card/70 p-6 shadow-sm backdrop-blur", className)}
+      transition={{ duration: 0.25 }}
+      className={cn(
+        "rounded-2xl border border-border/40 bg-card/60 backdrop-blur overflow-hidden",
+        className
+      )}
     >
-      <div className="flex items-center gap-2.5 mb-5">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-3 p-4 hover:bg-muted/20 transition-colors"
+      >
         <div className="rounded-xl bg-primary/10 p-2">
           <Icon className="h-4 w-4 text-primary" />
         </div>
-        <h3 className="text-base font-semibold">{title}</h3>
-      </div>
-      {children}
+        <span className="text-sm font-semibold flex-1 text-left">{title}</span>
+        {badge && (
+          <Badge variant="secondary" className="text-[10px] mr-1">{badge}</Badge>
+        )}
+        <ChevronRight className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform duration-200",
+          open && "rotate-90"
+        )} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="px-4 pb-4">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
+  );
+}
+
+// ─── Nav Item for sidebar navigation in settings ─
+function SettingsNavItem({ icon: Icon, label, active, onClick }: {
+  icon: React.ElementType; label: string; active: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
+        active
+          ? "bg-primary/10 text-primary font-semibold"
+          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
   );
 }
 
@@ -191,8 +164,32 @@ interface SettingsPageProps {
   initialTab?: string;
 }
 
+type SettingsTab = "profile" | "appearance" | "financial" | "notifications" | "plans" | "data" | "admin";
+
+const SETTINGS_TABS: Array<{ key: SettingsTab; label: string; icon: React.ElementType; adminOnly?: boolean }> = [
+  { key: "profile", label: "Perfil & Segurança", icon: User },
+  { key: "appearance", label: "Aparência", icon: Palette },
+  { key: "financial", label: "Financeiro", icon: Wallet },
+  { key: "notifications", label: "Notificações", icon: Bell },
+  { key: "plans", label: "Planos", icon: Crown },
+  { key: "data", label: "Dados & Exportação", icon: Database },
+  { key: "admin", label: "Administração", icon: Shield, adminOnly: true },
+];
+
 export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore, setAlertDaysBefore, initialTab }: SettingsPageProps) {
   const { theme, setTheme } = useTheme();
+
+  const resolveTab = (t?: string): SettingsTab => {
+    if (t === "plans") return "plans";
+    if (t === "preferences") return "appearance";
+    return "profile";
+  };
+
+  const [activeTab, setActiveTab] = useState<SettingsTab>(resolveTab(initialTab));
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(resolveTab(initialTab));
+  }, [initialTab]);
 
   // Profile state
   const [profileName, setProfileName] = useState("");
@@ -201,7 +198,6 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
   const [privacyMode, setPrivacyMode] = useState(false);
 
   // Password change
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
@@ -216,11 +212,10 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
   const saveProfile = useCallback(async () => {
     safeSet(LS.profileName, profileName.trim());
     safeSet(LS.profileEmail, profileEmail.trim());
-    // Also save display_name to database
     if (auth?.user?.id) {
       await supabase.from("profiles").update({ display_name: profileName.trim() } as any).eq("user_id", auth.user.id);
     }
-    toast.success("Perfil salvo com sucesso!");
+    toast.success("Perfil salvo!");
   }, [profileName, profileEmail, auth?.user?.id]);
 
   const savePreferences = useCallback(() => {
@@ -240,8 +235,8 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      toast.success("Senha alterada com sucesso!");
-      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+      toast.success("Senha alterada!");
+      setNewPassword(""); setConfirmPassword("");
     } catch (err: any) {
       toast.error(err?.message || "Erro ao alterar senha.");
     } finally {
@@ -257,7 +252,7 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
     }));
     const csv = toCSV(rows);
     downloadTextFile(`finbrasil-despesas-${new Date().getFullYear()}.csv`, csv, "text/csv;charset=utf-8");
-    toast.success("CSV exportado com sucesso!");
+    toast.success("CSV exportado!");
   }, [store.expenses]);
 
   const resetFinance = useCallback(() => {
@@ -270,185 +265,250 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
     window.location.reload();
   }, [store]);
 
-  const themeLabel = theme === "dark" ? "Escuro" : theme === "light" ? "Claro" : "Sistema";
+  const visibleTabs = SETTINGS_TABS.filter(t => !t.adminOnly || userRole === "admin" || userRole === "owner");
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "profile":
+        return (
+          <div className="space-y-4">
+            <SettingsSection title="Informações pessoais" icon={User}>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome</label>
+                  <Input
+                    value={profileName}
+                    onChange={e => setProfileName(e.target.value)}
+                    placeholder="Seu nome"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</label>
+                  <Input value={profileEmail} disabled className="h-11 rounded-xl bg-muted/30" />
+                  <p className="text-[11px] text-muted-foreground">O email não pode ser alterado.</p>
+                </div>
+                <Button className="w-full h-10 rounded-xl gap-2" onClick={saveProfile}>
+                  <Save className="h-4 w-4" /> Salvar perfil
+                </Button>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="Segurança" icon={Lock} defaultOpen={false}>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nova senha</label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Confirmar</label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Repita a nova senha"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+                <Button
+                  className="w-full h-10 rounded-xl gap-2"
+                  onClick={handleChangePassword}
+                  disabled={changingPassword || !newPassword || !confirmPassword}
+                >
+                  <KeyRound className="h-4 w-4" />
+                  {changingPassword ? "Alterando..." : "Alterar senha"}
+                </Button>
+              </div>
+            </SettingsSection>
+          </div>
+        );
+
+      case "appearance":
+        return (
+          <div className="space-y-4">
+            <SettingsSection title="Tema" icon={Palette}>
+              <ThemePicker />
+            </SettingsSection>
+
+            <SettingsSection title="Privacidade visual" icon={Eye}>
+              <QuickSetting icon={EyeOff} label="Modo privacidade" description="Oculta valores monetários na tela">
+                <Switch
+                  checked={privacyMode}
+                  onCheckedChange={(v) => {
+                    setPrivacyMode(v);
+                    safeSet(LS.privacyMode, v ? "1" : "0");
+                    if (typeof store.setPrivacyMode === "function") store.setPrivacyMode(v);
+                    toast.success(v ? "Modo privacidade ativado" : "Modo privacidade desativado");
+                  }}
+                />
+              </QuickSetting>
+            </SettingsSection>
+          </div>
+        );
+
+      case "financial":
+        return (
+          <div className="space-y-4">
+            <SettingsSection title="Ciclo financeiro" icon={Calendar}>
+              <QuickSetting icon={Calendar} label="Início do mês financeiro" description="Dia que inicia seu ciclo mensal (1–28)">
+                <Input
+                  type="number"
+                  min={1} max={28}
+                  value={monthStartDayDraft}
+                  onChange={e => setMonthStartDayDraft(parseInt(e.target.value || "1", 10))}
+                  className="w-[72px] h-10 rounded-xl text-center"
+                />
+              </QuickSetting>
+              <Divider />
+              <div className="flex justify-end pt-2">
+                <Button size="sm" className="h-9 rounded-xl gap-2" onClick={savePreferences}>
+                  <Save className="h-3.5 w-3.5" /> Salvar
+                </Button>
+              </div>
+            </SettingsSection>
+          </div>
+        );
+
+      case "notifications":
+        return (
+          <div className="space-y-4">
+            <SettingsSection title="Alertas de vencimento" icon={Bell}>
+              <QuickSetting icon={Bell} label="Dias de antecedência" description="Quando notificar sobre gastos próximos">
+                <Select
+                  value={String(alertDaysBefore)}
+                  onValueChange={v => {
+                    const n = parseInt(v, 10);
+                    setAlertDaysBefore(n);
+                    try { localStorage.setItem("finbrasil.settings.alertDaysBefore", v); } catch {}
+                  }}
+                >
+                  <SelectTrigger className="w-[90px] h-10 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {[1, 2, 3, 5, 7].map(d => (
+                      <SelectItem key={d} value={String(d)}>{d} {d === 1 ? "dia" : "dias"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </QuickSetting>
+            </SettingsSection>
+
+            <SettingsSection title="WhatsApp" icon={Smartphone} defaultOpen={false}>
+              {auth?.user?.id ? (
+                <WhatsAppSettings userId={auth.user.id} />
+              ) : (
+                <p className="text-sm text-muted-foreground py-4">Faça login para configurar o WhatsApp.</p>
+              )}
+            </SettingsSection>
+          </div>
+        );
+
+      case "plans":
+        return <PlansSection currentPlan={userPlan} />;
+
+      case "data":
+        return (
+          <div className="space-y-4">
+            <SettingsSection title="Exportação" icon={FileDown}>
+              <QuickSetting icon={Download} label="Exportar despesas" description="Baixe um arquivo CSV com todas as suas despesas">
+                <Button variant="outline" size="sm" className="h-9 rounded-xl gap-2" onClick={exportCSV}>
+                  <FileDown className="h-3.5 w-3.5" /> CSV
+                </Button>
+              </QuickSetting>
+              <Divider />
+              <div className="rounded-xl bg-muted/30 p-3 mt-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Mês financeiro: dia <span className="font-medium text-foreground">{store?.monthStartDay ?? 1}</span>
+                </div>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="Zona de perigo" icon={AlertTriangle} defaultOpen={false} className="border-destructive/20">
+              <QuickSetting icon={RotateCcw} label="Reset financeiro" description="Apaga todos os dados e configurações locais. Irreversível." danger>
+                <Button variant="destructive" size="sm" className="h-9 rounded-xl gap-2" onClick={resetFinance}>
+                  <AlertTriangle className="h-3.5 w-3.5" /> Resetar
+                </Button>
+              </QuickSetting>
+            </SettingsSection>
+          </div>
+        );
+
+      case "admin":
+        return (
+          <div className="space-y-4">
+            <AdminPanel currentUserRole={userRole} />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <Tabs defaultValue={initialTab || "profile"} key={initialTab} className="space-y-6">
-      <TabsList className="bg-muted/50 backdrop-blur rounded-2xl h-12 p-1 w-full grid grid-cols-4">
-        <TabsTrigger value="profile" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2 text-xs sm:text-sm">
-          <User className="h-4 w-4" />
-          <span className="hidden sm:inline">Perfil</span>
-        </TabsTrigger>
-        <TabsTrigger value="preferences" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2 text-xs sm:text-sm">
-          <Palette className="h-4 w-4" />
-          <span className="hidden sm:inline">Preferências</span>
-        </TabsTrigger>
-        <TabsTrigger value="plans" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2 text-xs sm:text-sm">
-          <Crown className="h-4 w-4" />
-          <span className="hidden sm:inline">Planos</span>
-        </TabsTrigger>
-        <TabsTrigger value="data" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2 text-xs sm:text-sm">
-          <Database className="h-4 w-4" />
-          <span className="hidden sm:inline">Dados</span>
-        </TabsTrigger>
-      </TabsList>
-
-      {/* ═══ PERFIL ═══ */}
-      <TabsContent value="profile" className="space-y-5 mt-0">
-        <SectionCard title="Informações pessoais" icon={User}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nome de exibição</label>
-              <Input
-                value={profileName}
-                onChange={e => setProfileName(e.target.value)}
-                placeholder="Seu nome"
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input
-                value={profileEmail}
-                disabled
-                className="h-11 rounded-xl bg-muted/40"
-              />
-              <p className="text-xs text-muted-foreground">O email não pode ser alterado diretamente.</p>
-            </div>
-            <div className="flex justify-end pt-2">
-              <Button className="h-10 rounded-xl gap-2" onClick={saveProfile}>
-                <Save className="h-4 w-4" /> Salvar perfil
-              </Button>
-            </div>
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Sidebar Navigation */}
+      <div className="lg:w-56 shrink-0">
+        <div className="lg:sticky lg:top-4">
+          {/* Mobile: horizontal scroll */}
+          <div className="flex lg:hidden gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+            {visibleTabs.map(tab => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all shrink-0",
+                    activeTab === tab.key
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted/30 text-muted-foreground"
+                  )}
+                >
+                  <TabIcon className="h-3.5 w-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-        </SectionCard>
 
-        <SectionCard title="Segurança" icon={Shield}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nova senha</label>
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                className="h-11 rounded-xl"
+          {/* Desktop: vertical nav */}
+          <nav className="hidden lg:flex flex-col gap-1">
+            {visibleTabs.map(tab => (
+              <SettingsNavItem
+                key={tab.key}
+                icon={tab.icon}
+                label={tab.label}
+                active={activeTab === tab.key}
+                onClick={() => setActiveTab(tab.key)}
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Confirmar nova senha</label>
-              <Input
-                type="password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="Repita a nova senha"
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="flex justify-end pt-2">
-              <Button
-                className="h-10 rounded-xl gap-2"
-                onClick={handleChangePassword}
-                disabled={changingPassword || !newPassword || !confirmPassword}
-              >
-                <KeyRound className="h-4 w-4" />
-                {changingPassword ? "Alterando..." : "Alterar senha"}
-              </Button>
-            </div>
-          </div>
-        </SectionCard>
-      </TabsContent>
+            ))}
+          </nav>
+        </div>
+      </div>
 
-      {/* ═══ PREFERÊNCIAS ═══ */}
-      <TabsContent value="preferences" className="space-y-5 mt-0">
-        <SectionCard title="Aparência" icon={Palette}>
-          <ThemePicker />
-          <Divider />
-          <SettingRow icon={Eye} title="Modo privacidade" description="Oculta valores monetários na tela.">
-            <Switch checked={privacyMode} onCheckedChange={setPrivacyMode} />
-          </SettingRow>
-        </SectionCard>
-
-        <SectionCard title="Financeiro" icon={Calendar}>
-          <SettingRow icon={Calendar} title="Início do mês financeiro" description="Dia que inicia seu ciclo mensal (1–28).">
-            <Input
-              type="number"
-              min={1} max={28}
-              value={monthStartDayDraft}
-              onChange={e => setMonthStartDayDraft(parseInt(e.target.value || "1", 10))}
-              className="w-[80px] h-10 rounded-xl text-center"
-            />
-          </SettingRow>
-          <Divider />
-          <SettingRow icon={Bell} title="Dias de antecedência para alertas" description="Quando notificar sobre gastos próximos.">
-            <Select
-              value={String(alertDaysBefore)}
-              onValueChange={v => {
-                const n = parseInt(v, 10);
-                setAlertDaysBefore(n);
-                try { localStorage.setItem("finbrasil.settings.alertDaysBefore", v); } catch {}
-              }}
-            >
-              <SelectTrigger className="w-[100px] h-10 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {[1, 2, 3, 5, 7].map(d => (
-                  <SelectItem key={d} value={String(d)}>{d} {d === 1 ? "dia" : "dias"}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </SettingRow>
-          <Divider />
-          <div className="flex justify-end pt-3">
-            <Button className="h-10 rounded-xl gap-2" onClick={savePreferences}>
-              <Save className="h-4 w-4" /> Salvar preferências
-            </Button>
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Metas financeiras" icon={Target}>
-          <GoalsManager />
-        </SectionCard>
-
-        {auth?.user?.id && <WhatsAppSettings userId={auth.user.id} />}
-      </TabsContent>
-
-      {/* ═══ PLANOS ═══ */}
-      <TabsContent value="plans" className="space-y-5 mt-0">
-        <PlansSection currentPlan={userPlan} />
-      </TabsContent>
-
-      {/* ═══ DADOS ═══ */}
-      <TabsContent value="data" className="space-y-5 mt-0">
-        <SectionCard title="Exportação" icon={FileDown}>
-          <SettingRow icon={Download} title="Exportar despesas" description="Baixe um arquivo CSV com todas as suas despesas.">
-            <Button variant="outline" className="h-10 rounded-xl gap-2" onClick={exportCSV}>
-              <FileDown className="h-4 w-4" /> Exportar CSV
-            </Button>
-          </SettingRow>
-          <Divider />
-          <div className="rounded-2xl bg-muted/30 p-4 mt-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5" />
-              Mês financeiro atual: dia <span className="font-medium text-foreground">{store?.monthStartDay ?? 1}</span>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Zona de perigo" icon={AlertTriangle} className="border-destructive/20">
-          <SettingRow icon={RotateCcw} title="Reset financeiro" description="Apaga todos os dados financeiros e configurações locais. Esta ação é irreversível." danger>
-            <Button variant="destructive" className="h-10 rounded-xl gap-2" onClick={resetFinance}>
-              <AlertTriangle className="h-4 w-4" /> Resetar tudo
-            </Button>
-          </SettingRow>
-        </SectionCard>
-
-        {/* Admin panel */}
-        {(userRole === "owner" || userRole === "admin") && (
-          <AdminPanel currentUserRole={userRole} />
-        )}
-      </TabsContent>
-    </Tabs>
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.15 }}
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
