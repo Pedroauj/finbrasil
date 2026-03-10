@@ -44,8 +44,10 @@ const NAV_LABELS: Record<NavKey, string> = {
   recurring: "Recorrentes",
   calendar: "Calendário",
   accounts: "Contas",
+  networth: "Patrimônio",
   reports: "Relatórios",
   goals: "Metas",
+  family: "Família",
   settings: "Ajustes",
 };
 
