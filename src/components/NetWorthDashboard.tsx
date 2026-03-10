@@ -55,7 +55,7 @@ function NetWorthKpi({ label, value, icon: Icon, color, sub }: {
 export function NetWorthDashboard({ accounts, invoices, expenses, currentDate, userId }: NetWorthDashboardProps) {
   // Calculate current totals
   const { totalAccounts, totalInvestments, totalDebts, netWorth } = useMemo(() => {
-    const activeAccounts = accounts.filter(a => a.is_active !== false);
+    const activeAccounts = accounts.filter(a => a.isActive !== false);
 
     const totalAccounts = activeAccounts
       .filter(a => ["checking", "savings", "wallet"].includes(a.type))
