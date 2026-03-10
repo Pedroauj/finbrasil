@@ -349,6 +349,30 @@ export default function Index() {
           </PageShell>
         );
 
+      case "networth":
+        return (
+          <PageShell title="Patrimônio" subtitle={subtitleByNav.networth}>
+            <NetWorthDashboard
+              accounts={store.financialAccounts ?? []}
+              invoices={store.invoices ?? []}
+              expenses={store.expenses ?? []}
+              currentDate={store.currentDate}
+              userId={auth?.user?.id}
+            />
+          </PageShell>
+        );
+
+      case "family":
+        return (
+          <PageShell title="Família" subtitle={subtitleByNav.family}>
+            {auth?.user?.id ? (
+              <FamilyManager userId={auth.user.id} />
+            ) : (
+              <p className="text-muted-foreground">Faça login para acessar.</p>
+            )}
+          </PageShell>
+        );
+
       case "settings":
         return (
           <PageShell title="Ajustes" subtitle={subtitleByNav.settings}>
