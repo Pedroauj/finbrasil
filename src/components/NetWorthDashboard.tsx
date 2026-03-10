@@ -136,7 +136,9 @@ export function NetWorthDashboard({ accounts, invoices, expenses, currentDate, u
   }, [currentDate, totalAccounts, totalInvestments, totalDebts, netWorth]);
 
   // Fetch historical snapshots
-  const [historicalData, setHistoricalData] = useMemo(() => [chartData, () => {}], [chartData]);
+  const [historicalData, setHistoricalData] = useState(chartData);
+
+  useEffect(() => { setHistoricalData(chartData); }, [chartData]);
 
   useEffect(() => {
     if (!userId) return;
