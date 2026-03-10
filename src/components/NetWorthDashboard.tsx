@@ -63,7 +63,7 @@ export function NetWorthDashboard({ accounts, invoices, expenses, currentDate, u
 
     const totalInvestments = activeAccounts
       .filter(a => a.type === "investment")
-      .reduce((sum, a) => sum + Number(a.current_value ?? a.balance ?? 0), 0);
+      .reduce((sum, a) => sum + Number(a.currentValue ?? a.balance ?? 0), 0);
 
     // Debts: unpaid invoices + planned/overdue expenses with installments
     const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
