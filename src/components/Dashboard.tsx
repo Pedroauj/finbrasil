@@ -580,6 +580,7 @@ export function Dashboard({
               sub={carryOver !== 0 ? `Inclui saldo anterior: ${formatCurrency(carryOver)}` : "Receita - gastos"}
               badge={prevTotal > 0 ? `${expenseDelta > 0 ? "↑" : "↓"} ${Math.abs(expenseDelta).toFixed(1)}%` : undefined}
               badgeColor={expenseDelta > 0 ? "hsl(0, 72%, 52%)" : "hsl(160, 84%, 45%)"}
+              index={0}
             />
 
             <KpiCard
@@ -590,6 +591,7 @@ export function Dashboard({
               sparkColor="hsl(217, 91%, 60%)"
               accentClass=""
               sub="Salário + extras"
+              index={1}
             />
 
             <KpiCard
@@ -602,6 +604,7 @@ export function Dashboard({
               sub={`Média ${formatCurrency(avgDailySpend)}/dia`}
               badge={prevTotal > 0 ? `↑ ${Math.abs(expenseDelta).toFixed(1)}%` : undefined}
               badgeColor={expenseDelta > 0 ? "hsl(0, 72%, 52%)" : "hsl(160, 84%, 45%)"}
+              index={2}
             />
 
             <KpiCard
@@ -614,6 +617,7 @@ export function Dashboard({
               sub={`${currentInvoices.length} ${currentInvoices.length === 1 ? "cartão ativo" : "cartões ativos"}`}
               badge={nextInvoiceDue !== null ? `vence em ${nextInvoiceDue}d` : undefined}
               badgeColor="hsl(30, 95%, 55%)"
+              index={3}
             />
           </div>
         </StaggerItem>
