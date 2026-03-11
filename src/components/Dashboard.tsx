@@ -670,10 +670,19 @@ export function Dashboard({
           {/* Cash Balance - Left */}
           <Card className={cn(appCard, "xl:col-span-3")}>
             <CardContent className="p-6">
-              <p className="text-xs text-muted-foreground mb-1">Saldo em caixa</p>
-              <p className={cn("text-3xl font-extrabold tracking-tight tabular-nums", balance >= 0 ? "text-primary" : "text-destructive")}>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">Saldo em caixa</p>
+                <PulseDot color="bg-primary" />
+              </div>
+              <motion.p
+                className={cn("text-3xl font-extrabold tracking-tight tabular-nums", balance >= 0 ? "text-primary" : "text-destructive")}
+                key={balance}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              >
                 {formatCurrency(balance)}
-              </p>
+              </motion.p>
               <p className="text-[11px] text-muted-foreground mt-1">
                 Atualizado agora · {monthLabelCap}
               </p>
