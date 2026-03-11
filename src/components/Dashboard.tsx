@@ -57,10 +57,9 @@ import { UpcomingAlerts } from "./UpcomingAlerts";
 import { MonthlyReport } from "./MonthlyReport";
 import { Gamification } from "./Gamification";
 import { CurrencyConverter } from "./CurrencyConverter";
-import { StaggerContainer, StaggerItem, PulseDot } from "@/components/ui/animations";
+import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
 import { cn } from "@/lib/utils";
 import { computeFinScore, type FinScoreResult } from "@/lib/finScore";
-import { motion } from "framer-motion";
 
 const appCard =
   "relative overflow-hidden rounded-2xl border border-border/50 bg-card backdrop-blur " +
@@ -124,7 +123,6 @@ function KpiCard({
   sub,
   badge,
   badgeColor,
-  index = 0,
 }: {
   label: string;
   value: string;
@@ -135,55 +133,35 @@ function KpiCard({
   sub?: string;
   badge?: string;
   badgeColor?: string;
-  index?: number;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <Card className={cn(appCard, accentClass, "group")}>
-        <CardContent className="p-5 flex flex-col justify-between h-full">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-muted-foreground">{label}</p>
-            <motion.div
-              className="rounded-xl p-2 ring-1 ring-border/40 bg-background/30"
-              whileHover={{ rotate: [0, -8, 8, 0], transition: { duration: 0.4 } }}
+    <Card className={cn(appCard, accentClass, "group")}>
+      <CardContent className="p-5 flex flex-col justify-between h-full">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <div className="rounded-xl p-2 ring-1 ring-border/40 bg-background/30">
+            {icon}
+          </div>
+        </div>
+        <div className="mb-2">
+          <MiniSparkline data={sparkData} color={sparkColor} height={36} />
+        </div>
+        <p className="text-xl font-bold tracking-tight tabular-nums" style={{ color: sparkColor }}>
+          {value}
+        </p>
+        <div className="flex items-center justify-between mt-1.5">
+          {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+          {badge && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: `${badgeColor ?? sparkColor}20`, color: badgeColor ?? sparkColor }}
             >
-              {icon}
-            </motion.div>
-          </div>
-          <div className="mb-2">
-            <MiniSparkline data={sparkData} color={sparkColor} height={36} />
-          </div>
-          <motion.p
-            className="text-xl font-bold tracking-tight tabular-nums"
-            style={{ color: sparkColor }}
-            key={value}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-          >
-            {value}
-          </motion.p>
-          <div className="flex items-center justify-between mt-1.5">
-            {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
-            {badge && (
-              <motion.span
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${badgeColor ?? sparkColor}20`, color: badgeColor ?? sparkColor }}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3 + index * 0.08, duration: 0.3 }}
-              >
-                {badge}
-              </motion.span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+              {badge}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -580,7 +558,6 @@ export function Dashboard({
               sub={carryOver !== 0 ? `Inclui saldo anterior: ${formatCurrency(carryOver)}` : "Receita - gastos"}
               badge={prevTotal > 0 ? `${expenseDelta > 0 ? "↑" : "↓"} ${Math.abs(expenseDelta).toFixed(1)}%` : undefined}
               badgeColor={expenseDelta > 0 ? "hsl(0, 72%, 52%)" : "hsl(160, 84%, 45%)"}
-              index={0}
             />
 
             <KpiCard
@@ -591,7 +568,6 @@ export function Dashboard({
               sparkColor="hsl(217, 91%, 60%)"
               accentClass=""
               sub="Salário + extras"
-              index={1}
             />
 
             <KpiCard
@@ -604,7 +580,6 @@ export function Dashboard({
               sub={`Média ${formatCurrency(avgDailySpend)}/dia`}
               badge={prevTotal > 0 ? `↑ ${Math.abs(expenseDelta).toFixed(1)}%` : undefined}
               badgeColor={expenseDelta > 0 ? "hsl(0, 72%, 52%)" : "hsl(160, 84%, 45%)"}
-              index={2}
             />
 
             <KpiCard
@@ -617,7 +592,6 @@ export function Dashboard({
               sub={`${currentInvoices.length} ${currentInvoices.length === 1 ? "cartão ativo" : "cartões ativos"}`}
               badge={nextInvoiceDue !== null ? `vence em ${nextInvoiceDue}d` : undefined}
               badgeColor="hsl(30, 95%, 55%)"
-              index={3}
             />
           </div>
         </StaggerItem>
@@ -631,27 +605,25 @@ export function Dashboard({
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
                 <p className="text-sm tabular-nums">
-                  <span className={cn("font-bold", budgetExceeded ? "text-destructive" : budgetPercent >= 80 ? "text-warning" : "text-primary")}>
+                  <span className={cn("font-bold", budgetExceeded ? "text-destructive" : budgetPercent >= 80 ? "text-yellow-500" : "text-primary")}>
                     {formatCurrency(totalExpenses)}
                   </span>
                   <span className="text-muted-foreground"> / {formatCurrency(budgetTotal)}</span>
                 </p>
               </div>
               <div className="h-2.5 w-full rounded-full bg-muted/40 overflow-hidden">
-                <motion.div
+                <div
                   className={cn(
-                    "h-full rounded-full",
-                    budgetExceeded ? "bg-destructive" : budgetPercent >= 80 ? "bg-warning" : "bg-primary"
+                    "h-full rounded-full transition-all duration-700",
+                    budgetExceeded ? "bg-destructive" : budgetPercent >= 80 ? "bg-yellow-500" : "bg-primary"
                   )}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(budgetPercent, 100)}%` }}
-                  transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  style={{ width: `${Math.min(budgetPercent, 100)}%` }}
                 />
               </div>
               <div className="flex flex-wrap items-center justify-between mt-3 gap-2 text-xs text-muted-foreground">
                 <span>{budgetPercent.toFixed(0)}% utilizado</span>
                 {budgetPercent >= 80 && !budgetExceeded && (
-                  <span className="text-warning font-medium">⚠ Acima de 80% — atenção</span>
+                  <span className="text-yellow-500 font-medium">⚠ Acima de 80% — atenção</span>
                 )}
                 {budgetExceeded && (
                   <span className="text-destructive font-medium">Excedido em {formatCurrency(totalExpenses - budgetTotal)}</span>
@@ -672,19 +644,10 @@ export function Dashboard({
           {/* Cash Balance - Left */}
           <Card className={cn(appCard, "xl:col-span-3")}>
             <CardContent className="p-6">
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">Saldo em caixa</p>
-                <PulseDot color="bg-primary" />
-              </div>
-              <motion.p
-                className={cn("text-3xl font-extrabold tracking-tight tabular-nums", balance >= 0 ? "text-primary" : "text-destructive")}
-                key={balance}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
+              <p className="text-xs text-muted-foreground mb-1">Saldo em caixa</p>
+              <p className={cn("text-3xl font-extrabold tracking-tight tabular-nums", balance >= 0 ? "text-primary" : "text-destructive")}>
                 {formatCurrency(balance)}
-              </motion.p>
+              </p>
               <p className="text-[11px] text-muted-foreground mt-1">
                 Atualizado agora · {monthLabelCap}
               </p>
