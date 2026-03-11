@@ -124,6 +124,7 @@ function KpiCard({
   sub,
   badge,
   badgeColor,
+  index = 0,
 }: {
   label: string;
   value: string;
@@ -134,35 +135,55 @@ function KpiCard({
   sub?: string;
   badge?: string;
   badgeColor?: string;
+  index?: number;
 }) {
   return (
-    <Card className={cn(appCard, accentClass, "group")}>
-      <CardContent className="p-5 flex flex-col justify-between h-full">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <div className="rounded-xl p-2 ring-1 ring-border/40 bg-background/30">
-            {icon}
-          </div>
-        </div>
-        <div className="mb-2">
-          <MiniSparkline data={sparkData} color={sparkColor} height={36} />
-        </div>
-        <p className="text-xl font-bold tracking-tight tabular-nums" style={{ color: sparkColor }}>
-          {value}
-        </p>
-        <div className="flex items-center justify-between mt-1.5">
-          {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
-          {badge && (
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: `${badgeColor ?? sparkColor}20`, color: badgeColor ?? sparkColor }}
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <Card className={cn(appCard, accentClass, "group")}>
+        <CardContent className="p-5 flex flex-col justify-between h-full">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
+            <motion.div
+              className="rounded-xl p-2 ring-1 ring-border/40 bg-background/30"
+              whileHover={{ rotate: [0, -8, 8, 0], transition: { duration: 0.4 } }}
             >
-              {badge}
-            </span>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              {icon}
+            </motion.div>
+          </div>
+          <div className="mb-2">
+            <MiniSparkline data={sparkData} color={sparkColor} height={36} />
+          </div>
+          <motion.p
+            className="text-xl font-bold tracking-tight tabular-nums"
+            style={{ color: sparkColor }}
+            key={value}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            {value}
+          </motion.p>
+          <div className="flex items-center justify-between mt-1.5">
+            {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+            {badge && (
+              <motion.span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: `${badgeColor ?? sparkColor}20`, color: badgeColor ?? sparkColor }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3 + index * 0.08, duration: 0.3 }}
+              >
+                {badge}
+              </motion.span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
