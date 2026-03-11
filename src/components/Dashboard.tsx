@@ -57,9 +57,10 @@ import { UpcomingAlerts } from "./UpcomingAlerts";
 import { MonthlyReport } from "./MonthlyReport";
 import { Gamification } from "./Gamification";
 import { CurrencyConverter } from "./CurrencyConverter";
-import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
+import { StaggerContainer, StaggerItem, PulseDot } from "@/components/ui/animations";
 import { cn } from "@/lib/utils";
 import { computeFinScore, type FinScoreResult } from "@/lib/finScore";
+import { motion } from "framer-motion";
 
 const appCard =
   "relative overflow-hidden rounded-2xl border border-border/50 bg-card backdrop-blur " +
