@@ -62,9 +62,8 @@ import { cn } from "@/lib/utils";
 import { computeFinScore, type FinScoreResult } from "@/lib/finScore";
 
 const appCard =
-  "relative overflow-hidden rounded-2xl border border-border/50 bg-card backdrop-blur " +
-  "shadow-[0_1px_3px_rgba(0,0,0,0.04),0_0_0_1px_hsl(var(--border)/0.5)] " +
-  "transition-all duration-300 ease-out hover:-translate-y-px hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12)]";
+  "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm " +
+  "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md";
 
 function daysInMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
