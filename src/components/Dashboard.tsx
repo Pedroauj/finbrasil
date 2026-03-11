@@ -651,7 +651,7 @@ export function Dashboard({
               <div className="flex flex-wrap items-center justify-between mt-3 gap-2 text-xs text-muted-foreground">
                 <span>{budgetPercent.toFixed(0)}% utilizado</span>
                 {budgetPercent >= 80 && !budgetExceeded && (
-                  <span className="text-yellow-500 font-medium">⚠ Acima de 80% — atenção</span>
+                  <span className="text-warning font-medium">⚠ Acima de 80% — atenção</span>
                 )}
                 {budgetExceeded && (
                   <span className="text-destructive font-medium">Excedido em {formatCurrency(totalExpenses - budgetTotal)}</span>
