@@ -631,7 +631,7 @@ export function Dashboard({
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-foreground">Orçamento mensal</p>
                 <p className="text-sm tabular-nums">
-                  <span className={cn("font-bold", budgetExceeded ? "text-destructive" : budgetPercent >= 80 ? "text-yellow-500" : "text-primary")}>
+                  <span className={cn("font-bold", budgetExceeded ? "text-destructive" : budgetPercent >= 80 ? "text-warning" : "text-primary")}>
                     {formatCurrency(totalExpenses)}
                   </span>
                   <span className="text-muted-foreground"> / {formatCurrency(budgetTotal)}</span>
