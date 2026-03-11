@@ -18,6 +18,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -27,6 +31,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -75,14 +80,15 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        xl: "calc(var(--radius) + 6px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
       },
       boxShadow: {
-        // “hairline” + depth realista (premium)
         premium:
-          "0 1px 0 hsl(var(--border) / 0.35), 0 14px 34px -24px rgba(0,0,0,0.55)",
+          "0 0 0 1px hsl(var(--border) / 0.4), 0 2px 4px -1px rgba(0,0,0,0.06), 0 12px 28px -8px rgba(0,0,0,0.15)",
         premiumLg:
-          "0 1px 0 hsl(var(--border) / 0.35), 0 22px 50px -34px rgba(0,0,0,0.60)",
+          "0 0 0 1px hsl(var(--border) / 0.4), 0 4px 8px -2px rgba(0,0,0,0.08), 0 20px 40px -12px rgba(0,0,0,0.2)",
+        glow: "0 0 20px -4px hsl(var(--primary) / 0.25)",
       },
       keyframes: {
         "accordion-down": {
@@ -93,10 +99,15 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 2s infinite",
       },
     },
   },

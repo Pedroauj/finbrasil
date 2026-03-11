@@ -6,45 +6,34 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        // Base
-        "group relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 text-foreground backdrop-blur",
-        "shadow-sm",
+        "group relative overflow-hidden rounded-2xl text-foreground",
+        "bg-card border border-border/50",
+        "shadow-[0_1px_3px_rgba(0,0,0,0.04),0_0_0_1px_hsl(var(--border)/0.5)]",
 
-        // Top highlight (premium, constante)
-        "after:pointer-events-none after:absolute after:left-6 after:right-6 after:top-0 after:h-px",
-        "after:bg-gradient-to-r after:from-transparent after:via-primary/25 after:to-transparent after:opacity-70",
+        // Subtle top edge highlight
+        "after:pointer-events-none after:absolute after:left-8 after:right-8 after:top-0 after:h-px",
+        "after:bg-gradient-to-r after:from-transparent after:via-primary/20 after:to-transparent after:opacity-60",
 
-        // Aura no hover (sutil)
-        "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
-        "before:bg-[radial-gradient(220px_circle_at_20%_15%,hsl(var(--primary)/0.12),transparent_60%)]",
+        // Hover glow
+        "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-500",
+        "before:bg-[radial-gradient(300px_circle_at_30%_20%,hsl(var(--primary)/0.06),transparent_70%)]",
         "hover:before:opacity-100",
 
-        // Sheen (reflexo passando — super leve)
-        "bg-[radial-gradient(1400px_circle_at_20%_0%,hsl(var(--primary)/0.06),transparent_55%)]",
-        "hover:shadow-[0_12px_32px_-22px_hsl(var(--primary)/0.45)]",
-        "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md",
+        // Transition
+        "transition-all duration-300 ease-out",
+        "hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.12),0_0_0_1px_hsl(var(--border)/0.6)]",
+        "hover:-translate-y-px",
         className
       )}
       {...props}
-    >
-      {/* sheen overlay: não interfere em layout, só visual */}
-      <span
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute -left-24 top-[-40%] h-[220%] w-24 rotate-12",
-          "bg-white/10 blur-md opacity-0 transition-opacity duration-300",
-          "group-hover:opacity-100"
-        )}
-      />
-      {props.children}
-    </div>
+    />
   )
 );
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-5 pb-3", className)} {...props} />
   )
 );
 CardHeader.displayName = "CardHeader";
@@ -53,7 +42,7 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      className={cn("text-base font-semibold leading-none tracking-tight", className)}
       {...props}
     />
   )
@@ -69,13 +58,13 @@ const CardDescription = React.forwardRef<
 CardDescription.displayName = "CardDescription";
 
 const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-5 pt-0", className)} {...props} />
 );
 CardContent.displayName = "CardContent";
 
 const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex items-center p-6 pt-0", className)} {...props} />
+    <div ref={ref} className={cn("flex items-center p-5 pt-0", className)} {...props} />
   )
 );
 CardFooter.displayName = "CardFooter";

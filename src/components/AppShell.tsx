@@ -309,15 +309,15 @@ export function AppShell({
   }, [collapsed]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
+    <div className="min-h-screen bg-background overflow-x-hidden noise-overlay">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(900px_circle_at_10%_20%,hsl(var(--primary)/0.05),transparent_55%),radial-gradient(700px_circle_at_85%_15%,hsl(var(--ring)/0.03),transparent_50%)]" />
 
       <div className="flex min-h-screen w-full">
         {/* Sidebar desktop */}
         <aside
           className={cn(
-            "hidden bg-background/60 backdrop-blur xl:block",
-            "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
+            "hidden bg-background/70 backdrop-blur-xl xl:block",
+            "shadow-[1px_0_0_hsl(var(--border)/0.2)]",
             "transition-[width] duration-300 ease-out",
             "will-change-[width]",
             "fixed top-0 left-0 h-screen shrink-0 overflow-y-auto z-30"
@@ -340,7 +340,7 @@ export function AppShell({
         <div className="hidden xl:block shrink-0 transition-[width] duration-300 ease-out" style={{ width: collapsed ? 80 : 288 }} />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.25)]">
+          <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl shadow-[0_1px_0_hsl(var(--border)/0.3)]">
             <div className="flex items-center gap-3 px-4 py-2.5">
               <div className="xl:hidden">
                 <Sheet>
