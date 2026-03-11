@@ -638,12 +638,14 @@ export function Dashboard({
                 </p>
               </div>
               <div className="h-2.5 w-full rounded-full bg-muted/40 overflow-hidden">
-                <div
+                <motion.div
                   className={cn(
-                    "h-full rounded-full transition-all duration-700",
-                    budgetExceeded ? "bg-destructive" : budgetPercent >= 80 ? "bg-yellow-500" : "bg-primary"
+                    "h-full rounded-full",
+                    budgetExceeded ? "bg-destructive" : budgetPercent >= 80 ? "bg-warning" : "bg-primary"
                   )}
-                  style={{ width: `${Math.min(budgetPercent, 100)}%` }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(budgetPercent, 100)}%` }}
+                  transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 />
               </div>
               <div className="flex flex-wrap items-center justify-between mt-3 gap-2 text-xs text-muted-foreground">
