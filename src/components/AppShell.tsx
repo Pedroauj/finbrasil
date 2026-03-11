@@ -316,8 +316,8 @@ export function AppShell({
         {/* Sidebar desktop */}
         <aside
           className={cn(
-            "hidden bg-background/60 backdrop-blur xl:block",
-            "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
+            "hidden bg-background/70 backdrop-blur-xl xl:block",
+            "shadow-[1px_0_0_hsl(var(--border)/0.2)]",
             "transition-[width] duration-300 ease-out",
             "will-change-[width]",
             "fixed top-0 left-0 h-screen shrink-0 overflow-y-auto z-30"
