@@ -309,8 +309,8 @@ export function AppShell({
   }, [collapsed]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
+    <div className="min-h-screen bg-background overflow-x-hidden noise-overlay">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(900px_circle_at_10%_20%,hsl(var(--primary)/0.05),transparent_55%),radial-gradient(700px_circle_at_85%_15%,hsl(var(--ring)/0.03),transparent_50%)]" />
 
       <div className="flex min-h-screen w-full">
         {/* Sidebar desktop */}
