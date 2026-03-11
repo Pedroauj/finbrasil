@@ -340,7 +340,7 @@ export function AppShell({
         <div className="hidden xl:block shrink-0 transition-[width] duration-300 ease-out" style={{ width: collapsed ? 80 : 288 }} />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.25)]">
+          <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl shadow-[0_1px_0_hsl(var(--border)/0.3)]">
             <div className="flex items-center gap-3 px-4 py-2.5">
               <div className="xl:hidden">
                 <Sheet>
