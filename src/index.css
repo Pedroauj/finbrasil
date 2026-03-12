@@ -4,37 +4,47 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light mode — warm, layered, premium */
+    --background: 210 20% 97%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 160 84% 45%;
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 215 25% 93%;
+    --secondary-foreground: 220 25% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 215 20% 94%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 215 25% 93%;
+    --accent-foreground: 220 25% 18%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 38 92% 20%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 160 84% 45%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 160 84% 39%;
 
     --radius: 1.5rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 25% 12%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 93%;
+    --sidebar-accent-foreground: 220 25% 18%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 160 84% 39%;
   }
 
   .dark {
@@ -67,6 +77,15 @@
     --border: 180 6% 18%;
     --input: 180 6% 18%;
     --ring: 160 84% 45%;
+
+    --sidebar-background: 180 8% 9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 160 84% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 180 7% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 180 6% 18%;
+    --sidebar-ring: 160 84% 45%;
   }
 
   /* ===== Accent: Blue (Safira) ===== */
@@ -105,15 +124,25 @@
     @apply border border-border/60 bg-card/70 backdrop-blur;
   }
 
-  /* Sombra premium discreta */
+  /* Sombra premium — adapta ao tema */
   .shadow-soft {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+  .dark .shadow-soft {
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.04),
       0 8px 30px rgba(0, 0, 0, 0.35);
   }
 
-  /* Glow verde MUITO sutil (igual seu print) */
+  /* Glow verde sutil — adapta ao tema */
   .glow-primary {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.15),
+      0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+  .dark .glow-primary {
     box-shadow:
       0 0 0 1px hsl(var(--primary) / 0.25),
       0 20px 60px rgba(0, 0, 0, 0.35);
@@ -133,4 +162,16 @@
   .status-bar-paid { background: hsl(160 84% 45%); }
   .status-bar-planned { background: hsl(217 91% 60%); }
   .status-bar-overdue { background: hsl(0 72% 52%); }
+
+  /* Dark mode: deeper tailwind shadow tokens */
+  .dark .shadow-premium {
+    box-shadow:
+      0 1px 0 hsl(var(--border) / 0.35),
+      0 14px 34px -24px rgba(0, 0, 0, 0.55);
+  }
+  .dark .shadow-premiumLg {
+    box-shadow:
+      0 1px 0 hsl(var(--border) / 0.35),
+      0 22px 50px -34px rgba(0, 0, 0, 0.60);
+  }
 }
