@@ -115,15 +115,25 @@
     @apply border border-border/60 bg-card/70 backdrop-blur;
   }
 
-  /* Sombra premium discreta */
+  /* Sombra premium — adapta ao tema */
   .shadow-soft {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+  .dark .shadow-soft {
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.04),
       0 8px 30px rgba(0, 0, 0, 0.35);
   }
 
-  /* Glow verde MUITO sutil (igual seu print) */
+  /* Glow verde sutil — adapta ao tema */
   .glow-primary {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.15),
+      0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+  .dark .glow-primary {
     box-shadow:
       0 0 0 1px hsl(var(--primary) / 0.25),
       0 20px 60px rgba(0, 0, 0, 0.35);
