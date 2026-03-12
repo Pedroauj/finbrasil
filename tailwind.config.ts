@@ -78,11 +78,10 @@ export default {
         xl: "calc(var(--radius) + 6px)",
       },
       boxShadow: {
-        // “hairline” + depth realista (premium)
         premium:
-          "0 1px 0 hsl(var(--border) / 0.35), 0 14px 34px -24px rgba(0,0,0,0.55)",
+          "0 1px 3px rgba(0,0,0,0.05), 0 6px 16px -6px rgba(0,0,0,0.08)",
         premiumLg:
-          "0 1px 0 hsl(var(--border) / 0.35), 0 22px 50px -34px rgba(0,0,0,0.60)",
+          "0 1px 3px rgba(0,0,0,0.05), 0 12px 28px -8px rgba(0,0,0,0.10)",
       },
       keyframes: {
         "accordion-down": {
