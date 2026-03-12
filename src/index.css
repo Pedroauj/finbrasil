@@ -77,6 +77,15 @@
     --border: 180 6% 18%;
     --input: 180 6% 18%;
     --ring: 160 84% 45%;
+
+    --sidebar-background: 180 8% 9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 160 84% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 180 7% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 180 6% 18%;
+    --sidebar-ring: 160 84% 45%;
   }
 
   /* ===== Accent: Blue (Safira) ===== */
