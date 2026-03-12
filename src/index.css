@@ -162,4 +162,16 @@
   .status-bar-paid { background: hsl(160 84% 45%); }
   .status-bar-planned { background: hsl(217 91% 60%); }
   .status-bar-overdue { background: hsl(0 72% 52%); }
+
+  /* Dark mode: deeper tailwind shadow tokens */
+  .dark .shadow-premium {
+    box-shadow:
+      0 1px 0 hsl(var(--border) / 0.35),
+      0 14px 34px -24px rgba(0, 0, 0, 0.55);
+  }
+  .dark .shadow-premiumLg {
+    box-shadow:
+      0 1px 0 hsl(var(--border) / 0.35),
+      0 22px 50px -34px rgba(0, 0, 0, 0.60);
+  }
 }
