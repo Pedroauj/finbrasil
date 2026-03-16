@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { format } from "date-fns";
 import type { Expense, TransactionStatus, FinancialAccount } from "@/types/expense";
+import { ExpenseShareToggle, type ShareConfig } from "@/components/ExpenseShareToggle";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,8 @@ interface ExpenseFormProps {
   categories: string[];
   accounts?: FinancialAccount[];
   existingExpenses?: Expense[];
-  onSubmit: (data: Omit<Expense, "id">) => void;
+  userId?: string;
+  onSubmit: (data: Omit<Expense, "id">, shareConfig?: ShareConfig) => void;
   onCancel: () => void;
   onAddCategory: (cat: string) => void;
   defaultStatus?: TransactionStatus;
@@ -33,6 +35,7 @@ export function ExpenseForm({
   categories,
   accounts = [],
   existingExpenses = [],
+  userId,
   onSubmit,
   onCancel,
   onAddCategory,
@@ -66,6 +69,14 @@ export function ExpenseForm({
   const [installmentCount, setInstallmentCount] = useState(
     expense?.installmentCount?.toString() || "2"
   );
+
+  // Share config
+  const [shareConfig, setShareConfig] = useState<ShareConfig>({
+    enabled: false,
+    groupId: "",
+    splitType: "proportional",
+    splits: [],
+  });
 
   // Disable installment toggle when editing
   const isEditing = !!expense;
@@ -113,16 +124,19 @@ export function ExpenseForm({
       return;
     }
 
-    onSubmit({
-      date,
-      description: desc,
-      category,
-      amount: parseFloat(amount),
-      status,
-      accountId: accountId === "none" ? undefined : accountId,
-      isInstallment: isInstallment && parsedCount > 1,
-      installmentCount: isInstallment && parsedCount > 1 ? parsedCount : undefined,
-    });
+    onSubmit(
+      {
+        date,
+        description: desc,
+        category,
+        amount: parseFloat(amount),
+        status,
+        accountId: accountId === "none" ? undefined : accountId,
+        isInstallment: isInstallment && parsedCount > 1,
+        installmentCount: isInstallment && parsedCount > 1 ? parsedCount : undefined,
+      },
+      shareConfig.enabled ? shareConfig : undefined
+    );
   }
 
   function handleAddCategory() {
@@ -357,6 +371,16 @@ export function ExpenseForm({
             📆 Parcela {expense.currentInstallment}/{expense.installmentCount}
           </p>
         </div>
+      )}
+
+      {/* ── Shared expense toggle ── */}
+      {!isEditing && userId && (
+        <ExpenseShareToggle
+          userId={userId}
+          amount={parsedAmount}
+          currentDate={currentDate}
+          onShareChange={setShareConfig}
+        />
       )}
       {/* Duplicate warning */}
       {duplicateWarning && duplicateConfirmed && (

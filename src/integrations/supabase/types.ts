@@ -669,6 +669,51 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_expenses: {
+        Row: {
+          created_at: string
+          created_by: string
+          expense_id: string
+          group_id: string
+          id: string
+          split_type: string
+          splits: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expense_id: string
+          group_id: string
+          id?: string
+          split_type?: string
+          splits?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expense_id?: string
+          group_id?: string
+          id?: string
+          split_type?: string
+          splits?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_expenses_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: true
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_expenses_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string

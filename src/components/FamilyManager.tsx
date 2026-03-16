@@ -12,6 +12,7 @@ import {
   Link2, Trash2, LogOut, Plus, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SharedExpenses } from "@/components/SharedExpenses";
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm";
@@ -442,6 +443,21 @@ export function FamilyManager({ userId }: FamilyManagerProps) {
                   );
                 })}
               </div>
+
+              {/* Shared Expenses Panel */}
+              {groupMembers.length >= 2 && (
+                <div className="p-4 pt-0">
+                  <SharedExpenses
+                    userId={userId}
+                    groupId={group.id}
+                    groupName={group.name}
+                    members={groupMembers.map(m => ({
+                      user_id: m.user_id,
+                      display_name: m.display_name,
+                    }))}
+                  />
+                </div>
+              )}
             </motion.div>
           );
         })
