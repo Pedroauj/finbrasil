@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { format } from "date-fns";
 import type { Expense, TransactionStatus, FinancialAccount } from "@/types/expense";
+import { ExpenseShareToggle, type ShareConfig } from "@/components/ExpenseShareToggle";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
