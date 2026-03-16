@@ -35,6 +35,7 @@ export function ExpenseForm({
   categories,
   accounts = [],
   existingExpenses = [],
+  userId,
   onSubmit,
   onCancel,
   onAddCategory,
