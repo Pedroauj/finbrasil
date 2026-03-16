@@ -7,34 +7,22 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
       ref={ref}
       className={cn(
         // Base surface
-        "group relative overflow-hidden rounded-3xl text-foreground",
-        "bg-card/80 backdrop-blur-xl",
+        "group relative overflow-hidden rounded-2xl text-foreground",
+        "bg-card/90 backdrop-blur-sm",
         
-        // Border: subtle gradient feel
+        // Border
         "border border-border/40",
         
-        // Shadow system
+        // Shadow
         "shadow-premium",
         
-        // Top highlight (premium edge light)
+        // Top highlight — single lightweight pseudo
         "after:pointer-events-none after:absolute after:left-8 after:right-8 after:top-0 after:h-px",
-        "after:bg-gradient-to-r after:from-transparent after:via-primary/20 after:to-transparent after:opacity-60",
+        "after:bg-gradient-to-r after:from-transparent after:via-primary/15 after:to-transparent",
 
-        // Hover aura
-        "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-500",
-        "before:bg-[radial-gradient(280px_circle_at_20%_15%,hsl(var(--primary)/0.08),transparent_60%)]",
-        "hover:before:opacity-100",
-
-        // Ambient light
-        "bg-[radial-gradient(1400px_circle_at_20%_0%,hsl(var(--primary)/0.04),transparent_55%)]",
-        
-        // Hover elevation
-        "transition-all duration-500 ease-out",
-        "hover:shadow-premiumLg hover:-translate-y-[2px]",
-        "hover:border-border/60",
-        
-        // Noise texture
-        "noise",
+        // Hover — CSS-only, no extra pseudo
+        "transition-shadow duration-300",
+        "hover:shadow-premiumLg",
         
         className
       )}

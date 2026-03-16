@@ -3,41 +3,51 @@ import { toast } from "sonner";
 import { useExpenseStore } from "@/hooks/useExpenseStore";
 import { useAuth } from "@/hooks/useAuth";
 
-import { Dashboard } from "@/components/Dashboard";
-import { ExpenseTable } from "@/components/ExpenseTable";
-import { IncomeManager } from "@/components/IncomeManager";
-import { RecurringExpenses } from "@/components/RecurringExpenses";
-import { FinancialCalendar } from "@/components/FinancialCalendar";
-import { CreditCardManager } from "@/components/CreditCardManager";
-import { AccountManager } from "@/components/AccountManager";
+// Eagerly loaded (always needed)
 import { MonthNavigator } from "@/components/MonthNavigator";
 import { ModeToggle } from "@/components/ModeToggle";
 import { DEFAULT_CATEGORIES } from "@/types/expense";
 import type { Expense } from "@/types/expense";
 import { useUpcomingAlertCount } from "@/components/UpcomingAlerts";
-import { ReportsPage } from "@/components/ReportsPage";
-import { FinancialGoals } from "@/components/FinancialGoals";
-import { CSVImporter } from "@/components/CSVImporter";
-import { SmartAlerts } from "@/components/SmartAlerts";
 import { OnboardingTour, useOnboarding } from "@/components/OnboardingTour";
-import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { initAnalytics, trackPageView, trackNavigation, trackFeatureUsage } from "@/lib/internalAnalytics";
-import { NetWorthDashboard } from "@/components/NetWorthDashboard";
-import { FamilyManager } from "@/components/FamilyManager";
-import { ComparativeDashboard } from "@/components/ComparativeDashboard";
-import { InstallmentManager } from "@/components/InstallmentManager";
 import { GlobalSearch } from "@/components/GlobalSearch";
-
 import { Button } from "@/components/ui/button";
-import { AssistantPanel } from "@/components/AssistantPanel";
 import { PageShell } from "@/components/layout/PageShell";
 import { FloatingAddButton } from "@/components/layout/FloatingAddButton";
 import { AppShell, NavKey } from "@/components/AppShell";
-
 import { Bot, LogOut } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { PremiumModal } from "@/components/PremiumModal";
-import { SettingsPage } from "@/components/SettingsPage";
+
+// Lazy loaded — heavy components only load when needed
+const Dashboard = React.lazy(() => import("@/components/Dashboard").then(m => ({ default: m.Dashboard })));
+const ExpenseTable = React.lazy(() => import("@/components/ExpenseTable").then(m => ({ default: m.ExpenseTable })));
+const IncomeManager = React.lazy(() => import("@/components/IncomeManager").then(m => ({ default: m.IncomeManager })));
+const RecurringExpenses = React.lazy(() => import("@/components/RecurringExpenses").then(m => ({ default: m.RecurringExpenses })));
+const FinancialCalendar = React.lazy(() => import("@/components/FinancialCalendar").then(m => ({ default: m.FinancialCalendar })));
+const CreditCardManager = React.lazy(() => import("@/components/CreditCardManager").then(m => ({ default: m.CreditCardManager })));
+const AccountManager = React.lazy(() => import("@/components/AccountManager").then(m => ({ default: m.AccountManager })));
+const ReportsPage = React.lazy(() => import("@/components/ReportsPage").then(m => ({ default: m.ReportsPage })));
+const FinancialGoals = React.lazy(() => import("@/components/FinancialGoals").then(m => ({ default: m.FinancialGoals })));
+const CSVImporter = React.lazy(() => import("@/components/CSVImporter").then(m => ({ default: m.CSVImporter })));
+const SmartAlerts = React.lazy(() => import("@/components/SmartAlerts").then(m => ({ default: m.SmartAlerts })));
+const AnalyticsDashboard = React.lazy(() => import("@/components/AnalyticsDashboard").then(m => ({ default: m.AnalyticsDashboard })));
+const NetWorthDashboard = React.lazy(() => import("@/components/NetWorthDashboard").then(m => ({ default: m.NetWorthDashboard })));
+const FamilyManager = React.lazy(() => import("@/components/FamilyManager").then(m => ({ default: m.FamilyManager })));
+const ComparativeDashboard = React.lazy(() => import("@/components/ComparativeDashboard").then(m => ({ default: m.ComparativeDashboard })));
+const InstallmentManager = React.lazy(() => import("@/components/InstallmentManager").then(m => ({ default: m.InstallmentManager })));
+const AssistantPanel = React.lazy(() => import("@/components/AssistantPanel").then(m => ({ default: m.AssistantPanel })));
+const PremiumModal = React.lazy(() => import("@/components/PremiumModal").then(m => ({ default: m.PremiumModal })));
+const SettingsPage = React.lazy(() => import("@/components/SettingsPage").then(m => ({ default: m.SettingsPage })));
+
+// Lightweight loading fallback
+function LazyFallback() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
+}
 
 const NAV_LABELS: Record<NavKey, string> = {
   dashboard: "Dashboard",
@@ -541,7 +551,9 @@ export default function Index() {
         planLabel={isTrialActive && trialDaysLeft > 0 ? `Trial Pro: ${trialDaysLeft}d restantes` : planLabelText}
         onPlanClick={() => { setSettingsTab("plans"); setNav("settings"); }}
       >
-        {Content}
+        <React.Suspense fallback={<LazyFallback />}>
+          {Content}
+        </React.Suspense>
       </AppShell>
 
       {/* FAB apenas no mobile (evita duplicar com o botão da sidebar) */}
