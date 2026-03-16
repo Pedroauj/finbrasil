@@ -289,6 +289,18 @@ export default function Index() {
           </PageShell>
         );
 
+      case "installments":
+        return (
+          <PageShell title="Parcelas" subtitle={subtitleByNav.installments}>
+            <InstallmentManager
+              expenses={store.expenses}
+              allExpenses={store.allExpenses}
+              currentDate={store.currentDate}
+              monthBalance={store.monthBalance}
+            />
+          </PageShell>
+        );
+
       case "calendar":
         return (
           <PageShell title="Calendário" subtitle={subtitleByNav.calendar}>
