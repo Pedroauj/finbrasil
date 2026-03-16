@@ -37,6 +37,8 @@ export type NavKey =
   | "calendar"
   | "accounts"
   | "reports"
+  | "comparative"
+  | "installments"
   | "goals"
   | "networth"
   | "family"
@@ -48,10 +50,12 @@ const navItems: Array<{ key: NavKey; label: string; icon: any }> = [
   { key: "income", label: "Receitas", icon: TrendingUp },
   { key: "cards", label: "Cartões", icon: CreditCard },
   { key: "recurring", label: "Recorrentes", icon: RefreshCw },
+  { key: "installments", label: "Parcelas", icon: Layers },
   { key: "calendar", label: "Calendário", icon: Calendar },
   { key: "accounts", label: "Contas", icon: Wallet },
   { key: "networth", label: "Patrimônio", icon: PiggyBank },
   { key: "reports", label: "Relatórios", icon: BarChart3 },
+  { key: "comparative", label: "Comparativo", icon: Activity },
   { key: "goals", label: "Metas", icon: Target },
   { key: "family", label: "Família", icon: Users },
   { key: "settings", label: "Ajustes", icon: Settings2 },
