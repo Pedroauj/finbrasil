@@ -461,6 +461,13 @@ export default function Index() {
 
   const rightActions = (
     <>
+      <GlobalSearch
+        expenses={store.allExpenses ?? store.expenses ?? []}
+        extraIncomes={store.allExtraIncomes ?? store.extraIncomes ?? []}
+        accounts={store.financialAccounts ?? []}
+        salaries={store.allSalaries ?? []}
+        onNavigate={setNav}
+      />
       <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
 
       <Button
