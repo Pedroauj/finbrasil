@@ -375,9 +375,9 @@ export default function Landing() {
                 </span>
               </h1>
 
-              <p className="mt-6 max-w-md text-base leading-relaxed text-white/45 lg:text-lg">
-                Entenda seus gastos, planeje o futuro e tome decisões financeiras melhores com o FinBrasil.
-              </p>
+                <p className="mt-6 max-w-md text-base leading-relaxed text-white/45 lg:text-lg">
+                  Controle despesas, receitas, cartões, patrimônio e metas. Receba snapshots semanais e insights de IA — tudo em um só lugar.
+                </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
