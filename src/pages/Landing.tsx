@@ -27,6 +27,15 @@ import {
   Target,
   FileSpreadsheet,
   Bell,
+  Search,
+  Mail,
+  Users,
+  RefreshCw,
+  PiggyBank,
+  Activity,
+  Trophy,
+  Layers,
+  ArrowLeftRight,
 } from "lucide-react";
 
 /* ───────── Background ───────── */
