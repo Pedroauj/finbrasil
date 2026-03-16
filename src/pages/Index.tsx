@@ -551,7 +551,9 @@ export default function Index() {
         planLabel={isTrialActive && trialDaysLeft > 0 ? `Trial Pro: ${trialDaysLeft}d restantes` : planLabelText}
         onPlanClick={() => { setSettingsTab("plans"); setNav("settings"); }}
       >
-        {Content}
+        <React.Suspense fallback={<LazyFallback />}>
+          {Content}
+        </React.Suspense>
       </AppShell>
 
       {/* FAB apenas no mobile (evita duplicar com o botão da sidebar) */}
