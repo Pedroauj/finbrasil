@@ -360,6 +360,19 @@ export default function Index() {
           </PageShell>
         );
 
+      case "comparative":
+        return (
+          <PageShell title="Comparativo" subtitle={subtitleByNav.comparative}>
+            <ComparativeDashboard
+              allExpenses={store.allExpenses}
+              allSalaries={store.allSalaries}
+              allExtraIncomes={store.allExtraIncomes}
+              currentDate={store.currentDate}
+              monthStartDay={store.monthStartDay}
+            />
+          </PageShell>
+        );
+
       case "goals":
         return (
           <PageShell title="Metas" subtitle={subtitleByNav.goals}>
