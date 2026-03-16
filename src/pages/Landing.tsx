@@ -27,6 +27,15 @@ import {
   Target,
   FileSpreadsheet,
   Bell,
+  Search,
+  Mail,
+  Users,
+  RefreshCw,
+  PiggyBank,
+  Activity,
+  Trophy,
+  Layers,
+  ArrowLeftRight,
 } from "lucide-react";
 
 /* ───────── Background ───────── */
@@ -194,7 +203,7 @@ function TestimonialCard({
 const FAQ_ITEMS = [
   {
     q: "O FinBrasil é realmente gratuito?",
-    a: "Sim! O plano Essencial é totalmente gratuito e inclui controle de despesas, receitas e dashboard financeiro. Você pode usar sem limite de tempo."
+    a: "Sim! O plano Essencial é totalmente gratuito e inclui controle de despesas, receitas, dashboard financeiro, calendário e pesquisa global. Você pode usar sem limite de tempo."
   },
   {
     q: "Meus dados financeiros estão seguros?",
@@ -209,8 +218,20 @@ const FAQ_ITEMS = [
     a: "Sim! Você pode importar extratos em formato CSV. O sistema detecta automaticamente as colunas e categoriza as despesas usando inteligência artificial."
   },
   {
+    q: "O que é o Snapshot Semanal?",
+    a: "Todo segunda-feira você recebe um resumo automático das suas finanças por e-mail ou WhatsApp, incluindo gastos da semana, orçamento restante e contas a vencer. Basta ativar em Ajustes → Notificações."
+  },
+  {
+    q: "Como funciona o Modo Família?",
+    a: "Você cria um grupo familiar e convida membros por código. Cada membro pode visualizar ou editar as finanças compartilhadas, com permissões configuráveis."
+  },
+  {
+    q: "O que é o FinScore?",
+    a: "É uma pontuação de 0 a 1000 que mede sua saúde financeira com base em hábitos como pagar em dia, manter orçamento e alcançar metas. Quanto maior, melhor sua disciplina financeira."
+  },
+  {
     q: "Posso usar no celular?",
-    a: "Sim! O FinBrasil é totalmente responsivo e funciona perfeitamente em smartphones, tablets e desktops."
+    a: "Sim! O FinBrasil é totalmente responsivo e funciona perfeitamente em smartphones, tablets e desktops. Também pode ser instalado como PWA."
   },
   {
     q: "Posso cancelar meu plano a qualquer momento?",
@@ -354,9 +375,9 @@ export default function Landing() {
                 </span>
               </h1>
 
-              <p className="mt-6 max-w-md text-base leading-relaxed text-white/45 lg:text-lg">
-                Entenda seus gastos, planeje o futuro e tome decisões financeiras melhores com o FinBrasil.
-              </p>
+                <p className="mt-6 max-w-md text-base leading-relaxed text-white/45 lg:text-lg">
+                  Controle despesas, receitas, cartões, patrimônio e metas. Receba snapshots semanais e insights de IA — tudo em um só lugar.
+                </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}>
@@ -471,42 +492,102 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <BentoCard
               icon={BarChart3}
               title="Relatórios interativos"
-              description="Gráficos comparativos mês a mês, evolução do patrimônio e tendências por categoria."
+              description="Gráficos comparativos mês a mês, evolução do patrimônio e tendências por categoria com exportação para PDF."
               delay={0}
             />
             <BentoCard
               icon={CreditCard}
               title="Cartões e faturas"
-              description="Gerencie parcelas, faturas e limites de todos os seus cartões."
-              delay={0.08}
+              description="Gerencie parcelas, faturas e limites de todos os seus cartões em um só lugar."
+              delay={0.06}
             />
             <BentoCard
               icon={Bot}
               title="Assistente com IA"
-              description="Análise inteligente dos seus padrões de gasto com sugestões práticas."
-              delay={0.16}
+              description="Converse sobre seus gastos e receba sugestões personalizadas de economia em tempo real."
+              delay={0.1}
             />
             <BentoCard
               icon={Target}
               title="Metas financeiras"
               description="Defina objetivos visuais com barras de progresso e acompanhe seu avanço em tempo real."
-              delay={0.12}
+              delay={0.14}
+            />
+            <BentoCard
+              icon={Search}
+              title="Pesquisa Global (⌘K)"
+              description="Encontre qualquer despesa, receita ou conta instantaneamente com a command palette."
+              delay={0.18}
+            />
+            <BentoCard
+              icon={Mail}
+              title="Snapshot Semanal"
+              description="Receba um resumo financeiro automático toda segunda por e-mail ou WhatsApp."
+              delay={0.22}
+            />
+            <BentoCard
+              icon={PiggyBank}
+              title="Patrimônio Líquido"
+              description="Acompanhe a evolução do seu patrimônio com gráficos históricos de 12 meses."
+              delay={0.26}
+            />
+            <BentoCard
+              icon={Users}
+              title="Modo Família"
+              description="Compartilhe finanças com familiares via código de convite com permissões granulares."
+              delay={0.3}
+            />
+            <BentoCard
+              icon={Calendar}
+              title="Calendário Financeiro"
+              description="Visualize todas as despesas e receitas organizadas no calendário por dia."
+              delay={0.34}
+            />
+            <BentoCard
+              icon={RefreshCw}
+              title="Despesas Recorrentes"
+              description="Cadastre gastos fixos mensais que são gerados automaticamente todo mês."
+              delay={0.38}
+            />
+            <BentoCard
+              icon={Layers}
+              title="Parcelas Inteligentes"
+              description="Controle de parcelamentos com visão de todas as parcelas futuras e status individual."
+              delay={0.42}
+            />
+            <BentoCard
+              icon={Trophy}
+              title="Gamificação e FinScore"
+              description="Ganhe pontos por bons hábitos financeiros e acompanhe sua pontuação de saúde financeira."
+              delay={0.46}
             />
             <BentoCard
               icon={FileSpreadsheet}
               title="Importação de extratos"
               description="Suba seu extrato CSV do banco e cadastre dezenas de despesas automaticamente."
-              delay={0.2}
+              delay={0.5}
             />
             <BentoCard
               icon={Bell}
               title="Alertas inteligentes"
-              description="Notificações quando o orçamento estiver perto do limite ou gastos forem fora do padrão."
-              delay={0.24}
+              description="Notificações de orçamento, faturas próximas e gastos fora do padrão."
+              delay={0.54}
+            />
+            <BentoCard
+              icon={ArrowLeftRight}
+              title="Múltiplas Contas"
+              description="Gerencie contas correntes, poupança, carteira e investimentos com transferências entre elas."
+              delay={0.58}
+            />
+            <BentoCard
+              icon={Activity}
+              title="Comparativo Mensal"
+              description="Compare meses lado a lado e identifique tendências de gasto e economia."
+              delay={0.62}
             />
           </div>
         </div>
