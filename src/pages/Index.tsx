@@ -26,6 +26,7 @@ import { NetWorthDashboard } from "@/components/NetWorthDashboard";
 import { FamilyManager } from "@/components/FamilyManager";
 import { ComparativeDashboard } from "@/components/ComparativeDashboard";
 import { InstallmentManager } from "@/components/InstallmentManager";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
@@ -460,6 +461,13 @@ export default function Index() {
 
   const rightActions = (
     <>
+      <GlobalSearch
+        expenses={store.allExpenses ?? store.expenses ?? []}
+        extraIncomes={store.allExtraIncomes ?? store.extraIncomes ?? []}
+        accounts={store.financialAccounts ?? []}
+        salaries={store.allSalaries ?? []}
+        onNavigate={setNav}
+      />
       <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
 
       <Button
