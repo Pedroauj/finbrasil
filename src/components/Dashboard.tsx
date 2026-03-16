@@ -208,6 +208,7 @@ interface DashboardProps {
   onEditExpense?: (expense: Expense) => void;
   onDuplicateExpense?: (expense: Expense) => void;
   showMonthlyReport?: boolean;
+  displayName?: string | null;
 }
 
 export function Dashboard({
@@ -224,9 +225,39 @@ export function Dashboard({
   onEditExpense,
   onDuplicateExpense,
   showMonthlyReport,
+  displayName,
 }: DashboardProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  /* ─── Greeting logic ─── */
+  const greeting = useMemo(() => {
+    const LS_KEY = "finbrasil.lastVisitDate";
+    const today = format(new Date(), "yyyy-MM-dd");
+    const lastVisit = typeof window !== "undefined" ? localStorage.getItem(LS_KEY) : null;
+    const isFirstToday = lastVisit !== today;
+    if (typeof window !== "undefined") localStorage.setItem(LS_KEY, today);
+
+    const hour = new Date().getHours();
+    const period = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+    const firstName = displayName?.split(" ")[0] ?? null;
+
+    if (isFirstToday) {
+      const welcomeMsgs = [
+        `${period}${firstName ? `, ${firstName}` : ""}! 👋 Que bom ter você de volta.`,
+        `${period}${firstName ? `, ${firstName}` : ""}! Pronto(a) para cuidar das finanças hoje?`,
+        `${period}${firstName ? `, ${firstName}` : ""}! Bem-vindo(a) de volta ao seu painel financeiro.`,
+      ];
+      return welcomeMsgs[Math.floor(Math.random() * welcomeMsgs.length)];
+    } else {
+      const returnMsgs = [
+        `Olá de novo${firstName ? `, ${firstName}` : ""}! 🚀 Continue acompanhando seus números.`,
+        `De volta${firstName ? `, ${firstName}` : ""}? Ótimo hábito! Confira as novidades do dia.`,
+        `Mais uma passada${firstName ? `, ${firstName}` : ""}? Sua disciplina financeira impressiona! 💪`,
+      ];
+      return returnMsgs[Math.floor(Math.random() * returnMsgs.length)];
+    }
+  }, [displayName]);
 
   const debugMode = useMemo(() => {
     if (typeof window === "undefined") return false;
@@ -477,6 +508,23 @@ export function Dashboard({
 
   return (
     <StaggerContainer className="space-y-6">
+      {/* ── Saudação ── */}
+      <StaggerItem>
+        <div className={cn(appCard, "border-accent/30 bg-gradient-to-r from-primary/5 via-card/70 to-accent/5")}>
+          <div className="p-5 flex items-center gap-4">
+            <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15 shrink-0">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm sm:text-base font-semibold text-foreground leading-relaxed">
+                {greeting}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{monthLabelCap}</p>
+            </div>
+          </div>
+        </div>
+      </StaggerItem>
+
       {/* ── Insight do mês ── */}
       <StaggerItem>
         <div className={cn(appCard, "border-primary/20")}>
