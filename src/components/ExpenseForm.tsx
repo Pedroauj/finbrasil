@@ -22,7 +22,8 @@ interface ExpenseFormProps {
   categories: string[];
   accounts?: FinancialAccount[];
   existingExpenses?: Expense[];
-  onSubmit: (data: Omit<Expense, "id">) => void;
+  userId?: string;
+  onSubmit: (data: Omit<Expense, "id">, shareConfig?: ShareConfig) => void;
   onCancel: () => void;
   onAddCategory: (cat: string) => void;
   defaultStatus?: TransactionStatus;
