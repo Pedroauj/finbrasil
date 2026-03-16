@@ -24,6 +24,8 @@ import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { initAnalytics, trackPageView, trackNavigation, trackFeatureUsage } from "@/lib/internalAnalytics";
 import { NetWorthDashboard } from "@/components/NetWorthDashboard";
 import { FamilyManager } from "@/components/FamilyManager";
+import { ComparativeDashboard } from "@/components/ComparativeDashboard";
+import { InstallmentManager } from "@/components/InstallmentManager";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
@@ -42,10 +44,12 @@ const NAV_LABELS: Record<NavKey, string> = {
   income: "Receitas",
   cards: "Cartões",
   recurring: "Recorrentes",
+  installments: "Parcelas",
   calendar: "Calendário",
   accounts: "Contas",
   networth: "Patrimônio",
   reports: "Relatórios",
+  comparative: "Comparativo",
   goals: "Metas",
   family: "Família",
   settings: "Ajustes",
@@ -141,10 +145,12 @@ export default function Index() {
     income: "Registre salários e entradas extras",
     cards: "Controle faturas, compras e parcelas",
     recurring: "Automatize gastos recorrentes",
+    installments: "Simulador, alertas e reagrupamento de parcelas",
     calendar: "Visualize seus lançamentos no calendário",
     accounts: "Organize contas, saldos e transferências",
     networth: "Evolução patrimonial consolidada",
     reports: "Gráficos e análises detalhadas",
+    comparative: "Evolução financeira dos últimos 12 meses",
     goals: "Defina e acompanhe seus objetivos",
     family: "Compartilhe finanças com quem você ama",
     settings: "Preferências, segurança e dados",
@@ -283,6 +289,18 @@ export default function Index() {
           </PageShell>
         );
 
+      case "installments":
+        return (
+          <PageShell title="Parcelas" subtitle={subtitleByNav.installments}>
+            <InstallmentManager
+              expenses={store.expenses}
+              allExpenses={store.allExpenses}
+              currentDate={store.currentDate}
+              monthBalance={store.monthBalance}
+            />
+          </PageShell>
+        );
+
       case "calendar":
         return (
           <PageShell title="Calendário" subtitle={subtitleByNav.calendar}>
@@ -339,6 +357,19 @@ export default function Index() {
                 extraIncomes={store.extraIncomes}
               />
             </div>
+          </PageShell>
+        );
+
+      case "comparative":
+        return (
+          <PageShell title="Comparativo" subtitle={subtitleByNav.comparative}>
+            <ComparativeDashboard
+              allExpenses={store.allExpenses}
+              allSalaries={store.allSalaries}
+              allExtraIncomes={store.allExtraIncomes}
+              currentDate={store.currentDate}
+              monthStartDay={store.monthStartDay}
+            />
           </PageShell>
         );
 
