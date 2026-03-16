@@ -174,27 +174,23 @@
 
   /* "Glass card" padrão */
   .glass {
-    @apply border border-border/50 bg-card/80 backdrop-blur-xl;
+    @apply border border-border/50 bg-card/80 backdrop-blur-sm;
   }
 
-  /* Noise texture overlay */
-  .noise {
-    position: relative;
-  }
+  /* Noise texture overlay — use sparingly on hero/feature sections only */
   .noise::after {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.025;
+    opacity: 0.02;
     background-image: url('/noise.png');
     background-repeat: repeat;
-    background-size: 128px 128px;
+    background-size: 200px 200px;
     border-radius: inherit;
-    mix-blend-mode: overlay;
   }
   .dark .noise::after {
-    opacity: 0.04;
+    opacity: 0.03;
   }
 
   /* Sombra premium — adapta ao tema */
