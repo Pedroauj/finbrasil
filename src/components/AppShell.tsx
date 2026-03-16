@@ -318,7 +318,7 @@ export function AppShell({
         <aside
           className={cn(
             "hidden xl:block",
-            "bg-background/80 backdrop-blur-xl",
+            "bg-background/90 backdrop-blur-sm",
             "border-r border-border/30",
             "transition-[width] duration-300 ease-out",
             "will-change-[width]",
