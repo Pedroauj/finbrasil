@@ -12,6 +12,7 @@ import {
   Link2, Trash2, LogOut, Plus, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SharedExpenses } from "@/components/SharedExpenses";
 
 const appCard =
   "relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 backdrop-blur shadow-sm";
