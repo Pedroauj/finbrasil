@@ -172,11 +172,11 @@ export function GlobalSearch({
       {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="hidden sm:flex items-center gap-2 h-10 px-3 rounded-xl border border-border/50 bg-card/60 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+        className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-xl border border-border/40 bg-card/60 backdrop-blur-lg text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/40 hover:border-border/60 transition-all duration-200 shadow-sm"
       >
-        <Search className="h-4 w-4" />
+        <Search className="h-3.5 w-3.5" />
         <span>Buscar...</span>
-        <kbd className="ml-2 pointer-events-none hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/40 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+        <kbd className="ml-2 pointer-events-none hidden sm:inline-flex h-5 items-center gap-0.5 rounded-md border border-border/50 bg-muted/30 px-1.5 font-mono text-[10px] font-medium text-muted-foreground/70">
           ⌘K
         </kbd>
       </button>

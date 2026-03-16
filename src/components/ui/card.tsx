@@ -6,38 +6,40 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        // Base
-        "group relative overflow-hidden rounded-3xl border border-border/60 bg-card/70 text-foreground backdrop-blur",
-        "shadow-sm",
+        // Base surface
+        "group relative overflow-hidden rounded-3xl text-foreground",
+        "bg-card/80 backdrop-blur-xl",
+        
+        // Border: subtle gradient feel
+        "border border-border/40",
+        
+        // Shadow system
+        "shadow-premium",
+        
+        // Top highlight (premium edge light)
+        "after:pointer-events-none after:absolute after:left-8 after:right-8 after:top-0 after:h-px",
+        "after:bg-gradient-to-r after:from-transparent after:via-primary/20 after:to-transparent after:opacity-60",
 
-        // Top highlight (premium, constante)
-        "after:pointer-events-none after:absolute after:left-6 after:right-6 after:top-0 after:h-px",
-        "after:bg-gradient-to-r after:from-transparent after:via-primary/25 after:to-transparent after:opacity-70",
-
-        // Aura no hover (sutil)
-        "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
-        "before:bg-[radial-gradient(220px_circle_at_20%_15%,hsl(var(--primary)/0.12),transparent_60%)]",
+        // Hover aura
+        "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-500",
+        "before:bg-[radial-gradient(280px_circle_at_20%_15%,hsl(var(--primary)/0.08),transparent_60%)]",
         "hover:before:opacity-100",
 
-        // Sheen (reflexo passando — super leve)
-        "bg-[radial-gradient(1400px_circle_at_20%_0%,hsl(var(--primary)/0.06),transparent_55%)]",
-        "hover:shadow-[0_12px_32px_-22px_hsl(var(--primary)/0.45)]",
-        "transition-all duration-300 will-change-transform hover:-translate-y-[1px] hover:shadow-md",
+        // Ambient light
+        "bg-[radial-gradient(1400px_circle_at_20%_0%,hsl(var(--primary)/0.04),transparent_55%)]",
+        
+        // Hover elevation
+        "transition-all duration-500 ease-out",
+        "hover:shadow-premiumLg hover:-translate-y-[2px]",
+        "hover:border-border/60",
+        
+        // Noise texture
+        "noise",
+        
         className
       )}
       {...props}
-    >
-      {/* sheen overlay: não interfere em layout, só visual */}
-      <span
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute -left-24 top-[-40%] h-[220%] w-24 rotate-12",
-          "bg-white/10 blur-md opacity-0 transition-opacity duration-300",
-          "group-hover:opacity-100"
-        )}
-      />
-      {props.children}
-    </div>
+    />
   )
 );
 Card.displayName = "Card";

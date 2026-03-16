@@ -44,22 +44,29 @@ export type NavKey =
   | "family"
   | "settings";
 
-const navItems: Array<{ key: NavKey; label: string; icon: any }> = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "expenses", label: "Gastos", icon: TableProperties },
-  { key: "income", label: "Receitas", icon: TrendingUp },
-  { key: "cards", label: "Cartões", icon: CreditCard },
-  { key: "recurring", label: "Recorrentes", icon: RefreshCw },
-  { key: "installments", label: "Parcelas", icon: Layers },
-  { key: "calendar", label: "Calendário", icon: Calendar },
-  { key: "accounts", label: "Contas", icon: Wallet },
-  { key: "networth", label: "Patrimônio", icon: PiggyBank },
-  { key: "reports", label: "Relatórios", icon: BarChart3 },
-  { key: "comparative", label: "Comparativo", icon: Activity },
-  { key: "goals", label: "Metas", icon: Target },
-  { key: "family", label: "Família", icon: Users },
-  { key: "settings", label: "Ajustes", icon: Settings2 },
+const navItems: Array<{ key: NavKey; label: string; icon: any; group?: string }> = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, group: "principal" },
+  { key: "expenses", label: "Gastos", icon: TableProperties, group: "principal" },
+  { key: "income", label: "Receitas", icon: TrendingUp, group: "principal" },
+  { key: "cards", label: "Cartões", icon: CreditCard, group: "gestão" },
+  { key: "recurring", label: "Recorrentes", icon: RefreshCw, group: "gestão" },
+  { key: "installments", label: "Parcelas", icon: Layers, group: "gestão" },
+  { key: "calendar", label: "Calendário", icon: Calendar, group: "gestão" },
+  { key: "accounts", label: "Contas", icon: Wallet, group: "análise" },
+  { key: "networth", label: "Patrimônio", icon: PiggyBank, group: "análise" },
+  { key: "reports", label: "Relatórios", icon: BarChart3, group: "análise" },
+  { key: "comparative", label: "Comparativo", icon: Activity, group: "análise" },
+  { key: "goals", label: "Metas", icon: Target, group: "análise" },
+  { key: "family", label: "Família", icon: Users, group: "outros" },
+  { key: "settings", label: "Ajustes", icon: Settings2, group: "outros" },
 ];
+
+const GROUP_LABELS: Record<string, string> = {
+  principal: "Principal",
+  gestão: "Gestão",
+  análise: "Análise",
+  outros: "Outros",
+};
 
 const SIDEBAR_STORAGE_KEY = "finbrasil.sidebar.collapsed";
 
@@ -84,6 +91,14 @@ function SidebarNav({
 }) {
   const isCollapsed = !!collapsed;
 
+  // Group nav items
+  const groups = navItems.reduce<Record<string, typeof navItems>>((acc, item) => {
+    const g = item.group ?? "outros";
+    if (!acc[g]) acc[g] = [];
+    acc[g].push(item);
+    return acc;
+  }, {});
+
   return (
     <div className="flex h-full flex-col overflow-visible">
       {/* Brand */}
@@ -93,11 +108,11 @@ function SidebarNav({
             "relative",
             isCollapsed
               ? "flex flex-col items-center gap-2 px-2 py-3"
-              : "rounded-2xl border border-border/50 bg-card/60 shadow-sm flex items-center gap-3 px-3 py-3"
+              : "rounded-2xl border border-border/40 bg-card/50 backdrop-blur-lg shadow-sm flex items-center gap-3 px-3 py-3"
           )}
         >
           {!isCollapsed && (
-            <div className="h-9 w-9 rounded-xl shrink-0 flex items-center justify-center bg-primary/10">
+            <div className="h-9 w-9 rounded-xl shrink-0 flex items-center justify-center bg-primary/10 ring-1 ring-primary/15">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L3 7V17L12 22L21 17V7L12 2Z" className="fill-primary/20 stroke-primary" strokeWidth="1.5" strokeLinejoin="round"/>
                 <path d="M12 8V16M8 10L12 8L16 10M8 14L12 16L16 14" className="stroke-primary" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -108,8 +123,8 @@ function SidebarNav({
 
           {!isCollapsed ? (
             <div className="leading-tight">
-              <div className="text-sm font-semibold whitespace-nowrap">FinBrasil</div>
-              <div className="text-xs text-muted-foreground whitespace-nowrap">
+              <div className="text-sm font-bold whitespace-nowrap tracking-tight">FinBrasil</div>
+              <div className="text-[11px] text-muted-foreground whitespace-nowrap">
                 Gestão Financeira
               </div>
             </div>
@@ -120,116 +135,108 @@ function SidebarNav({
               type="button"
               onClick={onToggleCollapsed}
               className={cn(
-                "h-8 w-8 rounded-xl flex items-center justify-center transition-colors",
-                "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                "h-7 w-7 rounded-lg flex items-center justify-center transition-all duration-200",
+                "text-muted-foreground hover:text-foreground hover:bg-muted/60",
                 isCollapsed ? "mx-auto" : "ml-auto"
               )}
               title={isCollapsed ? "Expandir menu" : "Minimizar menu"}
             >
               {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3.5 w-3.5" />
               ) : (
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3.5 w-3.5" />
               )}
             </button>
           ) : null}
         </div>
       </div>
 
-      {/* Nav */}
-      <div className={cn("px-3", isCollapsed && "px-2")}>
-        <div className="space-y-1 overflow-visible">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = active === item.key;
-            const badgeCount = badges?.[item.key] ?? 0;
+      {/* Nav grouped */}
+      <div className={cn("px-3 flex-1 overflow-y-auto", isCollapsed && "px-2")}>
+        {Object.entries(groups).map(([groupKey, items]) => (
+          <div key={groupKey} className="mb-1">
+            {!isCollapsed && (
+              <div className="px-3 pt-4 pb-1.5">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  {GROUP_LABELS[groupKey] ?? groupKey}
+                </span>
+              </div>
+            )}
+            {isCollapsed && groupKey !== "principal" && (
+              <div className="mx-auto my-2 h-px w-6 bg-border/40" />
+            )}
+            <div className="space-y-0.5">
+              {items.map((item) => {
+                const Icon = item.icon;
+                const isActive = active === item.key;
+                const badgeCount = badges?.[item.key] ?? 0;
 
-            return (
-              <button
-                key={item.key}
-                data-onboarding={item.key}
-                onClick={() => onNavigate(item.key)}
-                title={isCollapsed ? item.label : undefined}
-                className={cn(
-                  "relative group flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm transition",
-                  "hover:bg-muted/50",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  "overflow-hidden",
-                  "before:pointer-events-none before:absolute before:inset-0 before:opacity-0 before:transition-opacity before:duration-300",
-                  isCollapsed
-                    ? "before:bg-[radial-gradient(160px_circle_at_50%_40%,hsl(var(--primary)/0.07),transparent_72%)]"
-                    : "before:bg-[radial-gradient(200px_circle_at_25%_35%,hsl(var(--primary)/0.12),transparent_65%)]",
-                  "hover:before:opacity-100",
-                  isActive
-                    ? cn(
-                        "text-foreground bg-primary/8",
-                        "ring-1 ring-primary/12",
-                        "before:opacity-100",
-                        isCollapsed
-                          ? "before:bg-[radial-gradient(200px_circle_at_50%_40%,hsl(var(--primary)/0.06),transparent_75%)]"
-                          : "before:bg-[radial-gradient(260px_circle_at_20%_30%,hsl(var(--primary)/0.10),transparent_68%)]",
-                        "after:pointer-events-none after:absolute after:left-0 after:top-2.5 after:bottom-2.5 after:w-[2px] after:rounded-full",
-                        "after:bg-primary/50"
-                      )
-                    : "text-muted-foreground",
-                  isCollapsed && "justify-center px-2"
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "h-4 w-4 transition shrink-0",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground"
-                  )}
-                />
-
-                {!isCollapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
-
-                {badgeCount > 0 && (
-                  <span
+                return (
+                  <button
+                    key={item.key}
+                    data-onboarding={item.key}
+                    onClick={() => onNavigate(item.key)}
+                    title={isCollapsed ? item.label : undefined}
                     className={cn(
-                      "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none z-10",
-                      isCollapsed
-                        ? "absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 shadow-sm"
-                        : "h-5 min-w-[20px] px-1.5"
+                      "relative group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-all duration-200",
+                      "hover:bg-muted/40",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      "overflow-hidden",
+                      isActive
+                        ? cn(
+                            "text-foreground bg-primary/[0.06]",
+                            "shadow-sm border border-primary/10",
+                            "after:pointer-events-none after:absolute after:left-0 after:top-1.5 after:bottom-1.5 after:w-[2.5px] after:rounded-full",
+                            "after:bg-primary/60"
+                          )
+                        : "text-muted-foreground border border-transparent",
+                      isCollapsed && "justify-center px-2"
                     )}
                   >
-                    {badgeCount}
-                  </span>
-                )}
+                    <Icon
+                      className={cn(
+                        "h-[18px] w-[18px] transition-colors shrink-0",
+                        isActive
+                          ? "text-primary"
+                          : "text-muted-foreground/70 group-hover:text-foreground"
+                      )}
+                    />
 
-                {!isCollapsed ? (
-                  <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(120px_circle_at_70%_30%,hsl(var(--primary)/0.08),transparent_60%)]" />
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
+                    {!isCollapsed ? <span className="flex-1 text-left">{item.label}</span> : null}
+
+                    {badgeCount > 0 && (
+                      <span
+                        className={cn(
+                          "flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none z-10",
+                          isCollapsed
+                            ? "absolute -top-1 -right-1 h-4 min-w-[16px] px-1 shadow-sm"
+                            : "h-5 min-w-[20px] px-1.5"
+                        )}
+                      >
+                        {badgeCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
 
         {onNewExpense ? (
-          <div className={cn("mt-4", isCollapsed ? "flex justify-center" : "px-1")}>
+          <div className={cn("mt-5 mb-2", isCollapsed ? "flex justify-center" : "px-0")}>
             <Button
               onClick={onNewExpense}
               className={cn(
-                "group relative h-11 rounded-2xl font-semibold shadow-sm overflow-hidden transition-all",
-                "bg-gradient-to-r from-primary to-emerald-500 text-primary-foreground",
-                "hover:brightness-[1.03] active:brightness-[0.98]",
-                isCollapsed ? "w-11 p-0" : "w-full"
+                "group relative h-10 rounded-xl font-semibold overflow-hidden transition-all duration-300",
+                "bg-primary text-primary-foreground",
+                "shadow-sm hover:shadow-md hover:shadow-primary/20",
+                isCollapsed ? "w-10 p-0" : "w-full"
               )}
               title={isCollapsed ? "Novo gasto" : undefined}
             >
-              {!isCollapsed ? (
-                <>
-                  <span className="pointer-events-none absolute inset-0 rounded-2xl bg-primary/25 blur-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  <span className="pointer-events-none absolute -left-16 top-0 h-full w-24 rotate-12 bg-white/10 blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                </>
-              ) : null}
-
               <span className="relative flex items-center justify-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-xl bg-black/10 ring-1 ring-white/15">
-                  <Plus className="h-4 w-4 text-white" />
-                </span>
+                <Plus className="h-4 w-4" />
                 {!isCollapsed ? <span>Novo gasto</span> : null}
               </span>
             </Button>
@@ -238,14 +245,14 @@ function SidebarNav({
       </div>
 
       {/* Footer */}
-      <div className={cn("mt-auto p-4", isCollapsed && "px-3")}>
+      <div className={cn("p-4", isCollapsed && "px-3")}>
         {footer ? (
           footer
         ) : (
           <div
             className={cn(
-              "rounded-2xl border border-border/50 bg-card/40 px-4 py-3 text-xs text-muted-foreground",
-              isCollapsed && "px-3 text-center"
+              "rounded-xl border border-border/30 bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground/60",
+              isCollapsed && "px-2 text-center"
             )}
             title={isCollapsed ? "Controle total do seu dinheiro" : undefined}
           >
@@ -267,35 +274,19 @@ export function AppShell({
   children,
   onNewExpense,
   badges,
-
-  /** Opcional: atalho vendável para planos (leva pra Ajustes → Planos & Cobrança) */
   planLabel,
   onPlanClick,
 }: {
   active: NavKey;
   onNavigate: (k: NavKey) => void;
   title?: string;
-
-  /**
-   * Ações do topo para DESKTOP (md+).
-   * Evita duplicação quando você tem ações específicas de mobile/desktop.
-   */
   rightActions?: ReactNode;
-
-  /**
-   * Ações do topo para MOBILE (<md).
-   * Se você tinha botões duplicados, mova o "Sair" mobile pra cá.
-   */
   mobileActions?: ReactNode;
-
   footer?: ReactNode;
   children: ReactNode;
   onNewExpense?: () => void;
   badges?: Partial<Record<NavKey, number>>;
-
-  /** Ex: "Plano: Ultra" / "Plano: Pro" */
   planLabel?: string;
-  /** Clique do atalho de planos (normalmente: onNavigate("settings")) */
   onPlanClick?: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -316,19 +307,24 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,hsl(var(--primary)/0.08),transparent_60%),radial-gradient(900px_circle_at_80%_20%,hsl(var(--ring)/0.05),transparent_55%)]" />
+      {/* Ambient background glow */}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(1000px_circle_at_15%_10%,hsl(var(--primary)/0.06),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(800px_circle_at_85%_90%,hsl(var(--primary)/0.03),transparent_55%)]" />
+      </div>
 
       <div className="flex min-h-screen w-full">
         {/* Sidebar desktop */}
         <aside
           className={cn(
-            "hidden bg-background/60 backdrop-blur xl:block",
-            "shadow-[1px_0_0_hsl(var(--border)/0.25)]",
+            "hidden xl:block",
+            "bg-background/80 backdrop-blur-xl",
+            "border-r border-border/30",
             "transition-[width] duration-300 ease-out",
             "will-change-[width]",
             "fixed top-0 left-0 h-screen shrink-0 overflow-y-auto z-30"
           )}
-          style={{ width: collapsed ? 80 : 288 }}
+          style={{ width: collapsed ? 80 : 272 }}
         >
           <SidebarNav
             active={active}
@@ -343,10 +339,11 @@ export function AppShell({
         </aside>
 
         {/* Spacer for fixed sidebar */}
-        <div className="hidden xl:block shrink-0 transition-[width] duration-300 ease-out" style={{ width: collapsed ? 80 : 288 }} />
+        <div className="hidden xl:block shrink-0 transition-[width] duration-300 ease-out" style={{ width: collapsed ? 80 : 272 }} />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 bg-background/70 backdrop-blur shadow-[0_1px_0_hsl(var(--border)/0.25)]">
+          {/* Header */}
+          <header className="sticky top-0 z-20 border-b border-border/30 bg-background/80 backdrop-blur-xl">
             <div className="flex items-center gap-3 px-4 py-2.5">
               <div className="xl:hidden">
                 <Sheet>
@@ -372,46 +369,36 @@ export function AppShell({
 
               {/* Title */}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{title}</div>
+                <div className="text-sm font-bold truncate tracking-tight">{title}</div>
               </div>
 
-              {/* Plan shortcut (optional) */}
+              {/* Plan shortcut */}
               {planLabel ? (
                 <Button
                   type="button"
                   variant="outline"
-                  className="hidden sm:flex h-10 rounded-xl gap-2"
+                  className="hidden sm:flex h-9 rounded-xl gap-2 text-xs"
                   onClick={onPlanClick ?? (() => onNavigate("settings"))}
                   title="Gerenciar planos"
                 >
-                  <Crown className="h-4 w-4" />
-                  <span className="text-sm">{planLabel}</span>
+                  <Crown className="h-3.5 w-3.5 text-primary" />
+                  <span>{planLabel}</span>
                 </Button>
               ) : null}
 
-              {/* Actions: split mobile vs desktop to prevent duplication */}
-              <div className="flex items-center gap-2">
-                {/* Mobile actions only (<md) */}
+              {/* Actions */}
+              <div className="flex items-center gap-1.5">
                 {mobileActions ? (
-                  <div className="flex items-center gap-2 md:hidden">{mobileActions}</div>
+                  <div className="flex items-center gap-1.5 md:hidden">{mobileActions}</div>
                 ) : null}
-
-                {/* Desktop actions only (md+) */}
                 {rightActions ? (
-                  <div className="hidden md:flex items-center gap-2">{rightActions}</div>
+                  <div className="hidden md:flex items-center gap-1.5">{rightActions}</div>
                 ) : null}
               </div>
             </div>
           </header>
 
           <main className="relative flex-1 min-w-0 px-3 sm:px-5 py-4 sm:py-5">
-            <div
-              className="pointer-events-none absolute inset-0 -z-10 rounded-[32px]"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 30% 10%, hsl(var(--primary) / 0.08), transparent 55%)",
-              }}
-            />
             <div className="w-full min-w-0">{children}</div>
           </main>
         </div>
@@ -420,5 +407,4 @@ export function AppShell({
   );
 }
 
-// Ajuda caso alguma parte do projeto importe como default
 export default AppShell;

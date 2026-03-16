@@ -13,29 +13,29 @@ export function MonthNavigator({ currentDate, onNavigate }: MonthNavigatorProps)
 
   return (
     <div className="hidden sm:flex items-center">
-      <div className="flex items-center gap-1 rounded-2xl border border-border/60 bg-card/50 px-1.5 py-1 shadow-sm">
+      <div className="flex items-center gap-0.5 rounded-xl border border-border/40 bg-card/60 backdrop-blur-lg px-1 py-0.5 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-xl hover:bg-muted/50"
+          className="h-8 w-8 rounded-lg hover:bg-muted/50"
           onClick={() => onNavigate(-1)}
           aria-label="Mês anterior"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
 
-        <span className="min-w-[160px] px-2 text-center text-sm font-semibold capitalize text-foreground">
+        <span className="min-w-[150px] px-2 text-center text-[13px] font-semibold capitalize text-foreground tracking-tight">
           {monthLabel}
         </span>
 
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-xl hover:bg-muted/50"
+          className="h-8 w-8 rounded-lg hover:bg-muted/50"
           onClick={() => onNavigate(1)}
           aria-label="Próximo mês"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>
