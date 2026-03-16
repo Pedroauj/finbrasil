@@ -136,8 +136,14 @@ export default function Index() {
 
   const onNewExpense = React.useCallback(() => {
     trackFeatureUsage("add_expense");
-    window.dispatchEvent(new Event("open-add-expense"));
-  }, []);
+    if (nav !== "expenses") {
+      setNavRaw("expenses");
+      // Wait for the expenses tab to mount before dispatching
+      setTimeout(() => window.dispatchEvent(new Event("open-add-expense")), 150);
+    } else {
+      window.dispatchEvent(new Event("open-add-expense"));
+    }
+  }, [nav]);
 
   const subtitleByNav: Record<NavKey, string> = {
     dashboard: "Visão geral do mês e indicadores",
