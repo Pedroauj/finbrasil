@@ -1513,6 +1513,11 @@ export function useExpenseStore() {
     salary,
     extraIncomes,
 
+    // Dados históricos (todos os meses)
+    allExpenses,
+    allSalaries,
+    allExtraIncomes,
+
     // CRUD
     addExpense,
     updateExpense,
