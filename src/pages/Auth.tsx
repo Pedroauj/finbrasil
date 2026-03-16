@@ -84,7 +84,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <BackgroundFX />
 
       <div className="relative z-10 flex min-h-screen flex-col">
@@ -92,16 +92,16 @@ const Auth = () => {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </button>
           <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-400/20">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 ring-1 ring-primary/20">
               <span className="text-base">🪙</span>
             </div>
-            <span className="font-bold tracking-tight">FinBrasil</span>
+            <span className="font-bold tracking-tight text-foreground">FinBrasil</span>
           </div>
         </div>
 
@@ -115,12 +115,12 @@ const Auth = () => {
               transition={{ duration: 0.6 }}
               className="hidden lg:block"
             >
-              <h1 className="text-4xl font-bold leading-tight tracking-tight">
+              <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground">
                 {isLogin ? (
                   <>
                     Bom te ver
                     <br />
-                    <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-primary to-ring bg-clip-text text-transparent">
                       de volta.
                     </span>
                   </>
@@ -128,13 +128,13 @@ const Auth = () => {
                   <>
                     Comece sua jornada
                     <br />
-                    <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-primary to-ring bg-clip-text text-transparent">
                       financeira hoje.
                     </span>
                   </>
                 )}
               </h1>
-              <p className="mt-4 max-w-sm text-white/50">
+              <p className="mt-4 max-w-sm text-muted-foreground">
                 {isLogin
                   ? "Acesse sua conta e continue organizando suas finanças com inteligência."
                   : "Crie sua conta em segundos e tenha controle total do seu dinheiro — sem custos."}
@@ -154,13 +154,13 @@ const Auth = () => {
               transition={{ duration: 0.6, delay: 0.05 }}
               className="mx-auto w-full max-w-md"
             >
-              <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 shadow-2xl shadow-emerald-500/5 backdrop-blur-xl">
+              <div className="relative rounded-2xl border border-border bg-card/80 p-7 shadow-premiumLg backdrop-blur-xl">
                 {/* Glow */}
-                <div className="pointer-events-none absolute -inset-1 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-transparent to-cyan-500/5 blur-xl" />
+                <div className="pointer-events-none absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary/10 via-transparent to-ring/5 blur-xl" />
 
                 <div className="relative">
                   {/* Tab switcher */}
-                  <div className="mb-6 flex rounded-xl bg-white/5 p-1">
+                  <div className="mb-6 flex rounded-xl bg-muted p-1">
                     <TabButton active={!isLogin} onClick={() => setIsLogin(false)}>
                       Criar conta
                     </TabButton>
@@ -187,9 +187,9 @@ const Auth = () => {
 
                   {/* Divider */}
                   <div className="my-5 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-white/10" />
-                    <span className="text-xs text-white/30">ou com e-mail</span>
-                    <div className="h-px flex-1 bg-white/10" />
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-xs text-muted-foreground">ou com e-mail</span>
+                    <div className="h-px flex-1 bg-border" />
                   </div>
 
                   {/* Form */}
@@ -212,7 +212,7 @@ const Auth = () => {
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
                             maxLength={100}
-                            className="h-11 rounded-xl border-white/10 bg-slate-950/40 text-white placeholder:text-white/30 focus-visible:ring-emerald-500/20"
+                            className="h-11 rounded-xl border-border bg-background/60 text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring/30"
                           />
                         </Field>
                       )}
@@ -226,7 +226,7 @@ const Auth = () => {
                           onChange={(e) => setEmail(e.target.value)}
                           required
                           maxLength={255}
-                          className="h-11 rounded-xl border-white/10 bg-slate-950/40 text-white placeholder:text-white/30 focus-visible:ring-emerald-500/20"
+                          className="h-11 rounded-xl border-border bg-background/60 text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring/30"
                         />
                       </Field>
 
@@ -240,7 +240,7 @@ const Auth = () => {
                           required
                           minLength={6}
                           maxLength={128}
-                          className="h-11 rounded-xl border-white/10 bg-slate-950/40 text-white placeholder:text-white/30 focus-visible:ring-emerald-500/20"
+                          className="h-11 rounded-xl border-border bg-background/60 text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring/30"
                         />
                       </Field>
 
@@ -248,7 +248,7 @@ const Auth = () => {
                         <button
                           type="button"
                           onClick={() => setIsForgotPassword(true)}
-                          className="text-xs text-emerald-400/70 hover:text-emerald-400 transition-colors"
+                          className="text-xs text-primary/70 hover:text-primary transition-colors"
                         >
                           Esqueci minha senha
                         </button>
@@ -257,7 +257,7 @@ const Auth = () => {
                       <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
                         <Button
                           type="submit"
-                          className="h-12 w-full rounded-xl bg-emerald-500 text-base font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all duration-300"
+                          className="h-12 w-full rounded-xl text-base font-bold shadow-lg shadow-primary/20 transition-all duration-300"
                           disabled={loading}
                         >
                           {loading ? (
@@ -279,10 +279,10 @@ const Auth = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-20 flex flex-col rounded-2xl bg-slate-950/95 backdrop-blur-sm p-7"
+                        className="absolute inset-0 z-20 flex flex-col rounded-2xl bg-card/95 backdrop-blur-sm p-7"
                       >
-                        <h3 className="text-lg font-bold mb-2">Recuperar senha</h3>
-                        <p className="text-sm text-white/50 mb-5">
+                        <h3 className="text-lg font-bold mb-2 text-foreground">Recuperar senha</h3>
+                        <p className="text-sm text-muted-foreground mb-5">
                           Digite seu e-mail e enviaremos um link para redefinir sua senha.
                         </p>
                         <form onSubmit={handleForgotPassword} className="space-y-4 flex-1">
@@ -294,12 +294,12 @@ const Auth = () => {
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
                               required
-                              className="h-11 rounded-xl border-white/10 bg-slate-950/40 text-white placeholder:text-white/30 focus-visible:ring-emerald-500/20"
+                              className="h-11 rounded-xl border-border bg-background/60 text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-ring/30"
                             />
                           </Field>
                           <Button
                             type="submit"
-                            className="h-12 w-full rounded-xl bg-emerald-500 text-base font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all duration-300"
+                            className="h-12 w-full rounded-xl text-base font-bold shadow-lg shadow-primary/20 transition-all duration-300"
                             disabled={loading}
                           >
                             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar link"}
@@ -307,7 +307,7 @@ const Auth = () => {
                           <button
                             type="button"
                             onClick={() => setIsForgotPassword(false)}
-                            className="w-full text-center text-sm text-white/50 hover:text-white/70 transition-colors"
+                            className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
                           >
                             Voltar ao login
                           </button>
@@ -316,7 +316,7 @@ const Auth = () => {
                     )}
                   </AnimatePresence>
 
-                  <div className="mt-5 text-center text-xs text-white/35">
+                  <div className="mt-5 text-center text-xs text-muted-foreground">
                     🔒 Seus dados são criptografados e protegidos.
                   </div>
                 </div>
@@ -324,8 +324,8 @@ const Auth = () => {
 
               {/* Mobile value prop */}
               <div className="mt-6 space-y-2 lg:hidden">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60 backdrop-blur">
-                  <div className="font-semibold text-white/80">Por que usar o FinBrasil?</div>
+                <div className="rounded-2xl border border-border bg-card/80 p-4 text-sm text-muted-foreground backdrop-blur shadow-soft">
+                  <div className="font-semibold text-foreground/80">Por que usar o FinBrasil?</div>
                   <ul className="mt-2 space-y-1">
                     <li>• Controle total de gastos e cartões</li>
                     <li>• Assistente financeiro inteligente</li>
@@ -358,8 +358,8 @@ function TabButton({
       onClick={onClick}
       className={`relative flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
         active
-          ? "bg-emerald-500/15 text-emerald-300 shadow-sm"
-          : "text-white/50 hover:text-white/70"
+          ? "bg-primary/15 text-primary shadow-sm"
+          : "text-muted-foreground hover:text-foreground"
       }`}
     >
       {children}
@@ -383,7 +383,7 @@ function OAuthButton({
       <Button
         type="button"
         variant="outline"
-        className="h-11 w-full rounded-xl border-white/10 bg-white/[0.06] font-semibold text-white/80 hover:bg-white/10 hover:text-white backdrop-blur transition-all"
+        className="h-11 w-full rounded-xl border-border bg-muted/50 font-semibold text-foreground/80 hover:bg-accent hover:text-foreground backdrop-blur transition-all"
         disabled={disabled}
         onClick={onClick}
       >
@@ -414,7 +414,7 @@ function OAuthButton({
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-white/60 text-xs font-medium">
+      <Label htmlFor={id} className="text-muted-foreground text-xs font-medium">
         {label}
       </Label>
       {children}
@@ -424,9 +424,9 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 
 function TrustItem({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-3 text-sm text-white/50">
-      <div className="grid h-6 w-6 place-items-center rounded-lg bg-emerald-500/10">
-        <span className="text-emerald-400 text-xs">✓</span>
+    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+      <div className="grid h-6 w-6 place-items-center rounded-lg bg-primary/10">
+        <span className="text-primary text-xs">✓</span>
       </div>
       {text}
     </div>
@@ -436,15 +436,16 @@ function TrustItem({ text }: { text: string }) {
 function BackgroundFX() {
   return (
     <>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.12),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(34,211,238,0.08),transparent_45%),linear-gradient(135deg,#0b1220_0%,#060a14_45%,#04140f_100%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(to_right,rgba(255,255,255,0.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.25)_1px,transparent_1px)] [background-size:64px_64px]" />
+      <div className="pointer-events-none absolute inset-0 bg-background" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.10),transparent_40%),radial-gradient(circle_at_80%_30%,hsl(var(--ring)/0.06),transparent_45%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.05] [background-image:linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] [background-size:64px_64px]" />
       <motion.div
-        className="pointer-events-none absolute left-[-120px] top-[20%] h-[380px] w-[380px] rounded-full bg-emerald-500/10 blur-3xl"
+        className="pointer-events-none absolute left-[-120px] top-[20%] h-[380px] w-[380px] rounded-full bg-primary/[0.07] blur-3xl"
         animate={{ y: [0, -20, 0], x: [0, 12, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="pointer-events-none absolute right-[-140px] top-[10%] h-[420px] w-[420px] rounded-full bg-cyan-500/8 blur-3xl"
+        className="pointer-events-none absolute right-[-140px] top-[10%] h-[420px] w-[420px] rounded-full bg-ring/[0.05] blur-3xl"
         animate={{ y: [0, 24, 0], x: [0, -10, 0] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
