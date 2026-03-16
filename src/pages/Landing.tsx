@@ -480,42 +480,102 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <BentoCard
               icon={BarChart3}
               title="Relatórios interativos"
-              description="Gráficos comparativos mês a mês, evolução do patrimônio e tendências por categoria."
+              description="Gráficos comparativos mês a mês, evolução do patrimônio e tendências por categoria com exportação para PDF."
               delay={0}
             />
             <BentoCard
               icon={CreditCard}
               title="Cartões e faturas"
-              description="Gerencie parcelas, faturas e limites de todos os seus cartões."
-              delay={0.08}
+              description="Gerencie parcelas, faturas e limites de todos os seus cartões em um só lugar."
+              delay={0.06}
             />
             <BentoCard
               icon={Bot}
               title="Assistente com IA"
-              description="Análise inteligente dos seus padrões de gasto com sugestões práticas."
-              delay={0.16}
+              description="Converse sobre seus gastos e receba sugestões personalizadas de economia em tempo real."
+              delay={0.1}
             />
             <BentoCard
               icon={Target}
               title="Metas financeiras"
               description="Defina objetivos visuais com barras de progresso e acompanhe seu avanço em tempo real."
-              delay={0.12}
+              delay={0.14}
+            />
+            <BentoCard
+              icon={Search}
+              title="Pesquisa Global (⌘K)"
+              description="Encontre qualquer despesa, receita ou conta instantaneamente com a command palette."
+              delay={0.18}
+            />
+            <BentoCard
+              icon={Mail}
+              title="Snapshot Semanal"
+              description="Receba um resumo financeiro automático toda segunda por e-mail ou WhatsApp."
+              delay={0.22}
+            />
+            <BentoCard
+              icon={PiggyBank}
+              title="Patrimônio Líquido"
+              description="Acompanhe a evolução do seu patrimônio com gráficos históricos de 12 meses."
+              delay={0.26}
+            />
+            <BentoCard
+              icon={Users}
+              title="Modo Família"
+              description="Compartilhe finanças com familiares via código de convite com permissões granulares."
+              delay={0.3}
+            />
+            <BentoCard
+              icon={Calendar}
+              title="Calendário Financeiro"
+              description="Visualize todas as despesas e receitas organizadas no calendário por dia."
+              delay={0.34}
+            />
+            <BentoCard
+              icon={RefreshCw}
+              title="Despesas Recorrentes"
+              description="Cadastre gastos fixos mensais que são gerados automaticamente todo mês."
+              delay={0.38}
+            />
+            <BentoCard
+              icon={Layers}
+              title="Parcelas Inteligentes"
+              description="Controle de parcelamentos com visão de todas as parcelas futuras e status individual."
+              delay={0.42}
+            />
+            <BentoCard
+              icon={Trophy}
+              title="Gamificação e FinScore"
+              description="Ganhe pontos por bons hábitos financeiros e acompanhe sua pontuação de saúde financeira."
+              delay={0.46}
             />
             <BentoCard
               icon={FileSpreadsheet}
               title="Importação de extratos"
               description="Suba seu extrato CSV do banco e cadastre dezenas de despesas automaticamente."
-              delay={0.2}
+              delay={0.5}
             />
             <BentoCard
               icon={Bell}
               title="Alertas inteligentes"
-              description="Notificações quando o orçamento estiver perto do limite ou gastos forem fora do padrão."
-              delay={0.24}
+              description="Notificações de orçamento, faturas próximas e gastos fora do padrão."
+              delay={0.54}
+            />
+            <BentoCard
+              icon={ArrowLeftRight}
+              title="Múltiplas Contas"
+              description="Gerencie contas correntes, poupança, carteira e investimentos com transferências entre elas."
+              delay={0.58}
+            />
+            <BentoCard
+              icon={Activity}
+              title="Comparativo Mensal"
+              description="Compare meses lado a lado e identifique tendências de gasto e economia."
+              delay={0.62}
             />
           </div>
         </div>
