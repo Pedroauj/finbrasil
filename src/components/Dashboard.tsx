@@ -208,6 +208,7 @@ interface DashboardProps {
   onEditExpense?: (expense: Expense) => void;
   onDuplicateExpense?: (expense: Expense) => void;
   showMonthlyReport?: boolean;
+  displayName?: string | null;
 }
 
 export function Dashboard({
