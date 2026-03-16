@@ -26,6 +26,7 @@ import { NetWorthDashboard } from "@/components/NetWorthDashboard";
 import { FamilyManager } from "@/components/FamilyManager";
 import { ComparativeDashboard } from "@/components/ComparativeDashboard";
 import { InstallmentManager } from "@/components/InstallmentManager";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "@/components/AssistantPanel";
