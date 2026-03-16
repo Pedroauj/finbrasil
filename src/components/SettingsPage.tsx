@@ -210,7 +210,22 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
     setProfileEmail(auth?.user?.email ?? auth?.session?.user?.email ?? safeGet(LS.profileEmail) ?? "");
     setPrivacyMode((safeGet(LS.privacyMode) ?? "0") === "1");
     setMonthStartDayDraft(clampInt(Number(store?.monthStartDay ?? 1), 1, 28));
-  }, [auth?.user?.email, auth?.session?.user?.email, store?.monthStartDay]);
+
+    // Load weekly snapshot preferences from DB
+    if (auth?.user?.id) {
+      supabase
+        .from("profiles")
+        .select("weekly_snapshot_email, weekly_snapshot_whatsapp")
+        .eq("user_id", auth.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setWeeklySnapshotEmail((data as any).weekly_snapshot_email ?? false);
+            setWeeklySnapshotWhatsapp((data as any).weekly_snapshot_whatsapp ?? false);
+          }
+        });
+    }
+  }, [auth?.user?.email, auth?.session?.user?.email, store?.monthStartDay, auth?.user?.id]);
 
   const saveProfile = useCallback(async () => {
     safeSet(LS.profileName, profileName.trim());
