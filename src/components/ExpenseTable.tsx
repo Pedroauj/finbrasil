@@ -105,6 +105,8 @@ export function ExpenseTable({
   onDelete,
   onAddCategory,
 }: ExpenseTableProps) {
+  const auth = useAuth() as any;
+  const userId = auth?.user?.id;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
