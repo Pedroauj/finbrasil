@@ -202,6 +202,7 @@ export default function Index() {
               onEditExpense={handleEditFromAlert}
               onDuplicateExpense={handleDuplicateExpense}
               showMonthlyReport={userPlan !== "free"}
+              displayName={profile?.display_name}
             />
           </PageShell>
         );

@@ -508,6 +508,23 @@ export function Dashboard({
 
   return (
     <StaggerContainer className="space-y-6">
+      {/* ── Saudação ── */}
+      <StaggerItem>
+        <div className={cn(appCard, "border-accent/30 bg-gradient-to-r from-primary/5 via-card/70 to-accent/5")}>
+          <div className="p-5 flex items-center gap-4">
+            <div className="rounded-2xl bg-primary/10 p-3 ring-1 ring-primary/15 shrink-0">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm sm:text-base font-semibold text-foreground leading-relaxed">
+                {greeting}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{monthLabelCap}</p>
+            </div>
+          </div>
+        </div>
+      </StaggerItem>
+
       {/* ── Insight do mês ── */}
       <StaggerItem>
         <div className={cn(appCard, "border-primary/20")}>
