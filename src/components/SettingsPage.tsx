@@ -418,6 +418,41 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
               </QuickSetting>
             </SettingsSection>
 
+            <SettingsSection title="Snapshot Semanal" icon={Mail} defaultOpen>
+              <p className="text-xs text-muted-foreground mb-3">
+                Receba toda segunda-feira um resumo da sua semana: gastos, orçamento restante e alertas.
+              </p>
+              <QuickSetting icon={Mail} label="Receber por e-mail" description="Enviado para seu e-mail de cadastro">
+                <Switch
+                  checked={weeklySnapshotEmail}
+                  onCheckedChange={async (checked) => {
+                    setWeeklySnapshotEmail(checked);
+                    if (auth?.user?.id) {
+                      setLoadingSnapshot(true);
+                      await supabase.from("profiles").update({ weekly_snapshot_email: checked } as any).eq("user_id", auth.user.id);
+                      setLoadingSnapshot(false);
+                      toast.success(checked ? "Snapshot por e-mail ativado!" : "Snapshot por e-mail desativado.");
+                    }
+                  }}
+                />
+              </QuickSetting>
+              <Divider />
+              <QuickSetting icon={Smartphone} label="Receber por WhatsApp" description="Enviado para seu número verificado">
+                <Switch
+                  checked={weeklySnapshotWhatsapp}
+                  onCheckedChange={async (checked) => {
+                    setWeeklySnapshotWhatsapp(checked);
+                    if (auth?.user?.id) {
+                      setLoadingSnapshot(true);
+                      await supabase.from("profiles").update({ weekly_snapshot_whatsapp: checked } as any).eq("user_id", auth.user.id);
+                      setLoadingSnapshot(false);
+                      toast.success(checked ? "Snapshot por WhatsApp ativado!" : "Snapshot por WhatsApp desativado.");
+                    }
+                  }}
+                />
+              </QuickSetting>
+            </SettingsSection>
+
             <SettingsSection title="WhatsApp" icon={Smartphone} defaultOpen={false}>
               {auth?.user?.id ? (
                 <WhatsAppSettings userId={auth.user.id} />
