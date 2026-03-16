@@ -443,6 +443,21 @@ export function FamilyManager({ userId }: FamilyManagerProps) {
                   );
                 })}
               </div>
+
+              {/* Shared Expenses Panel */}
+              {groupMembers.length >= 2 && (
+                <div className="p-4 pt-0">
+                  <SharedExpenses
+                    userId={userId}
+                    groupId={group.id}
+                    groupName={group.name}
+                    members={groupMembers.map(m => ({
+                      user_id: m.user_id,
+                      display_name: m.display_name,
+                    }))}
+                  />
+                </div>
+              )}
             </motion.div>
           );
         })
