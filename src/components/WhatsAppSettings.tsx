@@ -52,14 +52,20 @@ export function WhatsAppSettings({ userId }: { userId: string }) {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       const fullPhone = "+55" + clean;
 
+      // Delete existing record first to avoid unique constraint conflicts
+      await supabase
+        .from("whatsapp_users")
+        .delete()
+        .eq("user_id", userId);
+
       const { error } = await supabase
         .from("whatsapp_users")
-        .upsert({
+        .insert({
           user_id: userId,
           phone_number: fullPhone,
           verification_code: code,
           verified: false,
-        }, { onConflict: "user_id" });
+        });
 
       if (error) throw error;
 
