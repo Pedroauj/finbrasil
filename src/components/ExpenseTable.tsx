@@ -522,9 +522,45 @@ export function ExpenseTable({
             accounts={accounts}
             existingExpenses={expenses}
             defaultStatus={defaultStatus}
-            onSubmit={(data) => {
-              if (editingExpense) onUpdate(editingExpense.id, data);
-              else onAdd(data);
+            userId={userId}
+            onSubmit={async (data, shareConfig) => {
+              let expenseId: string | undefined;
+              if (editingExpense) {
+                onUpdate(editingExpense.id, data);
+                expenseId = editingExpense.id;
+              } else {
+                onAdd(data);
+              }
+
+              // Save share config if enabled
+              if (shareConfig?.enabled && shareConfig.splits.length > 0 && userId) {
+                // For new expenses, we need to find the just-created expense
+                // We'll use a small delay to let the DB sync
+                if (!editingExpense) {
+                  setTimeout(async () => {
+                    const { data: latest } = await supabase
+                      .from("expenses")
+                      .select("id")
+                      .eq("user_id", userId)
+                      .eq("description", data.description)
+                      .eq("amount", data.amount)
+                      .eq("date", data.date)
+                      .order("created_at", { ascending: false })
+                      .limit(1)
+                      .single();
+
+                    if (latest) {
+                      await supabase.from("shared_expenses").insert({
+                        expense_id: latest.id,
+                        group_id: shareConfig.groupId,
+                        created_by: userId,
+                        split_type: shareConfig.splitType,
+                        splits: shareConfig.splits,
+                      } as any);
+                    }
+                  }, 500);
+                }
+              }
               closeDialog();
             }}
             onCancel={closeDialog}
