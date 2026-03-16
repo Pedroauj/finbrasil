@@ -50,6 +50,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { ExpenseForm } from "./ExpenseForm";
+import type { ShareConfig } from "./ExpenseShareToggle";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
 
 const appCard =
