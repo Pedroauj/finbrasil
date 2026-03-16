@@ -196,6 +196,9 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
   const [profileEmail, setProfileEmail] = useState("");
   const [monthStartDayDraft, setMonthStartDayDraft] = useState(1);
   const [privacyMode, setPrivacyMode] = useState(false);
+  const [weeklySnapshotEmail, setWeeklySnapshotEmail] = useState(false);
+  const [weeklySnapshotWhatsapp, setWeeklySnapshotWhatsapp] = useState(false);
+  const [loadingSnapshot, setLoadingSnapshot] = useState(false);
 
   // Password change
   const [newPassword, setNewPassword] = useState("");
