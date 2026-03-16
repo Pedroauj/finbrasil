@@ -372,6 +372,16 @@ export function ExpenseForm({
           </p>
         </div>
       )}
+
+      {/* ── Shared expense toggle ── */}
+      {!isEditing && userId && (
+        <ExpenseShareToggle
+          userId={userId}
+          amount={parsedAmount}
+          currentDate={currentDate}
+          onShareChange={setShareConfig}
+        />
+      )}
       {/* Duplicate warning */}
       {duplicateWarning && duplicateConfirmed && (
         <div className="rounded-2xl border border-[hsl(var(--warning))]/25 bg-[hsl(var(--warning))]/8 p-3">
