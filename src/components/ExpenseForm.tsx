@@ -70,6 +70,14 @@ export function ExpenseForm({
     expense?.installmentCount?.toString() || "2"
   );
 
+  // Share config
+  const [shareConfig, setShareConfig] = useState<ShareConfig>({
+    enabled: false,
+    groupId: "",
+    splitType: "proportional",
+    splits: [],
+  });
+
   // Disable installment toggle when editing
   const isEditing = !!expense;
 
