@@ -203,7 +203,7 @@ function TestimonialCard({
 const FAQ_ITEMS = [
   {
     q: "O FinBrasil é realmente gratuito?",
-    a: "Sim! O plano Essencial é totalmente gratuito e inclui controle de despesas, receitas e dashboard financeiro. Você pode usar sem limite de tempo."
+    a: "Sim! O plano Essencial é totalmente gratuito e inclui controle de despesas, receitas, dashboard financeiro, calendário e pesquisa global. Você pode usar sem limite de tempo."
   },
   {
     q: "Meus dados financeiros estão seguros?",
@@ -218,8 +218,20 @@ const FAQ_ITEMS = [
     a: "Sim! Você pode importar extratos em formato CSV. O sistema detecta automaticamente as colunas e categoriza as despesas usando inteligência artificial."
   },
   {
+    q: "O que é o Snapshot Semanal?",
+    a: "Todo segunda-feira você recebe um resumo automático das suas finanças por e-mail ou WhatsApp, incluindo gastos da semana, orçamento restante e contas a vencer. Basta ativar em Ajustes → Notificações."
+  },
+  {
+    q: "Como funciona o Modo Família?",
+    a: "Você cria um grupo familiar e convida membros por código. Cada membro pode visualizar ou editar as finanças compartilhadas, com permissões configuráveis."
+  },
+  {
+    q: "O que é o FinScore?",
+    a: "É uma pontuação de 0 a 1000 que mede sua saúde financeira com base em hábitos como pagar em dia, manter orçamento e alcançar metas. Quanto maior, melhor sua disciplina financeira."
+  },
+  {
     q: "Posso usar no celular?",
-    a: "Sim! O FinBrasil é totalmente responsivo e funciona perfeitamente em smartphones, tablets e desktops."
+    a: "Sim! O FinBrasil é totalmente responsivo e funciona perfeitamente em smartphones, tablets e desktops. Também pode ser instalado como PWA."
   },
   {
     q: "Posso cancelar meu plano a qualquer momento?",
