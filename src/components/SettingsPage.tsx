@@ -196,6 +196,9 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
   const [profileEmail, setProfileEmail] = useState("");
   const [monthStartDayDraft, setMonthStartDayDraft] = useState(1);
   const [privacyMode, setPrivacyMode] = useState(false);
+  const [weeklySnapshotEmail, setWeeklySnapshotEmail] = useState(false);
+  const [weeklySnapshotWhatsapp, setWeeklySnapshotWhatsapp] = useState(false);
+  const [loadingSnapshot, setLoadingSnapshot] = useState(false);
 
   // Password change
   const [newPassword, setNewPassword] = useState("");
@@ -207,7 +210,22 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
     setProfileEmail(auth?.user?.email ?? auth?.session?.user?.email ?? safeGet(LS.profileEmail) ?? "");
     setPrivacyMode((safeGet(LS.privacyMode) ?? "0") === "1");
     setMonthStartDayDraft(clampInt(Number(store?.monthStartDay ?? 1), 1, 28));
-  }, [auth?.user?.email, auth?.session?.user?.email, store?.monthStartDay]);
+
+    // Load weekly snapshot preferences from DB
+    if (auth?.user?.id) {
+      supabase
+        .from("profiles")
+        .select("weekly_snapshot_email, weekly_snapshot_whatsapp")
+        .eq("user_id", auth.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setWeeklySnapshotEmail((data as any).weekly_snapshot_email ?? false);
+            setWeeklySnapshotWhatsapp((data as any).weekly_snapshot_whatsapp ?? false);
+          }
+        });
+    }
+  }, [auth?.user?.email, auth?.session?.user?.email, store?.monthStartDay, auth?.user?.id]);
 
   const saveProfile = useCallback(async () => {
     safeSet(LS.profileName, profileName.trim());
@@ -397,6 +415,41 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
                     ))}
                   </SelectContent>
                 </Select>
+              </QuickSetting>
+            </SettingsSection>
+
+            <SettingsSection title="Snapshot Semanal" icon={Mail} defaultOpen>
+              <p className="text-xs text-muted-foreground mb-3">
+                Receba toda segunda-feira um resumo da sua semana: gastos, orçamento restante e alertas.
+              </p>
+              <QuickSetting icon={Mail} label="Receber por e-mail" description="Enviado para seu e-mail de cadastro">
+                <Switch
+                  checked={weeklySnapshotEmail}
+                  onCheckedChange={async (checked) => {
+                    setWeeklySnapshotEmail(checked);
+                    if (auth?.user?.id) {
+                      setLoadingSnapshot(true);
+                      await supabase.from("profiles").update({ weekly_snapshot_email: checked } as any).eq("user_id", auth.user.id);
+                      setLoadingSnapshot(false);
+                      toast.success(checked ? "Snapshot por e-mail ativado!" : "Snapshot por e-mail desativado.");
+                    }
+                  }}
+                />
+              </QuickSetting>
+              <Divider />
+              <QuickSetting icon={Smartphone} label="Receber por WhatsApp" description="Enviado para seu número verificado">
+                <Switch
+                  checked={weeklySnapshotWhatsapp}
+                  onCheckedChange={async (checked) => {
+                    setWeeklySnapshotWhatsapp(checked);
+                    if (auth?.user?.id) {
+                      setLoadingSnapshot(true);
+                      await supabase.from("profiles").update({ weekly_snapshot_whatsapp: checked } as any).eq("user_id", auth.user.id);
+                      setLoadingSnapshot(false);
+                      toast.success(checked ? "Snapshot por WhatsApp ativado!" : "Snapshot por WhatsApp desativado.");
+                    }
+                  }}
+                />
               </QuickSetting>
             </SettingsSection>
 
