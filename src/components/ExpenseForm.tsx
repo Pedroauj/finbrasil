@@ -124,16 +124,19 @@ export function ExpenseForm({
       return;
     }
 
-    onSubmit({
-      date,
-      description: desc,
-      category,
-      amount: parseFloat(amount),
-      status,
-      accountId: accountId === "none" ? undefined : accountId,
-      isInstallment: isInstallment && parsedCount > 1,
-      installmentCount: isInstallment && parsedCount > 1 ? parsedCount : undefined,
-    });
+    onSubmit(
+      {
+        date,
+        description: desc,
+        category,
+        amount: parseFloat(amount),
+        status,
+        accountId: accountId === "none" ? undefined : accountId,
+        isInstallment: isInstallment && parsedCount > 1,
+        installmentCount: isInstallment && parsedCount > 1 ? parsedCount : undefined,
+      },
+      shareConfig.enabled ? shareConfig : undefined
+    );
   }
 
   function handleAddCategory() {
