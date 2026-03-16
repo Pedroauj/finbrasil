@@ -524,6 +524,8 @@ export type Database = {
           subscription_provider: string | null
           subscription_status: string
           user_id: string
+          weekly_snapshot_email: boolean
+          weekly_snapshot_whatsapp: boolean
         }
         Insert: {
           created_at?: string
@@ -538,6 +540,8 @@ export type Database = {
           subscription_provider?: string | null
           subscription_status?: string
           user_id: string
+          weekly_snapshot_email?: boolean
+          weekly_snapshot_whatsapp?: boolean
         }
         Update: {
           created_at?: string
@@ -552,6 +556,8 @@ export type Database = {
           subscription_provider?: string | null
           subscription_status?: string
           user_id?: string
+          weekly_snapshot_email?: boolean
+          weekly_snapshot_whatsapp?: boolean
         }
         Relationships: []
       }
