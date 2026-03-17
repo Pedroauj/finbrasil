@@ -270,6 +270,7 @@ export function AppShell({
   title,
   rightActions,
   mobileActions,
+  mobileMonthNavigator,
   footer,
   children,
   onNewExpense,
@@ -282,6 +283,7 @@ export function AppShell({
   title?: string;
   rightActions?: ReactNode;
   mobileActions?: ReactNode;
+  mobileMonthNavigator?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
   onNewExpense?: () => void;
@@ -306,14 +308,14 @@ export function AppShell({
   }, [collapsed]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-clip">
       {/* Ambient background glow */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(1000px_circle_at_15%_10%,hsl(var(--primary)/0.06),transparent_55%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(800px_circle_at_85%_90%,hsl(var(--primary)/0.03),transparent_55%)]" />
       </div>
 
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-[100dvh] w-full">
         {/* Sidebar desktop */}
         <aside
           className={cn(
@@ -344,6 +346,7 @@ export function AppShell({
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Header */}
           <header className="sticky top-0 z-20 border-b border-border/30 bg-background/90 backdrop-blur-sm">
+            {/* Row 1: hamburger + title + compact actions */}
             <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5">
               <div className="xl:hidden shrink-0">
                 <Sheet>
@@ -386,19 +389,26 @@ export function AppShell({
                 </Button>
               ) : null}
 
-              {/* Actions */}
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                {mobileActions ? (
-                  <div className="flex items-center gap-1 md:hidden">{mobileActions}</div>
-                ) : null}
-                {rightActions ? (
-                  <div className="hidden md:flex items-center gap-1.5">{rightActions}</div>
-                ) : null}
-              </div>
+              {/* Actions — desktop */}
+              {rightActions ? (
+                <div className="hidden md:flex items-center gap-1.5 shrink-0">{rightActions}</div>
+              ) : null}
+
+              {/* Actions — mobile (compact, no month nav) */}
+              {mobileActions ? (
+                <div className="flex items-center gap-1 md:hidden shrink-0">{mobileActions}</div>
+              ) : null}
             </div>
+
+            {/* Row 2 mobile: month navigator — always visible on mobile */}
+            {mobileMonthNavigator ? (
+              <div className="flex md:hidden items-center justify-center border-t border-border/20 px-3 py-1.5">
+                {mobileMonthNavigator}
+              </div>
+            ) : null}
           </header>
 
-          <main className="relative flex-1 min-w-0 px-3 sm:px-5 py-4 sm:py-5">
+          <main className="relative flex-1 min-w-0 px-3 sm:px-5 py-4 sm:py-5 overflow-y-auto">
             <div className="w-full min-w-0">{children}</div>
           </main>
         </div>

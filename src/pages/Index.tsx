@@ -510,7 +510,6 @@ export default function Index() {
         salaries={store.allSalaries ?? []}
         onNavigate={setNav}
       />
-      <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
       <Button
         variant="outline"
         size="icon"
@@ -528,6 +527,10 @@ export default function Index() {
         <LogOut className="h-3.5 w-3.5" />
       </Button>
     </>
+  );
+
+  const mobileMonthNav = (
+    <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
   );
 
   return (
@@ -565,6 +568,7 @@ export default function Index() {
         title={pageTitle}
         rightActions={rightActions}
         mobileActions={mobileActions}
+        mobileMonthNavigator={mobileMonthNav}
         onNewExpense={onNewExpense}
         badges={navBadges}
         planLabel={isTrialActive && trialDaysLeft > 0 ? `Trial Pro: ${trialDaysLeft}d restantes` : planLabelText}
