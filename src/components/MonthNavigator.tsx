@@ -24,7 +24,7 @@ export function MonthNavigator({ currentDate, onNavigate }: MonthNavigatorProps)
           <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
 
-        <span className="min-w-[150px] px-2 text-center text-[13px] font-semibold capitalize text-foreground tracking-tight">
+        <span className="min-w-[100px] sm:min-w-[150px] px-1 sm:px-2 text-center text-[11px] sm:text-[13px] font-semibold capitalize text-foreground tracking-tight">
           {monthLabel}
         </span>
 

@@ -503,7 +503,26 @@ export default function Index() {
 
   const mobileActions = (
     <>
+      <GlobalSearch
+        expenses={store.allExpenses ?? store.expenses ?? []}
+        extraIncomes={store.allExtraIncomes ?? store.extraIncomes ?? []}
+        accounts={store.financialAccounts ?? []}
+        salaries={store.allSalaries ?? []}
+        onNavigate={setNav}
+      />
       <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 rounded-xl"
+        onClick={() => {
+          if (requirePremium("Assistente financeiro com IA")) return;
+          setAssistantOpen(true);
+        }}
+        title="Assistente IA"
+      >
+        <Bot className="h-4 w-4" />
+      </Button>
       <ModeToggle />
       <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={signOut}>
         <LogOut className="h-4 w-4" />
