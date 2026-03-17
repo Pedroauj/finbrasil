@@ -510,7 +510,6 @@ export default function Index() {
         salaries={store.allSalaries ?? []}
         onNavigate={setNav}
       />
-      <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
       <Button
         variant="outline"
         size="icon"
@@ -528,6 +527,10 @@ export default function Index() {
         <LogOut className="h-3.5 w-3.5" />
       </Button>
     </>
+  );
+
+  const mobileMonthNav = (
+    <MonthNavigator currentDate={store.currentDate} onNavigate={store.navigateMonth} />
   );
 
   return (

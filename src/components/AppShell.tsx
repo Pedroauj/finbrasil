@@ -270,6 +270,7 @@ export function AppShell({
   title,
   rightActions,
   mobileActions,
+  mobileMonthNavigator,
   footer,
   children,
   onNewExpense,
@@ -282,6 +283,7 @@ export function AppShell({
   title?: string;
   rightActions?: ReactNode;
   mobileActions?: ReactNode;
+  mobileMonthNavigator?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
   onNewExpense?: () => void;
