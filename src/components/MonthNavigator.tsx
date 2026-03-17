@@ -12,7 +12,7 @@ export function MonthNavigator({ currentDate, onNavigate }: MonthNavigatorProps)
   const monthLabel = format(currentDate, "MMMM yyyy", { locale: ptBR });
 
   return (
-    <div className="hidden sm:flex items-center">
+    <div className="flex items-center">
       <div className="flex items-center gap-0.5 rounded-xl border border-border/40 bg-card/60 backdrop-blur-lg px-1 py-0.5 shadow-sm">
         <Button
           variant="ghost"
