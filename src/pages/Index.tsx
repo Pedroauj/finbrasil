@@ -514,18 +514,18 @@ export default function Index() {
       <Button
         variant="outline"
         size="icon"
-        className="h-10 w-10 rounded-xl"
+        className="h-9 w-9 rounded-xl"
         onClick={() => {
           if (requirePremium("Assistente financeiro com IA")) return;
           setAssistantOpen(true);
         }}
         title="Assistente IA"
       >
-        <Bot className="h-4 w-4" />
+        <Bot className="h-3.5 w-3.5" />
       </Button>
       <ModeToggle />
-      <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={signOut}>
-        <LogOut className="h-4 w-4" />
+      <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl" onClick={signOut}>
+        <LogOut className="h-3.5 w-3.5" />
       </Button>
     </>
   );
