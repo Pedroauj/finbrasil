@@ -568,6 +568,7 @@ export default function Index() {
         title={pageTitle}
         rightActions={rightActions}
         mobileActions={mobileActions}
+        mobileMonthNavigator={mobileMonthNav}
         onNewExpense={onNewExpense}
         badges={navBadges}
         planLabel={isTrialActive && trialDaysLeft > 0 ? `Trial Pro: ${trialDaysLeft}d restantes` : planLabelText}
