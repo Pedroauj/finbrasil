@@ -344,11 +344,11 @@ export function AppShell({
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Header */}
           <header className="sticky top-0 z-20 border-b border-border/30 bg-background/90 backdrop-blur-sm">
-            <div className="flex items-center gap-3 px-4 py-2.5">
-              <div className="xl:hidden">
+            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5">
+              <div className="xl:hidden shrink-0">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl">
+                    <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl">
                       <Menu className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
@@ -387,9 +387,9 @@ export function AppShell({
               ) : null}
 
               {/* Actions */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 {mobileActions ? (
-                  <div className="flex items-center gap-1.5 md:hidden">{mobileActions}</div>
+                  <div className="flex items-center gap-1 md:hidden">{mobileActions}</div>
                 ) : null}
                 {rightActions ? (
                   <div className="hidden md:flex items-center gap-1.5">{rightActions}</div>
