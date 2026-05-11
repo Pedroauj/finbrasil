@@ -295,6 +295,8 @@ export function useExpenseStore() {
           installmentCount: e.installment_count || undefined,
           currentInstallment: e.current_installment || undefined,
           parentInstallmentId: e.parent_installment_id || undefined,
+          autoImported: (e as any).auto_imported || false,
+          pluggyTransactionId: (e as any).pluggy_transaction_id || null,
         };
       });
 
