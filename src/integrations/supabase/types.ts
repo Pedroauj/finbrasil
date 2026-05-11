@@ -248,6 +248,7 @@ export type Database = {
         Row: {
           account_id: string | null
           amount: number
+          auto_imported: boolean
           category: string
           created_at: string
           current_installment: number | null
@@ -257,12 +258,14 @@ export type Database = {
           installment_count: number | null
           is_installment: boolean
           parent_installment_id: string | null
+          pluggy_transaction_id: string | null
           status: Database["public"]["Enums"]["transaction_status"]
           user_id: string
         }
         Insert: {
           account_id?: string | null
           amount: number
+          auto_imported?: boolean
           category: string
           created_at?: string
           current_installment?: number | null
@@ -272,12 +275,14 @@ export type Database = {
           installment_count?: number | null
           is_installment?: boolean
           parent_installment_id?: string | null
+          pluggy_transaction_id?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           user_id: string
         }
         Update: {
           account_id?: string | null
           amount?: number
+          auto_imported?: boolean
           category?: string
           created_at?: string
           current_installment?: number | null
@@ -287,6 +292,7 @@ export type Database = {
           installment_count?: number | null
           is_installment?: boolean
           parent_installment_id?: string | null
+          pluggy_transaction_id?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           user_id?: string
         }
@@ -310,29 +316,35 @@ export type Database = {
       extra_incomes: {
         Row: {
           amount: number
+          auto_imported: boolean
           category: string
           created_at: string
           date: string
           description: string
           id: string
+          pluggy_transaction_id: string | null
           user_id: string
         }
         Insert: {
           amount: number
+          auto_imported?: boolean
           category?: string
           created_at?: string
           date?: string
           description: string
           id?: string
+          pluggy_transaction_id?: string | null
           user_id: string
         }
         Update: {
           amount?: number
+          auto_imported?: boolean
           category?: string
           created_at?: string
           date?: string
           description?: string
           id?: string
+          pluggy_transaction_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -510,6 +522,101 @@ export type Database = {
         }
         Relationships: []
       }
+      pluggy_account_links: {
+        Row: {
+          account_number: string | null
+          account_subtype: string | null
+          account_type: string
+          connection_id: string
+          created_at: string
+          financial_account_id: string | null
+          id: string
+          pluggy_account_id: string
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          account_subtype?: string | null
+          account_type: string
+          connection_id: string
+          created_at?: string
+          financial_account_id?: string | null
+          id?: string
+          pluggy_account_id: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string | null
+          account_subtype?: string | null
+          account_type?: string
+          connection_id?: string
+          created_at?: string
+          financial_account_id?: string | null
+          id?: string
+          pluggy_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_account_links_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pluggy_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pluggy_connections: {
+        Row: {
+          connector_id: number | null
+          connector_image_url: string | null
+          connector_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          mfa_required: boolean
+          next_sync_at: string | null
+          pluggy_item_id: string
+          status: string
+          status_detail: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id?: number | null
+          connector_image_url?: string | null
+          connector_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          mfa_required?: boolean
+          next_sync_at?: string | null
+          pluggy_item_id: string
+          status?: string
+          status_detail?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: number | null
+          connector_image_url?: string | null
+          connector_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          mfa_required?: boolean
+          next_sync_at?: string | null
+          pluggy_item_id?: string
+          status?: string
+          status_detail?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -518,6 +625,7 @@ export type Database = {
           fin_score: number
           id: string
           plan: string
+          pluggy_connections_limit: number
           referral_code: string | null
           role: string
           subscription_id: string | null
@@ -534,6 +642,7 @@ export type Database = {
           fin_score?: number
           id?: string
           plan?: string
+          pluggy_connections_limit?: number
           referral_code?: string | null
           role?: string
           subscription_id?: string | null
@@ -550,6 +659,7 @@ export type Database = {
           fin_score?: number
           id?: string
           plan?: string
+          pluggy_connections_limit?: number
           referral_code?: string | null
           role?: string
           subscription_id?: string | null
