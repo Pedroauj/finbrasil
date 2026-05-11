@@ -12,13 +12,14 @@ import { ThemePicker } from "@/components/ThemePicker";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 import { WhatsAppSettings } from "@/components/WhatsAppSettings";
+import { OpenFinanceManager } from "@/components/OpenFinanceManager";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Shield, Palette, Database, Target, Plus, Trash2,
   Download, AlertTriangle, Calendar, Eye, EyeOff, Bell,
   Lock, Mail, Save, Crown, Sun, Moon, Monitor, ChevronRight,
   FileDown, RotateCcw, KeyRound, MessageSquare, Smartphone,
-  Settings2, HelpCircle, CreditCard, Wallet,
+  Settings2, HelpCircle, CreditCard, Wallet, Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PlanTier, UserRole } from "@/lib/plans";
@@ -164,12 +165,13 @@ interface SettingsPageProps {
   initialTab?: string;
 }
 
-type SettingsTab = "profile" | "appearance" | "financial" | "notifications" | "plans" | "data" | "admin";
+type SettingsTab = "profile" | "appearance" | "financial" | "banks" | "notifications" | "plans" | "data" | "admin";
 
 const SETTINGS_TABS: Array<{ key: SettingsTab; label: string; icon: React.ElementType; adminOnly?: boolean }> = [
   { key: "profile", label: "Perfil & Segurança", icon: User },
   { key: "appearance", label: "Aparência", icon: Palette },
   { key: "financial", label: "Financeiro", icon: Wallet },
+  { key: "banks", label: "Bancos (Open Finance)", icon: Building2 },
   { key: "notifications", label: "Notificações", icon: Bell },
   { key: "plans", label: "Planos", icon: Crown },
   { key: "data", label: "Dados & Exportação", icon: Database },
@@ -458,6 +460,19 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
                 <WhatsAppSettings userId={auth.user.id} />
               ) : (
                 <p className="text-sm text-muted-foreground py-4">Faça login para configurar o WhatsApp.</p>
+              )}
+            </SettingsSection>
+          </div>
+        );
+
+      case "banks":
+        return (
+          <div className="space-y-4">
+            <SettingsSection title="Bancos conectados" icon={Building2} badge="Open Finance">
+              {auth?.user?.id ? (
+                <OpenFinanceManager userId={auth.user.id} userPlan={userPlan} />
+              ) : (
+                <p className="text-sm text-muted-foreground py-4">Faça login para conectar seus bancos.</p>
               )}
             </SettingsSection>
           </div>

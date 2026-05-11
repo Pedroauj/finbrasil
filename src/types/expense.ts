@@ -69,6 +69,8 @@ export interface Expense {
   installmentCount?: number;
   currentInstallment?: number;
   parentInstallmentId?: string | null;
+  autoImported?: boolean;
+  pluggyTransactionId?: string | null;
 }
 
 export interface RecurringExpense {
