@@ -465,6 +465,19 @@ export function SettingsPage({ store, auth, userPlan, userRole, alertDaysBefore,
           </div>
         );
 
+      case "banks":
+        return (
+          <div className="space-y-4">
+            <SettingsSection title="Bancos conectados" icon={Building2} badge="Open Finance">
+              {auth?.user?.id ? (
+                <OpenFinanceManager userId={auth.user.id} userPlan={userPlan} />
+              ) : (
+                <p className="text-sm text-muted-foreground py-4">Faça login para conectar seus bancos.</p>
+              )}
+            </SettingsSection>
+          </div>
+        );
+
       case "plans":
         return <PlansSection currentPlan={userPlan} />;
 
