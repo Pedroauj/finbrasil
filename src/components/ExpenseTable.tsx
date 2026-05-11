@@ -13,6 +13,7 @@ import {
   DollarSign,
   ListChecks,
   CalendarRange,
+  Link2,
 } from "lucide-react";
 
 import type { Expense, FinancialAccount, TransactionStatus } from "@/types/expense";
@@ -436,6 +437,11 @@ export function ExpenseTable({
                                   <CalendarRange className="h-3 w-3" />
                                   {expense.currentInstallment}/{expense.installmentCount}
                                 </Badge>
+                              )}
+                              {expense.autoImported && (
+                                <span title="Importado automaticamente via Open Finance">
+                                  <Link2 className="h-3 w-3 text-emerald-500" />
+                                </span>
                               )}
                             </span>
                           </TableCell>
